@@ -35,38 +35,40 @@
             background-image: linear-gradient(to right, #f1f5f9 1px, transparent 1px),
                               linear-gradient(to bottom, #f1f5f9 1px, transparent 1px);
         }
+        /* Highlight input transitions when auto-filled */
+        .autofilled-highlight {
+            animation: pulse-border 1.5s ease-in-out;
+        }
+        @keyframes pulse-border {
+            0% { border-color: #6366f1; box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.4); }
+            100% { border-color: #cbd5e1; box-shadow: none; }
+        }
     </style>
 </head>
 <body class="max-w-md mx-auto min-h-screen bg-slate-50 flex flex-col shadow-2xl relative pb-20 notebook-grid">
 
-    <!-- Top Navigation Bar -->
+    <!-- Top Navigation Bar (Simplified) -->
     <header class="bg-white border-b border-slate-100 px-4 py-3.5 sticky top-0 z-20 shadow-sm flex justify-between items-center">
         <div class="flex items-center space-x-2">
-            <button id="nav-menu-btn" class="p-1.5 text-slate-500 hover:bg-slate-100 rounded-lg">
+            <div class="p-1.5 text-slate-500 bg-slate-50 rounded-lg">
                 <i data-lucide="book-open" class="w-5 h-5 text-indigo-600"></i>
-            </button>
-            <div id="current-month-display-header" class="text-base font-extrabold text-slate-800 flex items-center gap-1 cursor-pointer">
-                <span>พ.ค. 2569</span> <i data-lucide="chevron-down" class="w-4 h-4 text-slate-500"></i>
             </div>
+            <!-- Month selector header made clickable -->
+            <button id="current-month-display-header" class="text-base font-extrabold text-slate-800 flex items-center gap-1 hover:bg-slate-50 px-2 py-1 rounded-xl transition-all">
+                <span>พ.ค. 2569</span> <i data-lucide="chevron-down" class="w-4 h-4 text-indigo-600"></i>
+            </button>
         </div>
         <div class="flex items-center space-x-1.5">
-            <!-- View Mode Switcher -->
-            <button id="view-list-btn" class="p-2 rounded-xl bg-indigo-50 text-indigo-600 font-bold transition-all" title="มุมมองรายการ">
-                <i data-lucide="list" class="w-4.5 h-4.5"></i>
-            </button>
-            <button id="view-calendar-btn" class="p-2 rounded-xl text-slate-500 hover:bg-slate-100 transition-all" title="มุมมองปฏิทิน">
-                <i data-lucide="calendar" class="w-4.5 h-4.5"></i>
-            </button>
             <button id="export-csv-btn" class="p-2 text-slate-500 hover:bg-slate-100 rounded-xl" title="ส่งออก CSV">
                 <i data-lucide="download" class="w-4.5 h-4.5"></i>
             </button>
         </div>
     </header>
 
-    <!-- Main Dynamic Content Frame -->
+    <!-- Main Dynamic Content Frame (List Only) -->
     <main class="flex-1 p-4 overflow-y-auto space-y-4 pb-12">
 
-        <!-- Monthly Balance summary cards (Visual indicators as shown in 1003.jpg) -->
+        <!-- Monthly Balance summary cards -->
         <div class="bg-white p-4 rounded-3xl border border-slate-100 shadow-sm grid grid-cols-2 gap-4">
             <div class="flex flex-col">
                 <span class="text-xs font-semibold text-slate-400">รายจ่ายรวมเดือนนี้</span>
@@ -78,74 +80,17 @@
             </div>
         </div>
 
-        <!-- VIEW MODE 1: LIST VIEW (Notebook Timeline Grouping as 1001.jpg) -->
+        <!-- VIEW MODE 1: LIST VIEW (MAIN & ONLY VIEW) -->
         <div id="wrapper-list-view" class="space-y-4">
-            <!-- Timeline Groups List -->
             <div id="timeline-group-container" class="space-y-5">
                 <!-- Group components will dynamically insert here -->
             </div>
         </div>
 
-        <!-- VIEW MODE 2: CALENDAR VIEW (Grid layout as 1002.jpg) -->
-        <div id="wrapper-calendar-view" class="space-y-4 hidden">
-            <div class="bg-white p-4 rounded-3xl border border-slate-100 shadow-sm space-y-4">
-                <!-- Month selector in calendar -->
-                <div class="flex justify-between items-center">
-                    <button id="cal-prev-month-btn" class="p-1.5 text-slate-600 hover:bg-slate-100 rounded-xl transition-colors">
-                        <i data-lucide="chevron-left" class="w-5 h-5"></i>
-                    </button>
-                    <span id="cal-month-title" class="text-sm font-bold text-slate-700">พฤษภาคม ค.ศ. 2026</span>
-                    <button id="cal-next-month-btn" class="p-1.5 text-slate-600 hover:bg-slate-100 rounded-xl transition-colors">
-                        <i data-lucide="chevron-right" class="w-5 h-5"></i>
-                    </button>
-                </div>
-
-                <!-- Calendar grid structure -->
-                <div class="grid grid-cols-7 gap-y-3.5 text-center text-xs font-semibold">
-                    <!-- Days of week headers -->
-                    <div class="text-slate-400">จ.</div>
-                    <div class="text-slate-400">อ.</div>
-                    <div class="text-slate-400">พ.</div>
-                    <div class="text-slate-400">พฤ.</div>
-                    <div class="text-slate-400">ศ.</div>
-                    <div class="text-indigo-600 font-bold">ส.</div>
-                    <div class="text-red-500 font-bold">อา.</div>
-
-                    <!-- Days cells container -->
-                    <div id="calendar-days-container" class="col-span-7 grid grid-cols-7 gap-y-4 text-slate-700">
-                        <!-- Dynamic cells here -->
-                    </div>
-                </div>
-
-                <!-- Monthly summary on Calendar -->
-                <div class="pt-4 border-t border-slate-100 grid grid-cols-2 gap-2 text-xs font-bold text-slate-600">
-                    <div class="flex justify-between px-1">
-                        <span>รายจ่าย:</span>
-                        <span id="cal-summary-expense" class="text-red-500">฿0.00</span>
-                    </div>
-                    <div class="flex justify-between px-1 border-l">
-                        <span>รายได้:</span>
-                        <span class="text-emerald-500">฿0.00</span>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Focus day ledger details (Below Calendar) -->
-            <div class="space-y-2">
-                <div class="flex justify-between items-center px-1">
-                    <h4 id="cal-focus-date-title" class="text-xs font-bold text-slate-500">วันนี้ พ.ค. 21 พฤหัสบดี</h4>
-                    <span class="text-[9px] px-2 py-0.5 bg-indigo-50 text-indigo-600 rounded-full font-bold">รายการประวัติวันเลือก</span>
-                </div>
-                <div id="calendar-focus-list-container" class="space-y-2.5">
-                    <!-- Targeted day items will appear here -->
-                </div>
-            </div>
-        </div>
-
     </main>
 
-    <!-- FLOATING ADD BUTTON (Fixed Bottom Area) -->
-    <div class="fixed bottom-4 inset-x-0 flex justify-center z-35 pointer-events-none">
+    <!-- FLOATING ADD BUTTON -->
+    <div class="fixed bottom-4 inset-x-0 flex justify-center z-30 pointer-events-none">
         <button id="floating-plus-btn" class="pointer-events-auto w-12 h-12 rounded-full bg-gradient-to-tr from-indigo-600 to-indigo-500 text-white flex items-center justify-center shadow-lg hover:scale-105 active:scale-95 transition-all">
             <i data-lucide="plus" class="w-6 h-6"></i>
         </button>
@@ -154,11 +99,11 @@
     <!-- MAIN CONTROL FORM SLIDE SHEET -->
     <div id="form-slide-sheet" class="hidden fixed inset-0 z-40 bg-black/60 flex flex-col justify-end">
         <!-- Sheet content box -->
-        <div class="bg-white rounded-t-[2.5rem] p-5 max-h-[85vh] overflow-y-auto flex flex-col space-y-4 shadow-2xl relative">
+        <div class="bg-white rounded-t-[2.5rem] p-5 max-h-[90vh] overflow-y-auto flex flex-col space-y-4 shadow-2xl relative custom-scrollbar">
             <div class="w-12 h-1.5 bg-slate-200 rounded-full mx-auto cursor-pointer" id="close-sheet-handle"></div>
             
             <div class="flex justify-between items-center">
-                <h3 class="text-sm font-bold text-slate-800 flex items-center gap-1.5">
+                <h3 id="form-sheet-title" class="text-sm font-bold text-slate-800 flex items-center gap-1.5">
                     <i data-lucide="plus-circle" class="w-4 h-4 text-indigo-600"></i>
                     เพิ่มรายการรายจ่ายใหม่
                 </h3>
@@ -167,51 +112,68 @@
                 </button>
             </div>
 
-            <!-- Mode Switcher: Scan Slip VS Manual Entry -->
-            <div class="bg-slate-100 p-1 rounded-xl flex gap-1 text-xs font-bold text-slate-500">
-                <button id="entry-mode-scan-btn" class="flex-1 py-2 rounded-lg bg-white text-indigo-600 shadow-sm flex items-center justify-center gap-1">
-                    <i data-lucide="scan" class="w-3.5 h-3.5"></i> สแกนสลิป K+
-                </button>
-                <button id="entry-mode-manual-btn" class="flex-1 py-2 rounded-lg flex items-center justify-center gap-1">
-                    <i data-lucide="pen-tool" class="w-3.5 h-3.5"></i> กรอกเอง (ไม่มีสลิป)
-                </button>
-            </div>
-
-            <!-- CONTENT MODE 1: SLIP SCANNER WITH CALIBRATOR -->
+            <!-- SLIP SCANNER WITH CALIBRATOR -->
             <div id="content-mode-scan" class="space-y-4">
-                <div class="border-2 border-dashed border-slate-200 rounded-2xl p-6 text-center cursor-pointer hover:bg-slate-50 transition-all flex flex-col items-center justify-center space-y-2" id="trigger-file-picker">
-                    <div class="w-10 h-10 bg-indigo-50 text-indigo-600 rounded-full flex items-center justify-center">
-                        <i data-lucide="upload-cloud" class="w-5 h-5"></i>
+                <!-- Batch status indicators -->
+                <div id="batch-queue-badge" class="hidden w-full bg-indigo-50 text-indigo-700 text-[10px] font-extrabold p-2 rounded-xl flex justify-between items-center">
+                    <span>คิวตรวจสอบรูปภาพสลิป: <span id="batch-current-num">1</span> จากทั้งหมด <span id="batch-total-num">1</span> ใบ</span>
+                    <button id="skip-batch-item-btn" class="text-red-500 hover:text-red-700 underline">ข้ามใบนี้</button>
+                </div>
+
+                <!-- Input configured to accept multiple images -->
+                <div class="border-2 border-dashed border-slate-200 rounded-2xl p-5 text-center cursor-pointer hover:bg-slate-50 transition-all flex flex-col items-center justify-center space-y-1.5" id="trigger-file-picker">
+                    <div class="w-9 h-9 bg-indigo-50 text-indigo-600 rounded-full flex items-center justify-center">
+                        <i data-lucide="scan" class="w-4.5 h-4.5"></i>
                     </div>
-                    <span class="text-xs font-bold text-slate-700">เลือกรูปภาพสลิป หรือ ถ่ายรูป</span>
-                    <span class="text-[9px] text-slate-400">ล็อกพื้นที่ครอปและประมวลผลโลคอล 100%</span>
+                    <span class="text-xs font-bold text-slate-700">สแกนสลิปอัตโนมัติ (เลือกภาพสลิปได้ทีละหลายรูป)</span>
+                    <span class="text-[9px] text-slate-400">หรือระบุข้อมูลด้วยตนเองที่แบบฟอร์มด้านล่างได้ทันที</span>
                 </div>
                 
-                <input type="file" id="slip-file-input" accept="image/*" class="hidden">
+                <input type="file" id="slip-file-input" accept="image/*" class="hidden" multiple>
 
                 <!-- Slip Upload Preview Area -->
                 <div id="image-preview-container" class="hidden space-y-3">
                     <div class="relative inline-block max-w-full text-center w-full">
-                        <img id="image-preview" src="#" alt="สลิปโอนเงิน" class="max-h-48 rounded-xl mx-auto border shadow-sm">
-                        <!-- Calibration Toggle inside preview -->
-                        <button id="toggle-calibration-btn" class="mt-2 text-[10px] text-indigo-600 hover:text-indigo-800 font-bold flex items-center gap-0.5 mx-auto bg-slate-100 px-3 py-1.5 rounded-full border">
-                            <i data-lucide="settings-2" class="w-3 h-3"></i> ปรับแต่งพิกัด Crop Grid
-                        </button>
+                        <div class="relative inline-block mx-auto">
+                            <!-- Overlay canvas for mapping crops graphically -->
+                            <canvas id="crop-overlay-canvas" class="absolute inset-0 w-full h-full pointer-events-none rounded-xl"></canvas>
+                            <img id="image-preview" src="#" alt="สลิปโอนเงิน" class="max-h-48 rounded-xl mx-auto border shadow-sm block">
+                        </div>
+                        <div class="flex gap-2 justify-center mt-2">
+                            <!-- Calibration Toggle -->
+                            <button id="toggle-calibration-btn" class="text-[10px] text-indigo-600 hover:text-indigo-800 font-bold flex items-center gap-0.5 bg-slate-100 px-3 py-1.5 rounded-full border">
+                                <i data-lucide="settings-2" class="w-3 h-3"></i> ปรับแต่งพิกัด Crop Grid
+                            </button>
+                            <!-- Delete/Remove image button -->
+                            <button id="remove-image-btn" class="text-[10px] text-red-500 hover:text-red-700 font-bold flex items-center gap-0.5 bg-red-50 px-3 py-1.5 rounded-full border border-red-100">
+                                <i data-lucide="trash-2" class="w-3 h-3"></i> ลบรูปภาพสลิป
+                            </button>
+                        </div>
                     </div>
 
-                    <!-- Live Crop Preview Display Boxes -->
-                    <div class="bg-slate-50 p-2.5 rounded-xl border border-slate-100 grid grid-cols-3 gap-2 text-center text-[8px] text-slate-400 font-bold">
-                        <div class="bg-white p-1 rounded-lg border">
-                            <span class="block mb-0.5 text-indigo-600">1. วันเวลา (Top)</span>
-                            <canvas id="crop-datetime-canvas" class="mx-auto border bg-slate-100 max-h-8 max-w-full rounded"></canvas>
-                        </div>
-                        <div class="bg-white p-1 rounded-lg border">
-                            <span class="block mb-0.5 text-indigo-600">2. ชื่อผู้รับ (Middle)</span>
-                            <canvas id="crop-recipient-canvas" class="mx-auto border bg-slate-100 max-h-8 max-w-full rounded"></canvas>
-                        </div>
-                        <div class="bg-white p-1 rounded-lg border">
-                            <span class="block mb-0.5 text-indigo-600">3. ยอดเงิน (Bottom)</span>
-                            <canvas id="crop-amount-canvas" class="mx-auto border bg-slate-100 max-h-8 max-w-full rounded"></canvas>
+                    <!-- Live Crop Preview Display Boxes (Unified Visual & Text Feedback as requested) -->
+                    <div class="bg-slate-50 p-2.5 rounded-xl border border-slate-100 space-y-3 text-left">
+                        <span class="text-[10px] font-bold text-slate-500 flex items-center gap-1">
+                            <i data-lucide="eye" class="w-3.5 h-3.5 text-indigo-500"></i>
+                            ตัวอย่างภาพครอปและข้อความถอดรหัส
+                        </span>
+                        
+                        <div class="grid grid-cols-3 gap-2 text-center text-[8px] text-slate-400 font-bold">
+                            <div class="bg-white p-1 rounded-lg border flex flex-col justify-between min-h-[90px]">
+                                <span class="block mb-1 text-indigo-600">1. วันเวลา (Top)</span>
+                                <canvas id="crop-datetime-canvas" class="mx-auto border bg-slate-100 max-h-8 max-w-full rounded mb-1"></canvas>
+                                <input type="text" id="ocr-raw-datetime" class="w-full text-center border rounded py-0.5 px-1 font-semibold text-slate-700 text-[9px] bg-slate-50" readonly placeholder="กำลังอ่าน...">
+                            </div>
+                            <div class="bg-white p-1 rounded-lg border flex flex-col justify-between min-h-[90px]">
+                                <span class="block mb-1 text-indigo-600">2. ชื่อผู้รับ (Middle)</span>
+                                <canvas id="crop-recipient-canvas" class="mx-auto border bg-slate-100 max-h-8 max-w-full rounded mb-1"></canvas>
+                                <input type="text" id="ocr-raw-recipient" class="w-full text-center border rounded py-0.5 px-1 font-semibold text-slate-700 text-[9px] bg-slate-50" readonly placeholder="กำลังอ่าน...">
+                            </div>
+                            <div class="bg-white p-1 rounded-lg border flex flex-col justify-between min-h-[90px]">
+                                <span class="block mb-1 text-indigo-600">3. ยอดเงิน (Bottom)</span>
+                                <canvas id="crop-amount-canvas" class="mx-auto border bg-slate-100 max-h-8 max-w-full rounded mb-1"></canvas>
+                                <input type="text" id="ocr-raw-amount" class="w-full text-center border rounded py-0.5 px-1 font-semibold text-slate-700 text-[9px] bg-slate-50" readonly placeholder="กำลังอ่าน...">
+                            </div>
                         </div>
                     </div>
 
@@ -220,41 +182,38 @@
                         <div class="flex justify-between items-center border-b border-indigo-100 pb-1.5">
                             <span class="text-[10px] font-bold text-indigo-800 flex items-center gap-1">
                                 <i data-lucide="sliders-horizontal" class="w-3.5 h-3.5"></i>
-                                แผงปรับพิกัดกล่องครอป %
+                                แผงปรับพิกัดกล่องครอป % (K-Plus)
                             </span>
-                            <div class="flex gap-1.5">
-                                <button id="save-current-calibration-btn" class="text-[8px] bg-emerald-600 text-white px-2 py-0.5 rounded font-bold hover:bg-emerald-700">บันทึกเป็นค่าเริ่มต้น</button>
-                                <button id="reset-calibration-btn" class="text-[8px] bg-white px-2 py-0.5 rounded border border-indigo-300 font-bold text-indigo-700">คืนค่ามาตรฐาน</button>
-                            </div>
+                            <button id="reset-calibration-btn" class="text-[8px] bg-white px-2 py-0.5 rounded border border-indigo-300 font-bold text-indigo-700">คืนค่ามาตรฐาน</button>
                         </div>
                         <!-- Date Time Calibration -->
                         <div class="text-[9px] space-y-1">
                             <span class="font-bold text-indigo-950">1. พิกัดวันเวลา (Date-Time)</span>
                             <div class="grid grid-cols-4 gap-1.5">
-                                <div>X (ขยับ): <span id="val-dt-x">5</span>% <input type="range" id="slider-dt-x" min="0" max="80" class="w-full accent-indigo-600"></div>
-                                <div>Y (บนล่าง): <span id="val-dt-y">7</span>% <input type="range" id="slider-dt-y" min="0" max="40" class="w-full accent-indigo-600"></div>
-                                <div>W (กว้าง): <span id="val-dt-w">55</span>% <input type="range" id="slider-dt-w" min="10" max="95" class="w-full accent-indigo-600"></div>
-                                <div>H (สูง): <span id="val-dt-h">7</span>% <input type="range" id="slider-dt-h" min="2" max="25" class="w-full accent-indigo-600"></div>
+                                <div>X: <span id="val-dt-x">5</span>% <input type="range" id="slider-dt-x" min="0" max="80" class="w-full accent-indigo-600"></div>
+                                <div>Y: <span id="val-dt-y">7</span>% <input type="range" id="slider-dt-y" min="0" max="40" class="w-full accent-indigo-600"></div>
+                                <div>W: <span id="val-dt-w">61</span>% <input type="range" id="slider-dt-w" min="10" max="95" class="w-full accent-indigo-600"></div>
+                                <div>H: <span id="val-dt-h">8</span>% <input type="range" id="slider-dt-h" min="2" max="25" class="w-full accent-indigo-600"></div>
                             </div>
                         </div>
                         <!-- Recipient Name Calibration -->
                         <div class="text-[9px] space-y-1">
                             <span class="font-bold text-indigo-950">2. พิกัดชื่อผู้รับโอน (Recipient)</span>
                             <div class="grid grid-cols-4 gap-1.5">
-                                <div>X (ขยับ): <span id="val-rc-x">34</span>% <input type="range" id="slider-rc-x" min="10" max="80" class="w-full accent-indigo-600"></div>
-                                <div>Y (บนล่าง): <span id="val-rc-y">42</span>% <input type="range" id="slider-rc-y" min="20" max="70" class="w-full accent-indigo-600"></div>
-                                <div>W (กว้าง): <span id="val-rc-w">51</span>% <input type="range" id="slider-rc-w" min="10" max="85" class="w-full accent-indigo-600"></div>
-                                <div>H (สูง): <span id="val-rc-h">8</span>% <input type="range" id="slider-rc-h" min="2" max="25" class="w-full accent-indigo-600"></div>
+                                <div>X: <span id="val-rc-x">21</span>% <input type="range" id="slider-rc-x" min="0" max="80" class="w-full accent-indigo-600"></div>
+                                <div>Y: <span id="val-rc-y">42</span>% <input type="range" id="slider-rc-y" min="20" max="70" class="w-full accent-indigo-600"></div>
+                                <div>W: <span id="val-rc-w">62</span>% <input type="range" id="slider-rc-w" min="10" max="95" class="w-full accent-indigo-600"></div>
+                                <div>H: <span id="val-rc-h">8</span>% <input type="range" id="slider-rc-h" min="2" max="25" class="w-full accent-indigo-600"></div>
                             </div>
                         </div>
                         <!-- Amount Calibration -->
                         <div class="text-[9px] space-y-1">
                             <span class="font-bold text-indigo-950">3. พิกัดจำนวนเงินยอดจ่าย (Amount)</span>
                             <div class="grid grid-cols-4 gap-1.5">
-                                <div>X (ขยับ): <span id="val-am-x">35</span>% <input type="range" id="slider-am-x" min="10" max="80" class="w-full accent-indigo-600"></div>
-                                <div>Y (บนล่าง): <span id="val-am-y">76</span>% <input type="range" id="slider-am-y" min="50" max="95" class="w-full accent-indigo-600"></div>
-                                <div>W (กว้าง): <span id="val-am-w">32</span>% <input type="range" id="slider-am-w" min="10" max="70" class="w-full accent-indigo-600"></div>
-                                <div>H (สูง): <span id="val-am-h">8</span>% <input type="range" id="slider-am-h" min="2" max="25" class="w-full accent-indigo-600"></div>
+                                <div>X: <span id="val-am-x">10</span>% <input type="range" id="slider-am-x" min="0" max="80" class="w-full accent-indigo-600"></div>
+                                <div>Y: <span id="val-am-y">79</span>% <input type="range" id="slider-am-y" min="50" max="95" class="w-full accent-indigo-600"></div>
+                                <div>W: <span id="val-am-w">54</span>% <input type="range" id="slider-am-w" min="10" max="95" class="w-full accent-indigo-600"></div>
+                                <div>H: <span id="val-am-h">6</span>% <input type="range" id="slider-am-h" min="2" max="25" class="w-full accent-indigo-600"></div>
                             </div>
                         </div>
                     </div>
@@ -274,7 +233,10 @@
             <div class="space-y-3 pt-2">
                 <!-- Amount input -->
                 <div>
-                    <label class="block text-xs font-bold text-slate-500 mb-1">จำนวนเงิน (บาท)</label>
+                    <div class="flex justify-between items-center mb-1">
+                        <label class="block text-xs font-bold text-slate-500">จำนวนเงิน (บาท)</label>
+                        <span id="amount-source-badge" class="text-[9px] px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-500 font-bold">รอการสแกนหรือระบุข้อมูล</span>
+                    </div>
                     <div class="relative">
                         <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400 font-extrabold text-sm">฿</span>
                         <input type="number" step="0.01" id="form-amount" placeholder="0.00" class="w-full pl-8 pr-3 py-2 border rounded-xl focus:outline-none focus:ring-1 focus:ring-indigo-500 font-extrabold text-slate-800 text-lg">
@@ -291,11 +253,11 @@
                 <div class="grid grid-cols-2 gap-3">
                     <div>
                         <label class="block text-xs font-bold text-slate-500 mb-1">วันที่ทำรายการ</label>
-                        <input type="date" id="form-date" class="w-full px-3 py-2 border rounded-xl focus:outline-none focus:ring-1 focus:ring-indigo-500 text-xs font-bold text-slate-600">
+                        <input type="date" id="form-date" class="w-full px-3 py-2 border rounded-xl focus:outline-none focus:ring-1 focus:ring-indigo-500 text-xs font-bold text-slate-600 transition-all">
                     </div>
                     <div>
                         <label class="block text-xs font-bold text-slate-500 mb-1">เวลาที่โอน</label>
-                        <input type="time" id="form-time" class="w-full px-3 py-2 border rounded-xl focus:outline-none focus:ring-1 focus:ring-indigo-500 text-xs font-bold text-slate-600">
+                        <input type="time" id="form-time" class="w-full px-3 py-2 border rounded-xl focus:outline-none focus:ring-1 focus:ring-indigo-500 text-xs font-bold text-slate-600 transition-all">
                     </div>
                 </div>
 
@@ -322,13 +284,64 @@
                 <!-- Save Action button -->
                 <button id="save-record-btn" class="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold transition-all text-xs shadow-md flex items-center justify-center gap-1.5">
                     <i data-lucide="check-circle" class="w-4 h-4"></i>
-                    บันทึกข้อมูลลงสมุดบัญชี
+                    <span id="save-btn-text">บันทึกข้อมูลลงสมุดบัญชี</span>
                 </button>
             </div>
         </div>
     </div>
 
-    <!-- Hidden native size canvas for QR scanning -->
+    <!-- MONTH PICKER INTERACTIVE OVERLAY MODAL -->
+    <div id="month-picker-modal" class="hidden fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl p-6 w-full max-w-sm space-y-4 shadow-2xl">
+            <div class="flex justify-between items-center border-b pb-3">
+                <h3 class="font-extrabold text-slate-800 text-sm flex items-center gap-1.5">
+                    <i data-lucide="calendar" class="w-4 h-4 text-indigo-600"></i> เลือกเดือน / ปีประวัติ
+                </h3>
+                <button id="close-month-picker-btn" class="p-1 text-slate-400 hover:bg-slate-100 rounded-full">
+                    <i data-lucide="x" class="w-4 h-4"></i>
+                </button>
+            </div>
+            
+            <!-- Year Selector -->
+            <div class="flex justify-between items-center bg-slate-50 p-2 rounded-2xl">
+                <button id="prev-picker-year" class="p-1 text-indigo-600 font-bold hover:bg-indigo-50 rounded-lg">
+                    <i data-lucide="chevron-left" class="w-4 h-4"></i>
+                </button>
+                <span id="picker-year-display" class="font-extrabold text-slate-800 text-sm">พ.ศ. 2569</span>
+                <button id="next-picker-year" class="p-1 text-indigo-600 font-bold hover:bg-indigo-50 rounded-lg">
+                    <i data-lucide="chevron-right" class="w-4 h-4"></i>
+                </button>
+            </div>
+
+            <!-- Months grid -->
+            <div class="grid grid-cols-4 gap-2 text-center" id="months-grid-container">
+                <!-- Dynamic Months will inject here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- DUPLICATE CONFIRMATION MODAL -->
+    <div id="duplicate-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
+        <div class="bg-white rounded-3xl p-6 max-w-xs w-full text-center space-y-4 shadow-2xl">
+            <div class="w-12 h-12 rounded-full bg-amber-50 text-amber-600 flex items-center justify-center mx-auto">
+                <i data-lucide="copy" class="w-6 h-6"></i>
+            </div>
+            <div>
+                <h4 class="text-base font-bold text-slate-800">แจ้งเตือนข้อมูลซ้ำซ้อน</h4>
+                <p class="text-xs text-slate-500 mt-2">พบธุรกรรมที่มี ยอดเงิน, ชื่อผู้รับโอน และวันเวลา ตรงกับที่บันทึกไว้ในคลังบัญชีเดิมเรียบร้อยแล้ว ต้องการบันทึกซ้ำซ้อนหรือไม่?</p>
+            </div>
+            <div class="flex gap-2.5">
+                <button id="cancel-duplicate-btn" class="flex-1 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl font-bold text-xs">
+                    ยกเลิก
+                </button>
+                <button id="confirm-duplicate-btn" class="flex-1 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold text-xs">
+                    บันทึกซ้ำ
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Hidden canvases for background conversions -->
     <canvas id="qr-canvas" class="hidden"></canvas>
     <canvas id="util-canvas" class="hidden"></canvas>
 
@@ -354,16 +367,30 @@
         let ocrWorker = null;
         let isOcrReady = false;
         let currentLoadedImage = null; // Store reference to original image for real-time slider cropping
-        let calendarSelectedDay = null; // Store targeted day focused on Calendar view
+        
+        // Month list filter states
         let calendarYear = 2026;
         let calendarMonth = 4; // May (0-indexed, so 4 is May)
-        let scanTimeout = null; // FIX: Global scanTimeout declared to resolve Uncaught ReferenceError
+        let scanTimeout = null;
+        
+        // Multi-slip batch upload queue states
+        let fileBatchQueue = [];
+        let batchIndex = 0;
 
-        // Default Calibration Settings (Optimized initially based on K-Bank)
+        // Transaction editing mode flag
+        let editingRecordId = null;
+
+        // Temp variables for holding duplicate data during dialog validation
+        let pendingSaveRecord = null;
+
+        // Year variable in popup picker
+        let tempPickerYear = 2026;
+
+        // Coordinates matched from image 1009.jpg / 1015.jpg
         const DEFAULT_GRID_SETTINGS = {
-            dt: { x: 5, y: 7, w: 55, h: 7 },
-            rc: { x: 34, y: 42, w: 51, h: 8 },
-            am: { x: 35, y: 76, w: 32, h: 8 }
+            dt: { x: 5, y: 7, w: 61, h: 8 },
+            rc: { x: 21, y: 42, w: 62, h: 8 },
+            am: { x: 10, y: 79, w: 54, h: 6 }
         };
 
         let gridSettings = {};
@@ -372,37 +399,24 @@
         const currentMonthDisplayHeader = document.getElementById('current-month-display-header');
         
         // View modes
-        const viewListBtn = document.getElementById('view-list-btn');
-        const viewCalendarBtn = document.getElementById('view-calendar-btn');
         const wrapperListView = document.getElementById('wrapper-list-view');
-        const wrapperCalendarView = document.getElementById('wrapper-calendar-view');
 
         // Stats Dashboard
         const statMonthlyExpense = document.getElementById('stat-monthly-expense');
         const statMonthlyCount = document.getElementById('stat-monthly-count');
         const timelineGroupContainer = document.getElementById('timeline-group-container');
 
-        // Calendar Components
-        const calPrevMonthBtn = document.getElementById('cal-prev-month-btn');
-        const calNextMonthBtn = document.getElementById('cal-next-month-btn');
-        const calMonthTitle = document.getElementById('cal-month-title');
-        const calendarDaysContainer = document.getElementById('calendar-days-container');
-        const calSummaryExpense = document.getElementById('cal-summary-expense');
-        const calFocusDateTitle = document.getElementById('cal-focus-date-title');
-        const calendarFocusListContainer = document.getElementById('calendar-focus-list-container');
-
         // Floating add buttons & Forms sheet controller
         const floatingPlusBtn = document.getElementById('floating-plus-btn');
         const formSlideSheet = document.getElementById('form-slide-sheet');
         const closeSheetBtn = document.getElementById('close-sheet-btn');
         const closeSheetHandle = document.getElementById('close-sheet-handle');
-        const entryModeScanBtn = document.getElementById('entry-mode-scan-btn');
-        const entryModeManualBtn = document.getElementById('entry-mode-manual-btn');
         const contentModeScan = document.getElementById('content-mode-scan');
         const triggerFilePicker = document.getElementById('trigger-file-picker');
         const slipFileInput = document.getElementById('slip-file-input');
         const imagePreviewContainer = document.getElementById('image-preview-container');
         const imagePreview = document.getElementById('image-preview');
+        const cropOverlayCanvas = document.getElementById('crop-overlay-canvas');
         const removeImageBtn = document.getElementById('remove-image-btn');
         
         // Input Confirmation Form Fields
@@ -414,6 +428,11 @@
         const formMemo = document.getElementById('form-memo');
         const saveRecordBtn = document.getElementById('save-record-btn');
         const amountSourceBadge = document.getElementById('amount-source-badge');
+
+        // Raw OCR texts output elements
+        const ocrRawDatetime = document.getElementById('ocr-raw-datetime');
+        const ocrRawRecipient = document.getElementById('ocr-raw-recipient');
+        const ocrRawAmount = document.getElementById('ocr-raw-amount');
 
         // Progress indicators
         const scanStatus = document.getElementById('scan-status');
@@ -430,7 +449,6 @@
         const toggleCalibrationBtn = document.getElementById('toggle-calibration-btn');
         const calibrationControls = document.getElementById('calibration-controls');
         const resetCalibrationBtn = document.getElementById('reset-calibration-btn');
-        const saveCurrentCalibrationBtn = document.getElementById('save-current-calibration-btn');
 
         // CSV Downloader
         const exportCsvBtn = document.getElementById('export-csv-btn');
@@ -442,54 +460,35 @@
         const alertIcon = document.getElementById('alert-icon');
         const closeAlertBtn = document.getElementById('close-alert-btn');
 
+        // Month Picker Modal Elements
+        const monthPickerModal = document.getElementById('month-picker-modal');
+        const closeMonthPickerBtn = document.getElementById('close-month-picker-btn');
+        const prevPickerYear = document.getElementById('prev-picker-year');
+        const nextPickerYear = document.getElementById('next-picker-year');
+        const pickerYearDisplay = document.getElementById('picker-year-display');
+        const monthsGridContainer = document.getElementById('months-grid-container');
+
+        const duplicateModal = document.getElementById('duplicate-modal');
+        const cancelDuplicateBtn = document.getElementById('cancel-duplicate-btn');
+        const confirmDuplicateBtn = document.getElementById('confirm-duplicate-btn');
+
+        const batchQueueBadge = document.getElementById('batch-queue-badge');
+        const batchCurrentNum = document.getElementById('batch-current-num');
+        const batchTotalNum = document.getElementById('batch-total-num');
+        const skipBatchItemBtn = document.getElementById('skip-batch-item-btn');
+
         // ------------------------- INITIALIZATION -------------------------
         window.addEventListener('DOMContentLoaded', () => {
             lucide.createIcons();
             loadGridSettings();
             loadExpenses();
             
-            // Set initial selected calendar day to today (May 21, 2026 as per context)
-            calendarSelectedDay = new Date(2026, 4, 21);
-            
             updateDashboard();
             preInitializeOCR(); // Load OCR Worker silently
             setupCalibrationListeners();
             setupFormListeners();
-        });
-
-        // Toggle Lists VS Calendar Mode Views
-        viewListBtn.addEventListener('click', () => {
-            viewListBtn.className = "p-2 rounded-xl bg-indigo-50 text-indigo-600 font-bold transition-all";
-            viewCalendarBtn.className = "p-2 rounded-xl text-slate-500 hover:bg-slate-100 transition-all";
-            wrapperListView.classList.remove('hidden');
-            wrapperCalendarView.classList.add('hidden');
-        });
-
-        viewCalendarBtn.addEventListener('click', () => {
-            viewCalendarBtn.className = "p-2 rounded-xl bg-indigo-50 text-indigo-600 font-bold transition-all";
-            viewListBtn.className = "p-2 rounded-xl text-slate-500 hover:bg-slate-100 transition-all";
-            wrapperListView.classList.add('hidden');
-            wrapperCalendarView.classList.remove('hidden');
-            renderCalendarDays();
-        });
-
-        // Handle Monthly Calendar Navigations
-        calPrevMonthBtn.addEventListener('click', () => {
-            calendarMonth--;
-            if (calendarMonth < 0) {
-                calendarMonth = 11;
-                calendarYear--;
-            }
-            renderCalendarDays();
-        });
-
-        calNextMonthBtn.addEventListener('click', () => {
-            calendarMonth++;
-            if (calendarMonth > 11) {
-                calendarMonth = 0;
-                calendarYear++;
-            }
-            renderCalendarDays();
+            setupMonthPicker();
+            setupDuplicateConfirmHandlers();
         });
 
         // ------------------------- PRELOAD SENSORS & OCR -------------------------
@@ -498,7 +497,6 @@
             try {
                 detailStatus.textContent = "กำลังโหลดระบบอ่านอักขระสองภาษา (eng+tha)...";
                 
-                // FIX: Check if Tesseract script loaded correctly
                 if (typeof Tesseract === "undefined") {
                     await new Promise((resolve) => {
                         const checkInterval = setInterval(() => {
@@ -529,41 +527,49 @@
             }
         }
 
-        // Toggle Slip Upload Modes VS Manual Text Insertion
-        entryModeScanBtn.addEventListener('click', () => {
-            entryModeScanBtn.className = "flex-1 py-2 rounded-lg bg-white text-indigo-600 shadow-sm flex items-center justify-center gap-1";
-            entryModeManualBtn.className = "flex-1 py-2 rounded-lg flex items-center justify-center gap-1";
-            contentModeScan.classList.remove('hidden');
-            amountSourceBadge.textContent = "รอสแกนจากสลิปกสิกรไทย";
-            amountSourceBadge.className = "text-[9px] px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-500 font-bold";
-        });
+        // ------------------------- POPUP FORMS TRIGGER -------------------------
+        floatingPlusBtn.addEventListener('click', () => {
+            editingRecordId = null;
+            document.getElementById('form-sheet-title').innerHTML = `
+                <i data-lucide="plus-circle" class="w-4 h-4 text-indigo-600"></i>
+                เพิ่มรายการรายจ่ายใหม่
+            `;
+            document.getElementById('save-btn-text').textContent = "บันทึกข้อมูลลงสมุดบัญชี";
+            lucide.createIcons();
 
-        entryModeManualBtn.addEventListener('click', () => {
-            entryModeManualBtn.className = "flex-1 py-2 rounded-lg bg-white text-indigo-600 shadow-sm flex items-center justify-center gap-1";
-            entryModeScanBtn.className = "flex-1 py-2 rounded-lg flex items-center justify-center gap-1";
-            contentModeScan.classList.add('hidden');
-            
-            // Prefill with defaults to ease typing
-            formDate.value = new Date(2026, 4, 21).toISOString().substring(0, 10);
-            formTime.value = new Date().toTimeString().substring(0, 5);
+            formSlideSheet.classList.remove('hidden');
+
+            // Default fallback date allocation (Current system date instead of calendar day)
+            const targetDate = new Date();
+            const year = targetDate.getFullYear();
+            const month = String(targetDate.getMonth() + 1).padStart(2, '0');
+            const day = String(targetDate.getDate()).padStart(2, '0');
+            formDate.value = `${year}-${month}-${day}`;
+
+            const hours = String(targetDate.getHours()).padStart(2, '0');
+            const minutes = String(targetDate.getMinutes()).padStart(2, '0');
+            formTime.value = `${hours}:${minutes}`;
+
             formAmount.value = "";
             formRecipient.value = "";
             formMemo.value = "";
+            formCategory.selectedIndex = 0;
+            amountSourceBadge.textContent = "ระบุข้อมูล หรือ สแกนผ่านสลิป";
+            amountSourceBadge.className = "text-[9px] px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-500 font-bold";
 
-            amountSourceBadge.textContent = "กรอกข้อมูลด้วยตนเอง";
-            amountSourceBadge.className = "text-[9px] px-2.5 py-0.5 rounded-full bg-indigo-100 text-indigo-800 font-bold";
-        });
+            // Clear OCR raw outputs
+            ocrRawDatetime.value = "";
+            ocrRawRecipient.value = "";
+            ocrRawAmount.value = "";
 
-        // ------------------------- POPUP FORMS TRIGGER -------------------------
-        floatingPlusBtn.addEventListener('click', () => {
-            formSlideSheet.classList.remove('hidden');
-            formDate.value = new Date(2026, 4, 21).toISOString().substring(0, 10);
-            formTime.value = new Date().toTimeString().substring(0, 5);
+            resetAppScanner();
         });
 
         const closeFormSheet = () => {
             formSlideSheet.classList.add('hidden');
             resetAppScanner();
+            fileBatchQueue = [];
+            batchQueueBadge.classList.add('hidden');
         };
 
         closeSheetBtn.addEventListener('click', closeFormSheet);
@@ -576,17 +582,67 @@
             });
             
             slipFileInput.addEventListener('change', (e) => {
-                if (e.target.files.length > 0) processFile(e.target.files[0]);
+                if (e.target.files.length > 0) {
+                    fileBatchQueue = Array.from(e.target.files);
+                    batchIndex = 0;
+                    processBatchItem();
+                }
             });
 
-            removeImageBtn.addEventListener('click', resetAppScanner);
+            removeImageBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                resetAppScanner();
+                
+                if (fileBatchQueue.length > 1) {
+                    fileBatchQueue.splice(batchIndex, 1);
+                    if (batchIndex >= fileBatchQueue.length) {
+                        batchIndex = 0;
+                    }
+                    processBatchItem();
+                }
+            });
 
-            // FIX: Prevent event bubbling in calibration panel
+            skipBatchItemBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                goToNextBatch();
+            });
+
             toggleCalibrationBtn.addEventListener('click', (e) => {
                 e.preventDefault();
                 e.stopPropagation();
                 calibrationControls.classList.toggle('hidden');
             });
+        }
+
+        function processBatchItem() {
+            if (fileBatchQueue.length === 0) {
+                batchQueueBadge.classList.add('hidden');
+                return;
+            }
+
+            if (fileBatchQueue.length > 1) {
+                batchQueueBadge.classList.remove('hidden');
+                batchCurrentNum.textContent = batchIndex + 1;
+                batchTotalNum.textContent = fileBatchQueue.length;
+            } else {
+                batchQueueBadge.classList.add('hidden');
+            }
+
+            const currentFile = fileBatchQueue[batchIndex];
+            processFile(currentFile);
+        }
+
+        function goToNextBatch() {
+            batchIndex++;
+            if (batchIndex >= fileBatchQueue.length) {
+                fileBatchQueue = [];
+                batchQueueBadge.classList.add('hidden');
+                resetAppScanner();
+                showCustomAlert('เสร็จสิ้น!', 'การสแกนตรวจสอบสลิปแบบกลุ่มครบทุกใบเรียบร้อยแล้วครับ', true);
+            } else {
+                processBatchItem();
+            }
         }
 
         function showCustomAlert(title, message, isSuccess = false) {
@@ -619,6 +675,21 @@
             updateSlidersUI();
         }
 
+        function updateSlidersUI() {
+            const keys = ['dt', 'rc', 'am'];
+            const fields = ['x', 'y', 'w', 'h'];
+            keys.forEach(key => {
+                fields.forEach(field => {
+                    const el = document.getElementById(`slider-${key}-${field}`);
+                    const valEl = document.getElementById(`val-${key}-${field}`);
+                    if (el && valEl && gridSettings[key]) {
+                        el.value = gridSettings[key][field];
+                        valEl.textContent = gridSettings[key][field];
+                    }
+                });
+            });
+        }
+
         function saveGridSettings() {
             localStorage.setItem('kbank_grid_calibration_settings', JSON.stringify(gridSettings));
         }
@@ -634,18 +705,19 @@
                     const el = document.getElementById(sliderId);
                     
                     if (el) {
-                        // FIX: Instant non-blocking local redraw of crops during sliding
                         el.addEventListener('input', (e) => {
                             const val = parseInt(e.target.value);
-                            document.getElementById(valId).textContent = val;
+                            const textVal = document.getElementById(valId);
+                            if (textVal) textVal.textContent = val;
                             gridSettings[key][field] = val;
                             
                             if (currentLoadedImage) {
                                 renderCropsOnly(currentLoadedImage); // Instant Canvas Sync
                             }
+                            
+                            saveGridSettings();
                         });
 
-                        // Trigger OCR execution after user releases the slider
                         el.addEventListener('change', () => {
                             if (currentLoadedImage) {
                                 triggerReScan();
@@ -653,14 +725,6 @@
                         });
                     }
                 });
-            });
-
-            // Save current calibrated settings as permanent default
-            saveCurrentCalibrationBtn.addEventListener('click', (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                saveGridSettings();
-                showCustomAlert('บันทึกสำเร็จ!', 'บันทึกพิกัดกล่องครอปปัจจุบันเป็นพิกัดเริ่มต้นเรียบร้อยแล้วครับ!', true);
             });
 
             resetCalibrationBtn.addEventListener('click', (e) => {
@@ -682,13 +746,13 @@
                 if (currentLoadedImage) {
                     analyzeKBankSlipOCR(currentLoadedImage);
                 }
-            }, 600); // 600ms debounce ensures rendering threads stay unfrozen
+            }, 600);
         }
 
         // ------------------------- SLIP SCAN CONTROLLER -------------------------
         function processFile(file) {
             if (!file.type.startsWith('image/')) {
-                showCustomAlert('ไฟล์ไม่ถูกต้อง', 'กรุณาอัปโหลดรูปภาพสลิมธุรกรรมเท่านั้นครับ');
+                showCustomAlert('ไฟล์ไม่ถูกต้อง', 'กรุณาอัปโหลดรูปภาพสลิปธุรกรรมเท่านั้นครับ');
                 return;
             }
 
@@ -723,7 +787,7 @@
             const dtY = Math.round(h * (gridSettings.dt.y / 100));
             const dtW = Math.round(w * (gridSettings.dt.w / 100));
             const dtH = Math.round(h * (gridSettings.dt.h / 100));
-            cropAndRenderToCanvas(img, dtX, dtY, dtW, dtH, cropDateTimeCanvas, false); // Low latency preview
+            cropAndRenderToCanvas(img, dtX, dtY, dtW, dtH, cropDateTimeCanvas, false);
 
             // Crop 2: Recipient
             const rcX = Math.round(w * (gridSettings.rc.x / 100));
@@ -738,8 +802,43 @@
             const amW = Math.round(w * (gridSettings.am.w / 100));
             const amH = Math.round(h * (gridSettings.am.h / 100));
             cropAndRenderToCanvas(img, amX, amY, amW, amH, cropAmountCanvas, false);
+
+            drawVisualOverlays();
         }
 
+        function drawVisualOverlays() {
+            const dW = imagePreview.clientWidth || 280;
+            const dH = imagePreview.clientHeight || 350;
+            cropOverlayCanvas.width = dW;
+            cropOverlayCanvas.height = dH;
+
+            const ctx = cropOverlayCanvas.getContext('2d');
+            ctx.clearRect(0, 0, dW, dH);
+
+            function drawGridBox(set, label, color) {
+                const rx = dW * (set.x / 100);
+                const ry = dH * (set.y / 100);
+                const rw = dW * (set.w / 100);
+                const rh = dH * (set.h / 100);
+
+                ctx.strokeStyle = color;
+                ctx.lineWidth = 1.5;
+                ctx.strokeRect(rx, ry, rw, rh);
+
+                ctx.fillStyle = color;
+                ctx.fillRect(rx, ry - 11, Math.min(rw, 55), 11);
+                
+                ctx.fillStyle = "#ffffff";
+                ctx.font = "bold 8px sans-serif";
+                ctx.fillText(label, rx + 2, ry - 3);
+            }
+
+            drawGridBox(gridSettings.dt, "วันเวลา", "#6366f1");
+            drawGridBox(gridSettings.rc, "ผู้รับโอน", "#f59e0b");
+            drawGridBox(gridSettings.am, "ยอดเงิน", "#ef4444");
+        }
+
+        // QR date-time decoder with strict priority override
         function analyzeKBankSlipQR(img) {
             const canvas = document.getElementById('util-canvas');
             const ctx = canvas.getContext('2d');
@@ -749,25 +848,40 @@
             canvas.height = h;
             ctx.drawImage(img, 0, 0, w, h);
 
-            let detectedDate = new Date(2026, 4, 21).toISOString().substring(0, 10);
-            let detectedTime = "18:30";
+            let detectedDate = null;
+            let detectedTime = null;
 
             try {
                 const imgData = ctx.getImageData(0, 0, w, h);
                 const code = jsQR(imgData.data, imgData.width, imgData.height);
-                if (code) {
-                    const dateMatch = code.data.match(/(202\d)(0\d|1[0-2])(0\d|[12]\d|3[01])([01]\d|2[0-3])([0-5]\d)/);
-                    if (dateMatch) {
-                        detectedDate = `${dateMatch[1]}-${dateMatch[2]}-${dateMatch[3]}`;
-                        detectedTime = `${dateMatch[4]}:${dateMatch[5]}`;
+                if (code && code.data) {
+                    // Extract Date and Time sequence from standard Thai EMV bank QR raw strings
+                    const dtMatch = code.data.match(/(202\d|203\d)(0\d|1[0-2])(0\d|[12]\d|3[01])([01]\d|2[0-3])([0-5]\d)/);
+                    if (dtMatch) {
+                        detectedDate = `${dtMatch[1]}-${dtMatch[2]}-${dtMatch[3]}`;
+                        detectedTime = `${dtMatch[4]}:${dtMatch[5]}`;
                     }
                 }
             } catch (err) {
                 console.warn("Local QR analyzer error:", err);
             }
 
-            formDate.value = detectedDate;
-            formTime.value = detectedTime;
+            // Priority 1: Force QR code date-time onto inputs instantly
+            if (detectedDate && detectedTime) {
+                formDate.value = detectedDate;
+                formTime.value = detectedTime;
+                highlightFilledInputs();
+            }
+        }
+
+        // Highlight input boxes visually to demonstrate override success
+        function highlightFilledInputs() {
+            formDate.classList.add('autofilled-highlight');
+            formTime.classList.add('autofilled-highlight');
+            setTimeout(() => {
+                formDate.classList.remove('autofilled-highlight');
+                formTime.classList.remove('autofilled-highlight');
+            }, 1500);
         }
 
         async function analyzeKBankSlipOCR(img) {
@@ -780,7 +894,6 @@
                     await preInitializeOCR();
                 }
 
-                // Apply Contrast-boosted upscale filters to Canvas blocks before OCR
                 const w = img.naturalWidth || img.width;
                 const h = img.naturalHeight || img.height;
 
@@ -788,7 +901,7 @@
                 const amY = Math.round(h * (gridSettings.am.y / 100));
                 const amW = Math.round(w * (gridSettings.am.w / 100));
                 const amH = Math.round(h * (gridSettings.am.h / 100));
-                cropAndRenderToCanvas(img, amX, amY, amW, amH, cropAmountCanvas, true); // Strict Binarization
+                cropAndRenderToCanvas(img, amX, amY, amW, amH, cropAmountCanvas, true);
 
                 const rcX = Math.round(w * (gridSettings.rc.x / 100));
                 const rcY = Math.round(h * (gridSettings.rc.y / 100));
@@ -796,20 +909,56 @@
                 const rcH = Math.round(h * (gridSettings.rc.h / 100));
                 cropAndRenderToCanvas(img, rcX, rcY, rcW, rcH, cropRecipientCanvas, true);
 
-                ocrProgressContainer.classList.remove('hidden');
-                ocrProgressBar.style.width = '20%';
+                const dtX = Math.round(w * (gridSettings.dt.x / 100));
+                const dtY = Math.round(h * (gridSettings.dt.y / 100));
+                const dtW = Math.round(w * (gridSettings.dt.w / 100));
+                const dtH = Math.round(h * (gridSettings.dt.h / 100));
+                cropAndRenderToCanvas(img, dtX, dtY, dtW, dtH, cropDateTimeCanvas, true);
 
-                // Scan 2: Recipient Name translation (Thai+English packs)
+                ocrProgressContainer.classList.remove('hidden');
+                ocrProgressBar.style.width = '10%';
+
+                // Scan 1: Read Date Time from slip via OCR Text
+                detailStatus.textContent = "กำลังวิเคราะห์วันเวลาในภาพคิว...";
+                const dtResult = await ocrWorker.recognize(cropDateTimeCanvas);
+                const rawDateText = dtResult.data.text;
+                
+                // Show raw OCR results in display fields
+                ocrRawDatetime.value = rawDateText.replace(/\s+/g, ' ').trim();
+                
+                const dateData = parseThaiSlipDateTime(rawDateText);
+                
+                // Priority 2: Force lock date onto inputs
+                if (dateData.date) {
+                    formDate.value = dateData.date;
+                    highlightFilledInputs();
+                }
+                if (dateData.time) {
+                    formTime.value = dateData.time;
+                    highlightFilledInputs();
+                }
+
+                ocrProgressBar.style.width = '40%';
+
+                // Scan 2: Recipient Name translation
                 detailStatus.textContent = "กำลังแกะลายเส้นภาษาไทย ชื่อผู้รับโอน...";
                 const recResult = await ocrWorker.recognize(cropRecipientCanvas);
-                const cleanedRecipient = cleanRecipientName(recResult.data.text);
+                const rawRecipientText = recResult.data.text;
+                
+                ocrRawRecipient.value = rawRecipientText.replace(/\s+/g, ' ').trim();
+                
+                const cleanedRecipient = cleanRecipientName(rawRecipientText);
                 formRecipient.value = cleanedRecipient || "ผู้รับกสิกรไทย";
 
                 // Scan 3: Numeric amounts processing
-                ocrProgressBar.style.width = '60%';
+                ocrProgressBar.style.width = '70%';
                 detailStatus.textContent = "กำลังประมวลผลตัวเลขยอดเงิน...";
                 const amtResult = await ocrWorker.recognize(cropAmountCanvas);
-                const cleanedAmount = extractFloatAmount(amtResult.data.text);
+                const rawAmountText = amtResult.data.text;
+                
+                ocrRawAmount.value = rawAmountText.replace(/\s+/g, ' ').trim();
+                
+                const cleanedAmount = extractFloatAmount(rawAmountText);
 
                 if (cleanedAmount) {
                     formAmount.value = parseFloat(cleanedAmount).toFixed(2);
@@ -836,11 +985,9 @@
             }
         }
 
-        // Binarization, Contrast, and Upscaling Pipeline (Designed specifically to read Thai letters and small fonts perfectly)
         function cropAndRenderToCanvas(sourceImg, x, y, w, h, targetCanvas, applyOcrOptimizations = false) {
             const ctx = targetCanvas.getContext('2d');
             if (applyOcrOptimizations) {
-                // Upscale canvas to 2x size to prevent Tesseract from losing dots or loops on Thai fonts
                 const upscaleFactor = 2;
                 targetCanvas.width = w * upscaleFactor;
                 targetCanvas.height = h * upscaleFactor;
@@ -849,20 +996,19 @@
                 ctx.imageSmoothingQuality = 'high';
                 ctx.drawImage(sourceImg, x, y, w, h, 0, 0, targetCanvas.width, targetCanvas.height);
 
-                // Enhance Contrast & Brightness for maximum edge definition (Sharpening style)
                 const imgData = ctx.getImageData(0, 0, targetCanvas.width, targetCanvas.height);
                 const data = imgData.data;
 
+                // Adjust Contrast/Brightness natively to prevent vowel truncation
                 for (let i = 0; i < data.length; i += 4) {
                     const r = data[i];
                     const g = data[i + 1];
                     const b = data[i + 2];
                     
-                    // Convert to luminance grayscale
                     const gray = 0.299 * r + 0.587 * g + 0.114 * b;
                     
-                    // Adaptive thresholding: pure black/white rendering for crisp characters
-                    const threshold = 145; 
+                    // Slightly higher threshold buffer specifically for Thai diacritics
+                    const threshold = 160; 
                     const finalVal = gray > threshold ? 255 : 0;
                     
                     data[i] = finalVal;
@@ -871,93 +1017,140 @@
                 }
                 ctx.putImageData(imgData, 0, 0);
             } else {
-                // Low overhead direct rendering (for real-time slider drags)
                 targetCanvas.width = w;
                 targetCanvas.height = h;
                 ctx.drawImage(sourceImg, x, y, w, h, 0, 0, w, h);
             }
         }
 
-        // Clean name values with Thai Space Repairing Algorithms (Resolves "บ ร ิ ษั ท" style spacing)
+        // Clean up Thai recipient name and trim junk characters at the tail (e.g. "ฝ", "ฟ" from sharing button icon border)
         function cleanRecipientName(text) {
             if (!text) return "";
             
-            // Remove spaces adjacent to Thai upper/lower vowels and diacritics
             let cleaned = text;
+            
+            // Remove spacing between vowels/tonal marks and consonants
             cleaned = cleaned.replace(/(\s+)([\u0e31\u0e34-\u0e3a\u0e47-\u0e4e\u0e4d])/g, '$2');
             cleaned = cleaned.replace(/([\u0e31\u0e34-\u0e3a\u0e47-\u0e4e\u0e4d])(\s+)/g, '$1');
             
-            // Handle split single-character spaced OCR artifacts (e.g. บ ร ิ ษั ท)
+            // Repair space breaks in the middle of words
             cleaned = cleaned.replace(/\s{2,}/g, ' __BREAK__ ');
             cleaned = cleaned.replace(/([ก-๙])\s([ก-๙])/g, '$1$2');
-            cleaned = cleaned.replace(/([ก-๙])\s([ก-๙])/g, '$1$2'); // Double pass
+            cleaned = cleaned.replace(/([ก-๙])\s([ก-๙])/g, '$1$2'); 
             cleaned = cleaned.replace(/__BREAK__/g, ' ');
 
-            // Clean common company formats
+            // Replace common OCR errors in K+ layout
             cleaned = cleaned.replace(/จ\s*ํ\s*า\s*ก\s*ั\s*ด/g, 'จำกัด');
             cleaned = cleaned.replace(/บ\s*ร\s*ิ\s*ษ\s*ั\s*ท/g, 'บริษัท');
             cleaned = cleaned.replace(/จํากัด/g, 'จำกัด');
             cleaned = cleaned.replace(/บ ร ิ ษ ั ท/g, 'บริษัท');
 
-            // Eliminate noise characters
+            // Strictly preserve all Thai characters, vowels, diacritics, tones, and English letters
             cleaned = cleaned.replace(/[^ก-๙a-zA-Z0-9\s()]/g, '').trim();
             cleaned = cleaned.replace(/\s+/g, ' ');
+            
+            // Remove common sharing button artifact characters at the very end of the string
+            cleaned = cleaned.replace(/\s*[ฝฟผพพัะ]โค?$/g, '');
+            cleaned = cleaned.replace(/\s*[ฝฟผพพัะ]$/g, '');
             
             return cleaned;
         }
 
+        // Improved amount regex extractor focusing on the right-hand-side decimal value
         function extractFloatAmount(text) {
             if (!text) return null;
-            const clean = text.replace(/[^0-9.,]/g, '');
-            const match = clean.match(/(\d{1,3}(,\d{3})*(\.\d{2})?|\d+(\.\d{2})?)/);
-            if (match) {
-                return match[0].replace(/,/g, '');
+            
+            // Remove spaces
+            const clean = text.replace(/\s+/g, '');
+            
+            // Extract the currency float portion from the right-hand side (usually ending with ".xx" or ".xxบาท")
+            const rightSideMatch = clean.match(/(\d{1,3}(,\d{3})*\.\d{2})|(\d+\.\d{2})/g);
+            
+            if (rightSideMatch && rightSideMatch.length > 0) {
+                // Always choose the last matched decimal sequence from the right side
+                const targetValue = rightSideMatch[rightSideMatch.length - 1];
+                return targetValue.replace(/,/g, '');
             }
+            
             return null;
         }
 
+        // Super Robust Multi-dialect parsing with Strict Positional Thai Grammar Logic
         function parseThaiSlipDateTime(text) {
-            let date = new Date(2026, 4, 21).toISOString().substring(0, 10);
-            let time = "18:30";
+            let date = null;
+            let time = null;
 
-            const clean = text.replace(/[^0-9ก-๙:\s]/g, ' ').replace(/\s+/g, ' ').trim();
-            const timeMatch = clean.match(/([01]\d|2[0-3])\s*:\s*([0-5]\d)/);
+            if (!text) return { date, time };
+
+            // 1. Sanitize: Strip ALL invisible characters, tabs and replace spaces with nothing to bind tokens
+            let clean = text.replace(/[\u200B-\u200D\uFEFF\u200E\u200F]/g, '');
+            clean = clean.replace(/\s+/g, ''); // Remove spaces completely for unified parsing
+
+            // 2. Extract Time: Grab standard HH:MM sequence
+            const timeMatch = clean.match(/([01]?\d|2[0-3])[:.](([0-5]\d))/);
             if (timeMatch) {
-                time = `${timeMatch[1]}:${timeMatch[2]}`;
+                time = `${timeMatch[1].padStart(2, '0')}:${timeMatch[2]}`;
             }
 
-            const numbers = clean.match(/\b\d+\b/g);
-            if (numbers && numbers.length >= 2) {
-                const day = numbers[0].padStart(2, '0');
-                let year = numbers[numbers.length - 1];
-                if (year.length === 2) {
-                    year = "20" + year;
+            // Month mapping to check against standard Thai abbreviations (3 characters usually)
+            const monthsMap = {
+                'ม.ค.': '01', 'มกราคม': '01',
+                'ก.พ.': '02', 'กุมภาพันธ์': '02',
+                'มี.ค.': '03', 'มีนาคม': '03',
+                'เม.ย.': '04', 'เมษายน': '04',
+                'พ.ค.': '05', 'พฤษภาคม': '05', 'พ.ศ.': '05', // Fix KBank common OCR error (reads พ.ค. as พ.ศ.)
+                'มิ.ย.': '06', 'มิถุนายน': '06',
+                'ก.ค.': '07', 'กรกฎาคม': '07',
+                'ส.ค.': '08', 'สิงหาคม': '08',
+                'ก.ย.': '09', 'กันยายน': '09',
+                'ต.ค.': '10', 'ตุลาคม': '10',
+                'พ.ย.': '11', 'พฤศจิกายน': '11',
+                'ธ.ค.': '12', 'ธันวาคม': '12'
+            };
+
+            // Loop and search for any month signature inside the fully-merged token
+            let foundMonthStr = null;
+            let monthVal = null;
+            let monthIndex = -1;
+
+            for (const [key, val] of Object.entries(monthsMap)) {
+                monthIndex = clean.indexOf(key);
+                if (monthIndex !== -1) {
+                    foundMonthStr = key;
+                    monthVal = val;
+                    break;
                 }
-                const currentMonth = "05"; // May
-                if (parseInt(day) <= 31 && parseInt(year) > 2020) {
-                    date = `${year}-${currentMonth}-${day}`;
+            }
+
+            if (foundMonthStr && monthVal && monthIndex !== -1) {
+                // Rule 1: The 2 characters directly before the Month substring are the Day
+                const dayStr = clean.substring(Math.max(0, monthIndex - 2), monthIndex);
+                const dayVal = dayStr.match(/\d+/) ? dayStr.match(/\d+/)[0].padStart(2, '0') : null;
+
+                // Rule 2: The 2 characters directly after the Month substring (which is usually of length 4 e.g. "พ.ค.") are the Year
+                const yearStartIndex = monthIndex + foundMonthStr.length;
+                const yearStr = clean.substring(yearStartIndex, yearStartIndex + 2);
+                const yearVal = yearStr.match(/\d+/) ? yearStr.match(/\d+/)[0] : null;
+
+                if (dayVal && yearVal) {
+                    let rawYear = parseInt(yearVal);
+                    let finalYear = new Date().getFullYear(); 
+                    
+                    if (rawYear < 100) {
+                        rawYear = 2500 + rawYear; // '69' BE -> 2569 BE
+                    }
+                    
+                    if (rawYear > 2500) {
+                        finalYear = rawYear - 543; // BE to AD conversion (2569 -> 2026)
+                    } else if (rawYear > 2000) {
+                        finalYear = rawYear;
+                    }
+
+                    date = `${finalYear}-${monthVal}-${dayVal}`;
                 }
             }
 
             return { date, time };
-        }
-
-        function resetAppScanner() {
-            slipFileInput.value = '';
-            imagePreview.src = '#';
-            imagePreviewContainer.classList.add('hidden');
-            triggerFilePicker.classList.remove('hidden');
-            scannedForm.classList.add('hidden');
-            detailStatus.textContent = "";
-            currentLoadedImage = null;
-
-            // Reset canvases
-            const ctx1 = cropDateTimeCanvas.getContext('2d');
-            const ctx2 = cropRecipientCanvas.getContext('2d');
-            const ctx3 = cropAmountCanvas.getContext('2d');
-            ctx1.clearRect(0,0,cropDateTimeCanvas.width, cropDateTimeCanvas.height);
-            ctx2.clearRect(0,0,cropRecipientCanvas.width, cropRecipientCanvas.height);
-            ctx3.clearRect(0,0,cropAmountCanvas.width, cropAmountCanvas.height);
         }
 
         // ------------------------- DATA REPOSITORIES (SAVE/LOAD) -------------------------
@@ -982,7 +1175,7 @@
             const rawCategory = category.replace(/[^ก-๙a-zA-Z]/g, '').trim();
 
             const record = {
-                id: 'exp_' + Date.now(),
+                id: editingRecordId ? editingRecordId : 'exp_' + Date.now(),
                 amount: amount,
                 recipient: recipient || 'โอนเงินสด / กรอกมือ',
                 date: date,
@@ -991,20 +1184,108 @@
                 memo: memo || `จ่ายค่า${rawCategory}`
             };
 
-            expenses.unshift(record);
+            const isDuplicate = checkDuplicateRecord(record);
+            if (isDuplicate) {
+                pendingSaveRecord = record;
+                duplicateModal.classList.remove('hidden');
+            } else {
+                executeSaveRecord(record);
+            }
+        });
+
+        function checkDuplicateRecord(newRecord) {
+            return expenses.some(item => 
+                item.id !== newRecord.id && 
+                item.amount === newRecord.amount &&
+                item.recipient.toLowerCase().trim() === newRecord.recipient.toLowerCase().trim() &&
+                item.date === newRecord.date &&
+                item.time === newRecord.time
+            );
+        }
+
+        function executeSaveRecord(record) {
+            if (editingRecordId) {
+                const index = expenses.findIndex(x => x.id === editingRecordId);
+                if (index !== -1) {
+                    expenses[index] = record;
+                }
+                editingRecordId = null;
+                showCustomAlert('แก้ไขสำเร็จ!', `ปรับปรุงยอดธุรกรรม ${record.amount.toFixed(2)} บาท เรียบร้อยแล้ว`, true);
+            } else {
+                expenses.unshift(record);
+                showCustomAlert('บันทึกสำเร็จ!', `จดบันทึกยอดชำระโอน ${record.amount.toFixed(2)} บาท ลงสมุดบัญชีเรียบร้อยแล้ว`, true);
+            }
+
             saveExpensesToStorage();
-            
-            const parts = date.split('-');
+
+            const parts = record.date.split('-');
             if (parts.length === 3) {
-                calendarSelectedDay = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
-                calendarYear = calendarSelectedDay.getFullYear();
-                calendarMonth = calendarSelectedDay.getMonth();
+                calendarYear = parseInt(parts[0]);
+                calendarMonth = parseInt(parts[1]) - 1;
             }
 
             updateDashboard();
-            closeFormSheet();
-            showCustomAlert('บันทึกสำเร็จ!', `จดบันทึกยอดชำระโอน ${amount.toFixed(2)} บาท ลงสมุดบัญชีเรียบร้อยแล้ว`, true);
-        });
+
+            if (fileBatchQueue.length > 1 && batchIndex < fileBatchQueue.length - 1) {
+                goToNextBatch();
+            } else {
+                closeFormSheet();
+            }
+        }
+
+        function setupDuplicateConfirmHandlers() {
+            cancelDuplicateBtn.addEventListener('click', () => {
+                duplicateModal.classList.add('hidden');
+                pendingSaveRecord = null;
+            });
+
+            confirmDuplicateBtn.addEventListener('click', () => {
+                duplicateModal.classList.add('hidden');
+                if (pendingSaveRecord) {
+                    executeSaveRecord(pendingSaveRecord);
+                    pendingSaveRecord = null;
+                }
+            });
+        }
+
+        window.startEditExpenseItem = function(id) {
+            const item = expenses.find(x => x.id === id);
+            if (!item) return;
+
+            editingRecordId = item.id;
+            
+            formAmount.value = item.amount;
+            formRecipient.value = item.recipient;
+            formDate.value = item.date;
+            formTime.value = item.time;
+            
+            for (let i = 0; i < formCategory.options.length; i++) {
+                if (formCategory.options[i].value.includes(item.category)) {
+                    formCategory.selectedIndex = i;
+                    break;
+                }
+            }
+            
+            formMemo.value = item.memo;
+
+            document.getElementById('form-sheet-title').innerHTML = `
+                <i data-lucide="edit-3" class="w-4 h-4 text-amber-500"></i>
+                แก้ไขประวัติธุรกรรม
+            `;
+            document.getElementById('save-btn-text').textContent = "บันทึกการแก้ไขประวัติ";
+            lucide.createIcons();
+
+            amountSourceBadge.textContent = "กำลังดำเนินการแก้ไขข้อมูล";
+            amountSourceBadge.className = "text-[9px] px-2.5 py-0.5 rounded-full bg-amber-50 text-amber-800 font-bold border border-amber-100";
+
+            // Clear OCR outputs for manually edited items
+            ocrRawDatetime.value = "";
+            ocrRawRecipient.value = "";
+            ocrRawAmount.value = "";
+
+            resetAppScanner();
+            formSlideSheet.classList.remove('hidden');
+        }
 
         function saveExpensesToStorage() {
             localStorage.setItem('notebook_expense_records_v4', JSON.stringify(expenses));
@@ -1019,14 +1300,14 @@
                     expenses = [];
                 }
             } else {
-                // Populate default dummy data
+                // Prepopulate with mock data
                 expenses = [
-                    { id: 'exp_1', amount: 300, recipient: 'อาหารเย็น', date: '2026-05-17', time: '18:30', category: 'อาหาร', memo: 'อาหารเย็น' },
-                    { id: 'exp_2', amount: 150, recipient: 'อาหารกลางวัน', date: '2026-05-16', time: '18:30', category: 'อาหาร', memo: 'อาหารกลางวัน' },
-                    { id: 'exp_3', amount: 178, recipient: 'เครื่องดื่ม', date: '2026-05-16', time: '18:30', category: 'อาหาร', memo: 'เครื่องดื่ม' },
-                    { id: 'exp_4', amount: 80, recipient: 'อาหาร', date: '2026-05-15', time: '18:30', category: 'อาหาร', memo: 'ของทานเล่น' },
-                    { id: 'exp_5', amount: 3000, recipient: 'ลงทุน', date: '2026-05-14', time: '18:28', category: 'จัดการ', memo: 'ลงทุนส่วนตัว' },
-                    { id: 'exp_6', amount: 635.58, recipient: 'บริษัท สินธร ฟู้ด มาร์เก็ต จำกัด', date: '2026-05-13', time: '18:28', category: 'อาหาร', memo: 'ซื้อของสดวัตถุดิบครัว' }
+                    { id: 'exp_1', amount: 10.00, recipient: 'บริษัท สินธร ฟู้ด มาร์เก็ต จำกัด', date: '2026-05-12', time: '18:24', category: 'อาหาร', memo: 'โอนไปยัง: บริษัท สินธร ฟู้ด มาร์เก็ต จำกัด' },
+                    { id: 'exp_2', amount: 36.00, recipient: 'น.ส. วรัญญา ธนาธร', date: '2026-05-21', time: '11:42', category: 'อาหาร', memo: 'โอนไปยัง: น.ส. วรัญญา ธนาธร' },
+                    { id: 'exp_3', amount: 635.58, recipient: 'บริษัท สินธร ฟู้ด มาร์เก็ต จำกัด', date: '2026-05-19', time: '21:11', category: 'อาหาร', memo: 'ซื้อของสดวัตถุดิบครัว' },
+                    { id: 'exp_4', amount: 300, recipient: 'อาหารเย็น', date: '2026-05-17', time: '18:30', category: 'อาหาร', memo: 'อาหารเย็น' },
+                    { id: 'exp_5', amount: 150, recipient: 'อาหารกลางวัน', date: '2026-05-16', time: '12:15', category: 'อาหาร', memo: 'อาหารกลางวัน' },
+                    { id: 'exp_6', amount: 178, recipient: 'เครื่องดื่ม', date: '2026-05-16', time: '15:40', category: 'อาหาร', memo: 'เครื่องดื่ม' }
                 ];
                 saveExpensesToStorage();
             }
@@ -1059,7 +1340,6 @@
             statMonthlyCount.textContent = monthlyRecords.length + ' รายการ';
 
             renderTimelineList(monthlyRecords);
-            renderCalendarDays();
         }
 
         function renderTimelineList(records) {
@@ -1105,7 +1385,8 @@
                 const rowsBox = document.getElementById(`group-rows-container-${dateStr}`);
                 dayRecords.forEach((item, index) => {
                     const row = document.createElement('div');
-                    row.className = `flex items-center justify-between gap-3 ${index > 0 ? 'pt-3.5 mt-3.5' : ''}`;
+                    row.className = `flex items-center justify-between gap-3 cursor-pointer hover:bg-slate-50/70 p-2 rounded-2xl transition-all ${index > 0 ? 'pt-3.5 mt-1 border-t border-slate-50' : ''}`;
+                    row.setAttribute('onclick', `startEditExpenseItem('${item.id}')`);
 
                     let iconClass = "bg-slate-50 text-slate-500";
                     let iconName = "receipt";
@@ -1127,12 +1408,12 @@
                                 <p class="text-[9px] text-slate-500 font-bold bg-slate-50 border border-slate-100 rounded px-1.5 py-0.5 inline-block mt-1">${item.category}</p>
                             </div>
                         </div>
-                        <div class="flex items-center gap-2 shrink-0">
+                        <div class="flex items-center gap-1.5 shrink-0">
                             <div class="text-right">
                                 <span class="text-sm font-extrabold text-slate-800">-฿${item.amount.toLocaleString('th-TH', { minimumFractionDigits: 0 })}</span>
                                 <span class="block text-[8px] text-slate-400 mt-0.5">${item.time}</span>
                             </div>
-                            <button onclick="removeExpenseItem('${item.id}')" class="text-slate-300 hover:text-red-500 p-1.5 transition-colors">
+                            <button onclick="event.stopPropagation(); removeExpenseItem('${item.id}')" class="text-slate-300 hover:text-red-500 p-2 transition-colors ml-1" title="ลบรายการ">
                                 <i data-lucide="trash-2" class="w-4 h-4"></i>
                             </button>
                         </div>
@@ -1147,7 +1428,7 @@
         function formatTimelineHeaderDate(dateStr) {
             const parts = dateStr.split('-');
             if (parts.length !== 3) return dateStr;
-            const thShortMonths = ['พ.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
+            const thShortMonths = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
             const daysOfWeek = ['อาทิตย์', 'จันทร์', 'อังคาร', 'พุธ', 'พฤหัสบดี', 'ศุกร์', 'เสาร์'];
             
             const dateObj = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
@@ -1155,149 +1436,7 @@
             const dayNum = dateObj.getDate();
             const dayName = daysOfWeek[dateObj.getDay()];
 
-            return `${thaiMonth}. ${dayNum} ${dayName}`;
-        }
-
-        function renderCalendarDays() {
-            const thaiFullMonths = ['มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน', 'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'];
-            calMonthTitle.textContent = `${thaiFullMonths[calendarMonth]} ค.ศ. ${calendarYear}`;
-
-            const firstDayIndex = new Date(calendarYear, calendarMonth, 1).getDay();
-            const totalMonthDays = new Date(calendarYear, calendarMonth + 1, 0).getDate();
-            const prevMonthDays = new Date(calendarYear, calendarMonth, 0).getDate();
-
-            calendarDaysContainer.innerHTML = '';
-
-            let adjustedOffset = firstDayIndex - 1;
-            if (adjustedOffset < 0) adjustedOffset = 6;
-
-            let dayRenderedCount = 0;
-
-            for (let i = adjustedOffset - 1; i >= 0; i--) {
-                const dayNum = prevMonthDays - i;
-                const cell = document.createElement('div');
-                cell.className = "p-1 min-h-[48px] text-slate-300 opacity-60 flex flex-col justify-between items-center text-[10px]";
-                cell.innerHTML = `<span>${dayNum}</span>`;
-                calendarDaysContainer.appendChild(cell);
-                dayRenderedCount++;
-            }
-
-            for (let day = 1; day <= totalMonthDays; day++) {
-                const cell = document.createElement('div');
-                const currentDateStr = `${calendarYear}-${(calendarMonth+1).toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`;
-                
-                const dayRecords = expenses.filter(x => x.date === currentDateStr);
-                const dayTotal = dayRecords.reduce((sum, item) => sum + item.amount, 0);
-
-                let selectClass = "";
-                const isSelected = calendarSelectedDay && 
-                                  calendarSelectedDay.getDate() === day && 
-                                  calendarSelectedDay.getMonth() === calendarMonth && 
-                                  calendarSelectedDay.getFullYear() === calendarYear;
-                
-                if (isSelected) {
-                    selectClass = "ring-2 ring-indigo-500 rounded-xl bg-indigo-50/30";
-                }
-
-                cell.className = `p-1 min-h-[50px] flex flex-col justify-between items-center cursor-pointer hover:bg-slate-50 rounded-xl transition-all ${selectClass}`;
-                
-                let expenseText = "";
-                if (dayTotal > 0) {
-                    expenseText = `<span class="text-[8px] font-extrabold text-red-500 block truncate w-full mt-1">-${dayTotal.toFixed(0)}</span>`;
-                }
-
-                cell.innerHTML = `
-                    <span class="text-[11px] font-bold text-slate-700">${day}</span>
-                    ${expenseText}
-                `;
-
-                cell.addEventListener('click', () => {
-                    calendarSelectedDay = new Date(calendarYear, calendarMonth, day);
-                    renderCalendarDays();
-                });
-
-                calendarDaysContainer.appendChild(cell);
-                dayRenderedCount++;
-            }
-
-            const totalGridCells = 42;
-            const trailingCells = totalGridCells - dayRenderedCount;
-            for (let dayNum = 1; dayNum <= trailingCells; dayNum++) {
-                const cell = document.createElement('div');
-                cell.className = "p-1 min-h-[48px] text-slate-300 opacity-60 flex flex-col justify-between items-center text-[10px]";
-                cell.innerHTML = `<span>${dayNum}</span>`;
-                calendarDaysContainer.appendChild(cell);
-            }
-
-            const calMonthStr = (calendarMonth + 1).toString().padStart(2, '0');
-            const targetMonthRecords = expenses.filter(x => x.date.startsWith(`${calendarYear}-${calMonthStr}`));
-            const totalMonthlyCalExpense = targetMonthRecords.reduce((sum, item) => sum + item.amount, 0);
-            calSummaryExpense.textContent = `฿${totalMonthlyCalExpense.toLocaleString('th-TH', { minimumFractionDigits: 2 })}`;
-
-            renderFocusDayLedger();
-        }
-
-        function renderFocusDayLedger() {
-            if (!calendarSelectedDay) return;
-
-            const day = calendarSelectedDay.getDate();
-            const month = calendarSelectedDay.getMonth();
-            const year = calendarSelectedDay.getFullYear();
-            
-            const thaiFullMonths = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
-            const daysOfWeek = ['อาทิตย์', 'จันทร์', 'อังคาร', 'พุธ', 'พฤหัสบดี', 'ศุกร์', 'เสาร์'];
-            
-            const dateStr = `${year}-${(month+1).toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`;
-            const targetDayRecords = expenses.filter(x => x.date === dateStr);
-
-            calFocusDateTitle.textContent = `วันนี้ ${thaiFullMonths[month]} ${day} ${daysOfWeek[calendarSelectedDay.getDay()]}`;
-
-            calendarFocusListContainer.innerHTML = '';
-
-            if (targetDayRecords.length === 0) {
-                calendarFocusListContainer.innerHTML = `
-                    <div class="bg-white p-6 rounded-2xl text-center border border-dashed border-slate-200 text-slate-400 text-xs font-semibold">
-                        ไม่มีรายการใช้จ่ายประวัติในวันนี้
-                    </div>
-                `;
-                return;
-            }
-
-            targetDayRecords.forEach(item => {
-                const card = document.createElement('div');
-                card.className = "bg-white p-3.5 rounded-2xl border border-slate-100 shadow-sm flex items-center justify-between gap-3";
-
-                let iconName = "receipt";
-                let colorClass = "bg-slate-50 text-slate-500";
-                if (item.category === "อาหาร") { colorClass = "bg-amber-50 text-amber-500"; iconName = "utensils"; }
-                else if (item.category === "การเดินทาง") { colorClass = "bg-blue-50 text-blue-500"; iconName = "car"; }
-                else if (item.category === "ช้อปปิ้ง") { colorClass = "bg-purple-50 text-purple-500"; iconName = "shopping-bag"; }
-                else if (item.category === "ที่อยู่อาศัย") { colorClass = "bg-rose-50 text-rose-500"; iconName = "home"; }
-                else if (item.category === "ความบันเทิง") { colorClass = "bg-teal-50 text-teal-500"; iconName = "clapperboard"; }
-                else if (item.category === "จัดการ") { colorClass = "bg-sky-50 text-sky-500"; iconName = "smile"; }
-
-                card.innerHTML = `
-                    <div class="flex items-center gap-3 flex-1 min-w-0">
-                        <div class="w-10 h-10 rounded-full ${colorClass} flex items-center justify-center shrink-0">
-                            <i data-lucide="${iconName}" class="w-5 h-5"></i>
-                        </div>
-                        <div class="min-w-0 flex-1 space-y-0.5">
-                            <p class="text-xs font-extrabold text-slate-800 truncate">${item.recipient}</p>
-                            <p class="text-[10px] text-slate-400 font-semibold">${formatThaiCalendar(item.date)} • ${item.time} น.</p>
-                            <p class="text-[8px] text-slate-500 font-bold bg-slate-50 border border-slate-100 rounded px-1.5 py-0.5 inline-block mt-0.5">${item.category}</p>
-                        </div>
-                    </div>
-                    <div class="flex items-center gap-2 shrink-0">
-                        <span class="text-sm font-extrabold text-slate-800">-฿${item.amount.toLocaleString('th-TH', { minimumFractionDigits: 0 })}</span>
-                        <button onclick="removeExpenseItem('${item.id}')" class="text-slate-300 hover:text-red-500 p-1.5 transition-colors">
-                            <i data-lucide="trash-2" class="w-4 h-4"></i>
-                        </button>
-                    </div>
-                `;
-                calendarFocusListContainer.appendChild(card);
-            });
-
-            lucide.createIcons();
+            return `${dayNum} ${thaiMonth} (วัน${dayName})`;
         }
 
         function formatThaiCalendar(dateStr) {
@@ -1308,6 +1447,59 @@
             const month = months[parseInt(parts[1]) - 1];
             const day = parseInt(parts[2]);
             return `${day} ${month} ${year}`;
+        }
+
+        // Top Left Month Picker popup dialog logic
+        function setupMonthPicker() {
+            currentMonthDisplayHeader.addEventListener('click', () => {
+                tempPickerYear = calendarYear;
+                pickerYearDisplay.textContent = `พ.ศ. ${tempPickerYear + 543}`;
+                renderMonthsGrid();
+                monthPickerModal.classList.remove('hidden');
+            });
+
+            closeMonthPickerBtn.addEventListener('click', () => {
+                monthPickerModal.classList.add('hidden');
+            });
+
+            prevPickerYear.addEventListener('click', () => {
+                tempPickerYear--;
+                pickerYearDisplay.textContent = `พ.ศ. ${tempPickerYear + 543}`;
+                renderMonthsGrid();
+            });
+
+            nextPickerYear.addEventListener('click', () => {
+                tempPickerYear++;
+                pickerYearDisplay.textContent = `พ.ศ. ${tempPickerYear + 543}`;
+                renderMonthsGrid();
+            });
+        }
+
+        function renderMonthsGrid() {
+            monthsGridContainer.innerHTML = '';
+            const months = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
+            
+            months.forEach((m, index) => {
+                const btn = document.createElement('button');
+                const isSelectedMonth = (calendarMonth === index && calendarYear === tempPickerYear);
+                
+                btn.className = `py-2 text-xs font-bold rounded-xl transition-all ${
+                    isSelectedMonth 
+                    ? 'bg-indigo-600 text-white shadow-md' 
+                    : 'bg-slate-50 hover:bg-slate-100 text-slate-700'
+                }`;
+                btn.textContent = m;
+
+                btn.addEventListener('click', () => {
+                    calendarMonth = index;
+                    calendarYear = tempPickerYear;
+                    
+                    updateDashboard();
+                    monthPickerModal.classList.add('hidden');
+                });
+
+                monthsGridContainer.appendChild(btn);
+            });
         }
 
         exportCsvBtn.addEventListener('click', () => {
@@ -1340,6 +1532,29 @@
             downloadLink.click();
             document.body.removeChild(downloadLink);
         });
+
+        // Fully operational reset handler ensuring a complete cleanup of slip states
+        function resetAppScanner() {
+            slipFileInput.value = '';
+            imagePreview.src = '#';
+            imagePreviewContainer.classList.add('hidden');
+            triggerFilePicker.classList.remove('hidden');
+            detailStatus.textContent = "";
+            currentLoadedImage = null;
+            
+            // Clear text outputs
+            ocrRawDatetime.value = "";
+            ocrRawRecipient.value = "";
+            ocrRawAmount.value = "";
+
+            // Reset canvases
+            const ctx1 = cropDateTimeCanvas.getContext('2d');
+            const ctx2 = cropRecipientCanvas.getContext('2d');
+            const ctx3 = cropAmountCanvas.getContext('2d');
+            ctx1.clearRect(0, 0, cropDateTimeCanvas.width, cropDateTimeCanvas.height);
+            ctx2.clearRect(0, 0, cropRecipientCanvas.width, cropRecipientCanvas.height);
+            ctx3.clearRect(0, 0, cropAmountCanvas.width, cropAmountCanvas.height);
+        }
     </script>
 </body>
 </html>
