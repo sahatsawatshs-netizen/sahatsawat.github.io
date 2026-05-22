@@ -4,8 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>สมุดบัญชีสแกนสลิป Cloud AI Pro</title>
+    <!-- Tailwind CSS for Modern Premium UI Layout -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- jsQR for Instant Local QR Code Decoding -->
     <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700;800&display=swap');
@@ -47,11 +50,13 @@
 </head>
 <body class="max-w-md mx-auto min-h-screen bg-slate-50 flex flex-col shadow-2xl relative pb-20 notebook-grid">
 
+    <!-- Top Navigation Bar -->
     <header class="bg-white border-b border-slate-100 px-4 py-3.5 sticky top-0 z-20 shadow-sm flex justify-between items-center">
         <div class="flex items-center space-x-2">
             <div class="p-1.5 text-slate-500 bg-slate-50 rounded-lg">
                 <i data-lucide="book-open" class="w-5 h-5 text-indigo-600"></i>
             </div>
+            <!-- Month selector header clickable -->
             <button id="current-month-display-header" class="text-base font-extrabold text-slate-800 flex items-center gap-1 hover:bg-slate-50 px-2 py-1 rounded-xl transition-all">
                 <span>พ.ค. 2569</span> <i data-lucide="chevron-down" class="w-4 h-4 text-indigo-600"></i>
             </button>
@@ -67,8 +72,10 @@
         </div>
     </header>
 
+    <!-- Main Dynamic Content Frame -->
     <main class="flex-1 p-4 overflow-y-auto space-y-4 pb-20">
 
+        <!-- Top Overview -->
         <div class="bg-white p-4 rounded-3xl border border-slate-100 shadow-sm grid grid-cols-2 gap-4">
             <div class="flex flex-col">
                 <span class="text-xs font-semibold text-slate-400">รายจ่ายรวมเดือนนี้</span>
@@ -80,11 +87,14 @@
             </div>
         </div>
 
+        <!-- Tab Content Area -->
         <div id="tab-content-container" class="space-y-4">
-            </div>
+            <!-- Content will be injected dynamically -->
+        </div>
 
     </main>
 
+    <!-- NAVIGATION SYSTEM (Bottom Tabs) -->
     <nav class="fixed bottom-0 max-w-md w-full bg-white border-t border-slate-100 px-3 py-2 flex justify-around items-center z-30 shadow-[0_-2px_10px_rgba(0,0,0,0.03)]">
         <button id="tab-list-btn" class="flex flex-col items-center gap-1 text-indigo-600 font-bold text-[10px] transition-all">
             <i data-lucide="list-ordered" class="w-5 h-5"></i>
@@ -100,12 +110,14 @@
         </button>
     </nav>
 
+    <!-- FLOATING ADD BUTTON -->
     <div class="fixed bottom-14 inset-x-0 flex justify-center z-30 pointer-events-none">
         <button id="floating-plus-btn" class="pointer-events-auto w-12 h-12 rounded-full bg-gradient-to-tr from-indigo-600 to-indigo-500 text-white flex items-center justify-center shadow-lg hover:scale-105 active:scale-95 transition-all">
             <i data-lucide="plus" class="w-6 h-6"></i>
         </button>
     </div>
 
+    <!-- MAIN CONTROL FORM SLIDE SHEET -->
     <div id="form-slide-sheet" class="hidden fixed inset-0 z-40 bg-black/60 flex flex-col justify-end">
         <div class="bg-white rounded-t-[2.5rem] p-5 max-h-[90vh] overflow-y-auto flex flex-col space-y-4 shadow-2xl relative custom-scrollbar">
             <div class="w-12 h-1.5 bg-slate-200 rounded-full mx-auto cursor-pointer" id="close-sheet-handle"></div>
@@ -120,6 +132,7 @@
                 </button>
             </div>
 
+            <!-- SLIP SCANNER WITH CALIBRATOR -->
             <div id="content-mode-scan" class="space-y-4">
                 <div id="batch-queue-badge" class="hidden w-full bg-indigo-50 text-indigo-700 text-[10px] font-extrabold p-2 rounded-xl flex justify-between items-center">
                     <span>คิวตรวจสอบรูปภาพสลิป: <span id="batch-current-num">1</span> จากทั้งหมด <span id="batch-total-num">1</span> ใบ</span>
@@ -136,10 +149,12 @@
                 
                 <input type="file" id="slip-file-input" accept="image/*" class="hidden" multiple>
 
+                <!-- Slip Upload Preview Area -->
                 <div id="image-preview-container" class="hidden space-y-3">
                     <div class="relative w-full max-w-xs mx-auto text-center">
                         <div class="relative inline-block mx-auto overflow-hidden rounded-xl border">
                             <img id="image-preview" src="#" alt="สลิปโอนเงิน" class="max-h-64 object-contain mx-auto block">
+                            <!-- Canvas overlays matching the image geometry -->
                             <canvas id="crop-overlay-canvas" class="absolute inset-0 w-full h-full pointer-events-none"></canvas>
                         </div>
                         <div class="flex gap-2 justify-center mt-2">
@@ -152,6 +167,7 @@
                         </div>
                     </div>
 
+                    <!-- Live Crop Preview Boxes -->
                     <div class="bg-slate-50 p-2.5 rounded-xl border border-slate-100 space-y-3 text-left">
                         <span class="text-[10px] font-bold text-slate-500 flex items-center gap-1">
                             <i data-lucide="cloud-lightning" class="w-3.5 h-3.5 text-indigo-500"></i>
@@ -177,6 +193,7 @@
                         </div>
                     </div>
 
+                    <!-- Calibration settings sliders panel -->
                     <div id="calibration-controls" class="hidden bg-indigo-50/70 p-3.5 rounded-xl border border-indigo-100 space-y-3 text-left">
                         <div class="flex justify-between items-center border-b border-indigo-100 pb-1.5">
                             <span class="text-[10px] font-bold text-indigo-800 flex items-center gap-1">
@@ -224,6 +241,7 @@
                 </div>
             </div>
 
+            <!-- SHARED DETAIL CONFIRMATION FORM -->
             <div class="space-y-3 pt-2">
                 <div>
                     <div class="flex justify-between items-center mb-1">
@@ -278,6 +296,7 @@
         </div>
     </div>
 
+    <!-- MONTH PICKER INTERACTIVE OVERLAY MODAL -->
     <div id="month-picker-modal" class="hidden fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4">
         <div class="bg-white rounded-3xl p-6 w-full max-w-sm space-y-4 shadow-2xl">
             <div class="flex justify-between items-center border-b pb-3">
@@ -303,6 +322,7 @@
         </div>
     </div>
 
+    <!-- RECIPIENT ALIAS RULES MANAGER MODAL -->
     <div id="alias-rules-modal" class="hidden fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4">
         <div class="bg-white rounded-3xl p-5 w-full max-w-sm space-y-4 shadow-2xl flex flex-col max-h-[85vh]">
             <div class="flex justify-between items-center border-b pb-3 shrink-0">
@@ -329,6 +349,7 @@
         </div>
     </div>
 
+    <!-- DUPLICATE CONFIRMATION MODAL -->
     <div id="duplicate-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
         <div class="bg-white rounded-3xl p-6 max-w-xs w-full text-center space-y-4 shadow-2xl">
             <div class="w-12 h-12 rounded-full bg-amber-50 text-amber-600 flex items-center justify-center mx-auto">
@@ -349,6 +370,7 @@
         </div>
     </div>
 
+    <!-- UI Alert Modal -->
     <div id="alert-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 transition-all">
         <div class="bg-white rounded-3xl p-6 max-w-xs w-full text-center space-y-4 shadow-2xl scale-100">
             <div class="w-12 h-12 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center mx-auto" id="alert-icon">
@@ -364,12 +386,12 @@
         </div>
     </div>
 
+    <!-- Hidden canvases -->
     <canvas id="qr-canvas" class="hidden"></canvas>
     <canvas id="util-canvas" class="hidden"></canvas>
 
     <script>
         // --- API CONFIGURATION ---
-        // ตรงนี้เชื่อมต่อกับ Hugging Face API ของคุณแล้วครับ
         const CLOUD_API_URL = "https://cran3lz-thai-ocr-api.hf.space/extract-text/";
 
         // Store Application Records
@@ -906,6 +928,7 @@
 
                     breakdownHTML += `
                         <div class="border border-slate-100 rounded-2xl overflow-hidden bg-slate-50/50">
+                            <!-- Header toggler -->
                             <button onclick="toggleDrilldownAccordion(event, '${cat}')" class="w-full flex justify-between items-center p-3 text-left hover:bg-slate-100/50 transition-all font-bold text-xs">
                                 <span class="flex items-center gap-1.5 text-slate-800">
                                     <span class="w-2 h-2 rounded-full ${badgeColor}"></span>
@@ -917,6 +940,7 @@
                                     <i data-lucide="chevron-down" id="chevron-${cat}" class="w-4 h-4 text-slate-400 transition-transform duration-200"></i>
                                 </div>
                             </button>
+                            <!-- Collapsible container -->
                             <div id="accordion-panel-${cat}" class="hidden p-2 border-t border-slate-100 space-y-1">
                                 ${subRowsHTML}
                             </div>
@@ -1262,9 +1286,10 @@
             }, 600);
         }
 
-        // --- NEW CLOUD API FUNCTION ---
+        // --- NEW CLOUD API FUNCTION (COMPRESSED JPEG FOR SPEED) ---
         async function fetchTextFromCloudAPI(canvasElement) {
             return new Promise((resolve, reject) => {
+                // บีบอัดรูปเป็น JPEG 85% เพื่อลดขนาดไฟล์ อัปโหลดไวขึ้นแต่ยังคงความชัด
                 canvasElement.toBlob(async (blob) => {
                     const formData = new FormData();
                     formData.append("file", blob, "crop_image.jpg");
@@ -1283,7 +1308,7 @@
                         console.error("Cloud API Error:", error);
                         reject(error);
                     }
-                }, "image/jpeg", 0.95);
+                }, "image/jpeg", 0.85); 
             });
         }
 
@@ -1444,48 +1469,48 @@
 
                 ocrProgressContainer.classList.remove('hidden');
                 ocrProgressBar.style.width = '10%';
-
-                // Scan 1: ยิง API ถามวันเวลา
-                detailStatus.textContent = "กำลังให้ Cloud วิเคราะห์วันเวลา... (1/3)";
-                const rawDateText = await fetchTextFromCloudAPI(cropDateTimeCanvas);
-                ocrRawDatetime.value = rawDateText.replace(/\s+/g, ' ').trim();
                 
-                const dateData = parseThaiSlipDateTime(rawDateText);
-                if (dateData.date) {
-                    formDate.value = dateData.date;
-                    highlightFilledInputs();
-                }
-                if (dateData.time) {
-                    formTime.value = dateData.time;
-                    highlightFilledInputs();
-                }
-                ocrProgressBar.style.width = '40%';
+                detailStatus.textContent = "กำลังให้ Cloud วิเคราะห์ข้อมูลพร้อมกัน 3 จุด...";
 
-                // Scan 2: ยิง API ถามชื่อผู้รับโอน
-                detailStatus.textContent = "กำลังให้ Cloud วิเคราะห์ชื่อผู้รับโอน... (2/3)";
-                const rawRecipientText = await fetchTextFromCloudAPI(cropRecipientCanvas);
-                ocrRawRecipient.value = rawRecipientText.replace(/\s+/g, ' ').trim();
+                // --- FEATURE: PARALLEL FETCHING (ส่ง 3 คำขอพร้อมกัน) ---
                 
-                let cleanedRecipient = cleanRecipientName(rawRecipientText);
-                cleanedRecipient = applyAliasToName(cleanedRecipient);
-                formRecipient.value = cleanedRecipient || "ผู้รับเงินโอน";
-                ocrProgressBar.style.width = '70%';
+                // 1. งานวิเคราะห์วันเวลา
+                const promiseDate = fetchTextFromCloudAPI(cropDateTimeCanvas).then(rawDateText => {
+                    ocrRawDatetime.value = rawDateText.replace(/\s+/g, ' ').trim();
+                    const dateData = parseThaiSlipDateTime(rawDateText);
+                    if (dateData.date) { formDate.value = dateData.date; highlightFilledInputs(); }
+                    if (dateData.time) { formTime.value = dateData.time; highlightFilledInputs(); }
+                    ocrProgressBar.style.width = '40%';
+                });
 
-                // Scan 3: ยิง API ถามยอดเงิน
-                detailStatus.textContent = "กำลังให้ Cloud วิเคราะห์ตัวเลขยอดเงิน... (3/3)";
-                const rawAmountText = await fetchTextFromCloudAPI(cropAmountCanvas);
-                ocrRawAmount.value = rawAmountText.replace(/\s+/g, ' ').trim();
-                
-                const cleanedAmount = extractFloatAmount(rawAmountText);
-                if (cleanedAmount) {
-                    formAmount.value = parseFloat(cleanedAmount).toFixed(2);
-                    amountSourceBadge.textContent = "วิเคราะห์ผ่าน Cloud สำเร็จ";
-                    amountSourceBadge.className = "text-[9px] px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-bold";
-                } else {
-                    formAmount.value = "";
-                    amountSourceBadge.textContent = "ตรวจไม่พบยอดเงิน";
-                    amountSourceBadge.className = "text-[9px] px-2.5 py-0.5 rounded-full bg-rose-100 text-rose-800 font-bold animate-pulse";
-                }
+                // 2. งานวิเคราะห์ชื่อผู้รับ
+                const promiseName = fetchTextFromCloudAPI(cropRecipientCanvas).then(rawRecipientText => {
+                    ocrRawRecipient.value = rawRecipientText.replace(/\s+/g, ' ').trim();
+                    let cleanedRecipient = cleanRecipientName(rawRecipientText);
+                    cleanedRecipient = applyAliasToName(cleanedRecipient);
+                    formRecipient.value = cleanedRecipient || "ผู้รับเงินโอน";
+                    ocrProgressBar.style.width = '70%';
+                });
+
+                // 3. งานวิเคราะห์ยอดเงิน
+                const promiseAmount = fetchTextFromCloudAPI(cropAmountCanvas).then(rawAmountText => {
+                    ocrRawAmount.value = rawAmountText.replace(/\s+/g, ' ').trim();
+                    const cleanedAmount = extractFloatAmount(rawAmountText);
+                    if (cleanedAmount) {
+                        formAmount.value = parseFloat(cleanedAmount).toFixed(2);
+                        amountSourceBadge.textContent = "วิเคราะห์ผ่าน Cloud สำเร็จ";
+                        amountSourceBadge.className = "text-[9px] px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-bold";
+                    } else {
+                        formAmount.value = "";
+                        amountSourceBadge.textContent = "ตรวจไม่พบยอดเงิน";
+                        amountSourceBadge.className = "text-[9px] px-2.5 py-0.5 rounded-full bg-rose-100 text-rose-800 font-bold animate-pulse";
+                    }
+                });
+
+                // รอให้ทั้ง 3 งานเสร็จสิ้นพร้อมกันทั้งหมด!
+                await Promise.all([promiseDate, promiseName, promiseAmount]);
+
+                // --------------------------------------------------------
 
                 formMemo.value = ""; 
                 ocrProgressBar.style.width = '100%';
