@@ -6,7 +6,6 @@ import os
 
 app = FastAPI()
 
-# อนุญาตให้ HTML จากที่อื่น (CORS) สามารถเรียกใช้งาน API นี้ได้
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"], 
@@ -15,22 +14,18 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# โหลด AI Model ของ EasyOCR (รองรับภาษาไทยและอังกฤษ)
+# โหลด AI Model (RAM 16GB รับไหวสบายๆ)
 reader = easyocr.Reader(['th', 'en'])
 
 @app.post("/extract-text/")
 async def extract_text(file: UploadFile = File(...)):
-    # 1. บันทึกไฟล์รูปภาพที่ HTML ส่งมาลงในเซิร์ฟเวอร์ชั่วคราว
     temp_file_path = f"temp_{file.filename}"
     with open(temp_file_path, "wb") as buffer:
         shutil.copyfileobj(file.file, buffer)
     
-    # 2. ให้ EasyOCR อ่านรูปภาพ
-    result = reader.readtext(temp_file_path, detail=0) # detail=0 คือเอาแค่ข้อความ ไม่เอากรอบ
+    result = reader.readtext(temp_file_path, detail=0)
     
-    # 3. ลบไฟล์รูปทิ้งเพื่อประหยัดพื้นที่เซิร์ฟเวอร์
     os.remove(temp_file_path)
     
-    # 4. ส่งข้อความกลับไปให้ HTML
     joined_text = " ".join(result)
     return {"status": "success", "text": joined_text}
