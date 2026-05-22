@@ -3,15 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>สมุดบัญชีสแกนสลิปออฟไลน์ Pro</title>
-    <!-- Tailwind CSS for Modern Premium UI Layout -->
+    <title>สมุดบัญชีสแกนสลิป Cloud AI Pro</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
-    <!-- jsQR for Instant Local QR Code Decoding -->
     <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
-    <!-- Tesseract.js for Offline Client-side OCR -->
-    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4.0.2/dist/tesseract.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700;800&display=swap');
         body {
@@ -52,13 +47,11 @@
 </head>
 <body class="max-w-md mx-auto min-h-screen bg-slate-50 flex flex-col shadow-2xl relative pb-20 notebook-grid">
 
-    <!-- Top Navigation Bar -->
     <header class="bg-white border-b border-slate-100 px-4 py-3.5 sticky top-0 z-20 shadow-sm flex justify-between items-center">
         <div class="flex items-center space-x-2">
             <div class="p-1.5 text-slate-500 bg-slate-50 rounded-lg">
                 <i data-lucide="book-open" class="w-5 h-5 text-indigo-600"></i>
             </div>
-            <!-- Month selector header clickable -->
             <button id="current-month-display-header" class="text-base font-extrabold text-slate-800 flex items-center gap-1 hover:bg-slate-50 px-2 py-1 rounded-xl transition-all">
                 <span>พ.ค. 2569</span> <i data-lucide="chevron-down" class="w-4 h-4 text-indigo-600"></i>
             </button>
@@ -74,10 +67,8 @@
         </div>
     </header>
 
-    <!-- Main Dynamic Content Frame -->
     <main class="flex-1 p-4 overflow-y-auto space-y-4 pb-20">
 
-        <!-- Top Overview -->
         <div class="bg-white p-4 rounded-3xl border border-slate-100 shadow-sm grid grid-cols-2 gap-4">
             <div class="flex flex-col">
                 <span class="text-xs font-semibold text-slate-400">รายจ่ายรวมเดือนนี้</span>
@@ -89,14 +80,11 @@
             </div>
         </div>
 
-        <!-- Tab Content Area -->
         <div id="tab-content-container" class="space-y-4">
-            <!-- Content will be injected dynamically -->
-        </div>
+            </div>
 
     </main>
 
-    <!-- NAVIGATION SYSTEM (Bottom Tabs) -->
     <nav class="fixed bottom-0 max-w-md w-full bg-white border-t border-slate-100 px-3 py-2 flex justify-around items-center z-30 shadow-[0_-2px_10px_rgba(0,0,0,0.03)]">
         <button id="tab-list-btn" class="flex flex-col items-center gap-1 text-indigo-600 font-bold text-[10px] transition-all">
             <i data-lucide="list-ordered" class="w-5 h-5"></i>
@@ -112,14 +100,12 @@
         </button>
     </nav>
 
-    <!-- FLOATING ADD BUTTON -->
     <div class="fixed bottom-14 inset-x-0 flex justify-center z-30 pointer-events-none">
         <button id="floating-plus-btn" class="pointer-events-auto w-12 h-12 rounded-full bg-gradient-to-tr from-indigo-600 to-indigo-500 text-white flex items-center justify-center shadow-lg hover:scale-105 active:scale-95 transition-all">
             <i data-lucide="plus" class="w-6 h-6"></i>
         </button>
     </div>
 
-    <!-- MAIN CONTROL FORM SLIDE SHEET -->
     <div id="form-slide-sheet" class="hidden fixed inset-0 z-40 bg-black/60 flex flex-col justify-end">
         <div class="bg-white rounded-t-[2.5rem] p-5 max-h-[90vh] overflow-y-auto flex flex-col space-y-4 shadow-2xl relative custom-scrollbar">
             <div class="w-12 h-1.5 bg-slate-200 rounded-full mx-auto cursor-pointer" id="close-sheet-handle"></div>
@@ -134,7 +120,6 @@
                 </button>
             </div>
 
-            <!-- SLIP SCANNER WITH CALIBRATOR -->
             <div id="content-mode-scan" class="space-y-4">
                 <div id="batch-queue-badge" class="hidden w-full bg-indigo-50 text-indigo-700 text-[10px] font-extrabold p-2 rounded-xl flex justify-between items-center">
                     <span>คิวตรวจสอบรูปภาพสลิป: <span id="batch-current-num">1</span> จากทั้งหมด <span id="batch-total-num">1</span> ใบ</span>
@@ -145,18 +130,16 @@
                     <div class="w-9 h-9 bg-indigo-50 text-indigo-600 rounded-full flex items-center justify-center">
                         <i data-lucide="scan" class="w-4.5 h-4.5"></i>
                     </div>
-                    <span class="text-xs font-bold text-slate-700">สแกนสลิปอัตโนมัติ (เลือกภาพสลิปได้ทีละหลายรูป)</span>
+                    <span class="text-xs font-bold text-slate-700">สแกนสลิปผ่าน Cloud AI (เลือกได้หลายรูป)</span>
                     <span class="text-[9px] text-slate-400">หรือระบุข้อมูลด้วยตนเองที่แบบฟอร์มด้านล่างได้ทันที</span>
                 </div>
                 
                 <input type="file" id="slip-file-input" accept="image/*" class="hidden" multiple>
 
-                <!-- Slip Upload Preview Area -->
                 <div id="image-preview-container" class="hidden space-y-3">
                     <div class="relative w-full max-w-xs mx-auto text-center">
                         <div class="relative inline-block mx-auto overflow-hidden rounded-xl border">
                             <img id="image-preview" src="#" alt="สลิปโอนเงิน" class="max-h-64 object-contain mx-auto block">
-                            <!-- Canvas overlays matching the image geometry -->
                             <canvas id="crop-overlay-canvas" class="absolute inset-0 w-full h-full pointer-events-none"></canvas>
                         </div>
                         <div class="flex gap-2 justify-center mt-2">
@@ -169,33 +152,31 @@
                         </div>
                     </div>
 
-                    <!-- Live Crop Preview Boxes -->
                     <div class="bg-slate-50 p-2.5 rounded-xl border border-slate-100 space-y-3 text-left">
                         <span class="text-[10px] font-bold text-slate-500 flex items-center gap-1">
-                            <i data-lucide="eye" class="w-3.5 h-3.5 text-indigo-500"></i>
-                            ตัวอย่างภาพครอปและข้อความถอดรหัส
+                            <i data-lucide="cloud-lightning" class="w-3.5 h-3.5 text-indigo-500"></i>
+                            ตัวอย่างภาพครอปและข้อความถอดรหัส (Cloud AI)
                         </span>
                         
                         <div class="grid grid-cols-3 gap-2 text-center text-[8px] text-slate-400 font-bold">
                             <div class="bg-white p-1 rounded-lg border flex flex-col justify-between min-h-[90px]">
                                 <span class="block mb-1 text-indigo-600">1. วันเวลา (Top)</span>
                                 <canvas id="crop-datetime-canvas" class="mx-auto border bg-slate-100 max-h-8 max-w-full rounded mb-1"></canvas>
-                                <input type="text" id="ocr-raw-datetime" class="w-full text-center border rounded py-0.5 px-1 font-semibold text-slate-700 text-[9px] bg-slate-50" readonly placeholder="กำลังอ่าน...">
+                                <input type="text" id="ocr-raw-datetime" class="w-full text-center border rounded py-0.5 px-1 font-semibold text-slate-700 text-[9px] bg-slate-50" readonly placeholder="รอส่ง API...">
                             </div>
                             <div class="bg-white p-1 rounded-lg border flex flex-col justify-between min-h-[90px]">
                                 <span class="block mb-1 text-indigo-600">2. ชื่อผู้รับ (Middle)</span>
                                 <canvas id="crop-recipient-canvas" class="mx-auto border bg-slate-100 max-h-8 max-w-full rounded mb-1"></canvas>
-                                <input type="text" id="ocr-raw-recipient" class="w-full text-center border rounded py-0.5 px-1 font-semibold text-slate-700 text-[9px] bg-slate-50" readonly placeholder="กำลังอ่าน...">
+                                <input type="text" id="ocr-raw-recipient" class="w-full text-center border rounded py-0.5 px-1 font-semibold text-slate-700 text-[9px] bg-slate-50" readonly placeholder="รอส่ง API...">
                             </div>
                             <div class="bg-white p-1 rounded-lg border flex flex-col justify-between min-h-[90px]">
                                 <span class="block mb-1 text-indigo-600">3. ยอดเงิน (Bottom)</span>
                                 <canvas id="crop-amount-canvas" class="mx-auto border bg-slate-100 max-h-8 max-w-full rounded mb-1"></canvas>
-                                <input type="text" id="ocr-raw-amount" class="w-full text-center border rounded py-0.5 px-1 font-semibold text-slate-700 text-[9px] bg-slate-50" readonly placeholder="กำลังอ่าน...">
+                                <input type="text" id="ocr-raw-amount" class="w-full text-center border rounded py-0.5 px-1 font-semibold text-slate-700 text-[9px] bg-slate-50" readonly placeholder="รอส่ง API...">
                             </div>
                         </div>
                     </div>
 
-                    <!-- Calibration settings sliders panel -->
                     <div id="calibration-controls" class="hidden bg-indigo-50/70 p-3.5 rounded-xl border border-indigo-100 space-y-3 text-left">
                         <div class="flex justify-between items-center border-b border-indigo-100 pb-1.5">
                             <span class="text-[10px] font-bold text-indigo-800 flex items-center gap-1">
@@ -243,7 +224,6 @@
                 </div>
             </div>
 
-            <!-- SHARED DETAIL CONFIRMATION FORM -->
             <div class="space-y-3 pt-2">
                 <div>
                     <div class="flex justify-between items-center mb-1">
@@ -298,7 +278,6 @@
         </div>
     </div>
 
-    <!-- MONTH PICKER INTERACTIVE OVERLAY MODAL -->
     <div id="month-picker-modal" class="hidden fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4">
         <div class="bg-white rounded-3xl p-6 w-full max-w-sm space-y-4 shadow-2xl">
             <div class="flex justify-between items-center border-b pb-3">
@@ -324,7 +303,6 @@
         </div>
     </div>
 
-    <!-- RECIPIENT ALIAS RULES MANAGER MODAL -->
     <div id="alias-rules-modal" class="hidden fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4">
         <div class="bg-white rounded-3xl p-5 w-full max-w-sm space-y-4 shadow-2xl flex flex-col max-h-[85vh]">
             <div class="flex justify-between items-center border-b pb-3 shrink-0">
@@ -351,7 +329,6 @@
         </div>
     </div>
 
-    <!-- DUPLICATE CONFIRMATION MODAL -->
     <div id="duplicate-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
         <div class="bg-white rounded-3xl p-6 max-w-xs w-full text-center space-y-4 shadow-2xl">
             <div class="w-12 h-12 rounded-full bg-amber-50 text-amber-600 flex items-center justify-center mx-auto">
@@ -372,7 +349,6 @@
         </div>
     </div>
 
-    <!-- UI Alert Modal -->
     <div id="alert-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 transition-all">
         <div class="bg-white rounded-3xl p-6 max-w-xs w-full text-center space-y-4 shadow-2xl scale-100">
             <div class="w-12 h-12 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center mx-auto" id="alert-icon">
@@ -388,16 +364,17 @@
         </div>
     </div>
 
-    <!-- Hidden canvases -->
     <canvas id="qr-canvas" class="hidden"></canvas>
     <canvas id="util-canvas" class="hidden"></canvas>
 
     <script>
+        // --- API CONFIGURATION ---
+        // ตรงนี้เชื่อมต่อกับ Hugging Face API ของคุณแล้วครับ
+        const CLOUD_API_URL = "https://cran3lz-thai-ocr-api.hf.space/extract-text/";
+
         // Store Application Records
         let expenses = [];
-        let recipientRules = {}; // e.g. {"สินธร": "อาหารกลางวัน"}
-        let ocrWorker = null;
-        let isOcrReady = false;
+        let recipientRules = {}; 
         let currentLoadedImage = null;
         
         // Month filter states
@@ -407,7 +384,7 @@
         let currentTab = 'list'; // 'list', 'calendar', 'chart'
         
         // Context storage for Calendar & List
-        let selectedCalendarDate = null; // Stored when user taps calendar day
+        let selectedCalendarDate = null; 
         
         // Queue state
         let fileBatchQueue = [];
@@ -522,7 +499,6 @@
             loadDashboardOrder();
             
             updateDashboard();
-            preInitializeOCR();
             setupCalibrationListeners();
             setupFormListeners();
             setupMonthPicker();
@@ -531,45 +507,9 @@
             setupAliasRulesManager();
         });
 
-        // ------------------------- PRELOAD SENSORS & OCR -------------------------
-        async function preInitializeOCR() {
-            if (isOcrReady) return;
-            try {
-                detailStatus.textContent = "กำลังโหลดระบบอ่านอักขระสองภาษา (eng+tha)...";
-                if (typeof Tesseract === "undefined") {
-                    await new Promise((resolve) => {
-                        const checkInterval = setInterval(() => {
-                            if (typeof Tesseract !== "undefined") {
-                                clearInterval(checkInterval);
-                                resolve();
-                            }
-                        }, 100);
-                    });
-                }
-
-                ocrWorker = await Tesseract.createWorker({
-                    logger: m => {
-                        if (m.status === 'recognizing text') {
-                            const percent = Math.round(m.progress * 100);
-                            ocrProgressBar.style.width = percent + '%';
-                            detailStatus.textContent = `กำลังวิเคราะห์ประมวลภาพสลิป: ${percent}%`;
-                        }
-                    }
-                });
-                await ocrWorker.loadLanguage('eng+tha');
-                await ocrWorker.initialize('eng+tha');
-                isOcrReady = true;
-                detailStatus.textContent = "ระบบอ่านอักขระสองภาษา พร้อมใช้งาน";
-            } catch (err) {
-                console.error("Local Tesseract Worker Load Error:", err);
-                detailStatus.textContent = "การเริ่มต้นเอนจิ้น OCR ออฟไลน์ขัดข้อง";
-            }
-        }
-
         // ------------------------- TAB NAVIGATION -------------------------
         function setupTabNavigation() {
             tabListBtn.addEventListener('click', () => {
-                // FEATURE 4: Reset selected day highlight & calendar context date to current on "List" tab
                 selectedCalendarDate = null;
                 switchTab('list');
             });
@@ -635,7 +575,6 @@
                     const dayRecords = monthlyRecords.filter(x => x.date === dStr);
                     const dayTotal = dayRecords.reduce((sum, item) => sum + item.amount, 0);
 
-                    // FEATURE 2: Highlight selected calendar day
                     const isSelected = (selectedCalendarDate === dStr);
                     const isToday = (new Date().getDate() === dayNum && new Date().getMonth() === calendarMonth && new Date().getFullYear() === calendarYear);
 
@@ -672,19 +611,16 @@
                 tabContentContainer.appendChild(calendarWrapper);
                 lucide.createIcons();
 
-                // If a day was previously selected, restore its layout list below the calendar grid
                 if (selectedCalendarDate) {
                     filterShowDayRecords(selectedCalendarDate);
                 }
 
             } else if (currentTab === 'chart') {
-                // Interactive Drag & Drop Dashboard
                 const dashboardContainer = document.createElement('div');
                 dashboardContainer.className = "space-y-4";
                 dashboardContainer.id = "draggable-dashboard-root";
                 tabContentContainer.appendChild(dashboardContainer);
 
-                // Re-render blocks based on ordered sequence
                 dashboardOrder.forEach(cardId => {
                     if (cardId === 'stats-card') {
                         dashboardContainer.appendChild(createStatsCard(monthlyRecords));
@@ -700,13 +636,11 @@
             }
         }
 
-        // Handle Calendar selection & Highlight toggle
         window.handleCalendarDaySelection = function(dateStr) {
             selectedCalendarDate = dateStr;
-            renderTabContent(); // Re-render calendar grid to apply highlight class
+            renderTabContent(); 
         };
 
-        // FEATURE 1: Render calendar records list with the exact premium style as main timeline list
         window.filterShowDayRecords = function(dateStr) {
             const detailBox = document.getElementById('calendar-day-details');
             if (!detailBox) return;
@@ -827,7 +761,6 @@
             card.className = "bg-white p-4 rounded-3xl border border-slate-100 shadow-sm relative group cursor-grab active:cursor-grabbing";
             card.setAttribute('draggable', 'true');
 
-            // Category sums
             const categorySums = {};
             records.forEach(r => {
                 const cat = r.category || "อื่นๆ";
@@ -836,7 +769,6 @@
 
             const totalSum = Object.values(categorySums).reduce((sum, val) => sum + val, 0);
 
-            // Compute SVG segments with perfect rotation
             let svgContent = '';
             let cumulativePercent = 0;
             const radius = 30;
@@ -897,7 +829,6 @@
                         <i data-lucide="pie-chart" class="w-4 h-4 text-indigo-600"></i> กราฟสัดส่วนรายจ่ายในเดือน
                     </span>
                     <div class="flex items-center justify-around gap-4 py-2">
-                        <!-- Pure SVG Clean Donut Chart -->
                         <div class="w-24 h-24 shrink-0">
                             <svg viewBox="0 0 100 100" class="w-full h-full">
                                 <circle cx="50" cy="50" r="${radius}" fill="transparent" stroke="#f1f5f9" stroke-width="12"></circle>
@@ -915,7 +846,6 @@
             return card;
         }
 
-        // FEATURE 3: Category breakdown with interactive Accordion details (Drilldown)
         function createDrilldownCard(records) {
             const card = document.createElement('div');
             card.id = 'drilldown-card';
@@ -956,7 +886,6 @@
                     const pct = totalSum > 0 ? Math.round((data.sum / totalSum) * 100) : 0;
                     const badgeColor = categoryColors[cat] || "bg-slate-500";
 
-                    // Drilldown sub-rows matching the premium design standard
                     let subRowsHTML = '';
                     data.items.forEach(item => {
                         subRowsHTML += `
@@ -977,7 +906,6 @@
 
                     breakdownHTML += `
                         <div class="border border-slate-100 rounded-2xl overflow-hidden bg-slate-50/50">
-                            <!-- Header toggler -->
                             <button onclick="toggleDrilldownAccordion(event, '${cat}')" class="w-full flex justify-between items-center p-3 text-left hover:bg-slate-100/50 transition-all font-bold text-xs">
                                 <span class="flex items-center gap-1.5 text-slate-800">
                                     <span class="w-2 h-2 rounded-full ${badgeColor}"></span>
@@ -989,7 +917,6 @@
                                     <i data-lucide="chevron-down" id="chevron-${cat}" class="w-4 h-4 text-slate-400 transition-transform duration-200"></i>
                                 </div>
                             </button>
-                            <!-- Collapsible container -->
                             <div id="accordion-panel-${cat}" class="hidden p-2 border-t border-slate-100 space-y-1">
                                 ${subRowsHTML}
                             </div>
@@ -1038,7 +965,6 @@
             const draggables = root.querySelectorAll('[draggable="true"]');
 
             draggables.forEach(drv => {
-                // Desktop events
                 drv.addEventListener('dragstart', (e) => {
                     drv.classList.add('dragging');
                     e.dataTransfer.effectAllowed = 'move';
@@ -1049,13 +975,11 @@
                     saveCurrentDashboardState();
                 });
 
-                // Mobile touch support
                 drv.addEventListener('touchstart', (e) => {
                     const handle = drv.querySelector('.grip-handle');
                     const rect = handle.getBoundingClientRect();
                     const touch = e.touches[0];
                     
-                    // Only drag if dragging the grip handle icon
                     if (touch.clientX >= rect.left && touch.clientX <= rect.right &&
                         touch.clientY >= rect.top && touch.clientY <= rect.bottom) {
                         drv.classList.add('dragging');
@@ -1083,7 +1007,6 @@
                 }
             });
 
-            // Handle touch drag
             root.addEventListener('touchmove', (e) => {
                 const dragging = document.querySelector('.dragging');
                 if (!dragging) return;
@@ -1101,7 +1024,6 @@
 
         function getDragAfterElement(container, y) {
             const draggableElements = [...container.querySelectorAll('[draggable="true"]:not(.dragging)')];
-
             return draggableElements.reduce((closest, child) => {
                 const box = child.getBoundingClientRect();
                 const offset = y - box.top - box.height / 2;
@@ -1116,7 +1038,6 @@
         function saveCurrentDashboardState() {
             const root = document.getElementById('draggable-dashboard-root');
             if (!root) return;
-
             const cards = [...root.querySelectorAll('[draggable="true"]')];
             dashboardOrder = cards.map(c => c.id);
             saveDashboardOrder();
@@ -1134,7 +1055,6 @@
 
             formSlideSheet.classList.remove('hidden');
 
-            // FEATURE 3: Pre-fill context date based on highlighted calendar day, else use today
             const targetDate = selectedCalendarDate ? new Date(selectedCalendarDate) : new Date();
             const year = targetDate.getFullYear();
             const month = String(targetDate.getMonth() + 1).padStart(2, '0');
@@ -1148,7 +1068,7 @@
 
             formAmount.value = "";
             formRecipient.value = "";
-            formMemo.value = ""; // Default blank
+            formMemo.value = ""; 
             formCategory.selectedIndex = 0;
             amountSourceBadge.textContent = "ระบุข้อมูล หรือ สแกนผ่านสลิป";
             amountSourceBadge.className = "text-[9px] px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-500 font-bold";
@@ -1265,7 +1185,6 @@
                     gridSettings = {};
                 }
             }
-            // Safe-guard defaults to make sure grid never goes missing
             gridSettings = { ...DEFAULT_GRID_SETTINGS, ...gridSettings };
             updateSlidersUI();
         }
@@ -1343,6 +1262,31 @@
             }, 600);
         }
 
+        // --- NEW CLOUD API FUNCTION ---
+        async function fetchTextFromCloudAPI(canvasElement) {
+            return new Promise((resolve, reject) => {
+                canvasElement.toBlob(async (blob) => {
+                    const formData = new FormData();
+                    formData.append("file", blob, "crop_image.jpg");
+
+                    try {
+                        const response = await fetch(CLOUD_API_URL, {
+                            method: "POST",
+                            body: formData
+                        });
+                        
+                        if (!response.ok) throw new Error("API Server Error");
+                        
+                        const result = await response.json();
+                        resolve(result.text || "");
+                    } catch (error) {
+                        console.error("Cloud API Error:", error);
+                        reject(error);
+                    }
+                }, "image/jpeg", 0.95);
+            });
+        }
+
         // ------------------------- SLIP SCAN CONTROLLER -------------------------
         function processFile(file) {
             if (!file.type.startsWith('image/')) {
@@ -1357,22 +1301,21 @@
                 triggerFilePicker.classList.add('hidden');
                 
                 scanStatus.className = "text-xs font-bold py-1.5 px-4 rounded-full inline-block bg-amber-100 text-amber-800 animate-pulse";
-                scanStatus.textContent = "ถอดรหัสรหัส QR Code และวิเคราะห์โครงสร้าง...";
-                detailStatus.textContent = "กำลังวิเคราะห์พิกัดสลิป...";
+                scanStatus.textContent = "เตรียมส่งภาพขึ้น Cloud AI Server...";
+                detailStatus.textContent = "กำลังวิเคราะห์โครงสร้างพิกัดสลิป...";
 
                 const img = new Image();
                 img.onload = function() {
                     currentLoadedImage = img;
-                    analyzeKBankSlipQR(img);
+                    analyzeKBankSlipQR(img); 
                     renderCropsOnly(img);
-                    analyzeKBankSlipOCR(img);
+                    analyzeKBankSlipOCR(img); 
                 };
                 img.src = event.target.result;
             };
             reader.readAsDataURL(file);
         }
 
-        // FEATURE 1: Fixed coordinate overlays using exact image pixel geometry mapping
         function renderCropsOnly(img) {
             const w = img.naturalWidth || img.width;
             const h = img.naturalHeight || img.height;
@@ -1398,7 +1341,6 @@
             drawVisualOverlays(w, h);
         }
 
-        // Draw perfect resolution matching lines
         function drawVisualOverlays(imgWidth, imgHeight) {
             cropOverlayCanvas.width = imgWidth;
             cropOverlayCanvas.height = imgHeight;
@@ -1413,10 +1355,9 @@
                 const rh = imgHeight * (set.h / 100);
 
                 ctx.strokeStyle = color;
-                ctx.lineWidth = Math.max(3, Math.round(imgWidth / 150)); // Scale line stroke with image resolution
+                ctx.lineWidth = Math.max(3, Math.round(imgWidth / 150));
                 ctx.strokeRect(rx, ry, rw, rh);
 
-                // Add background for label text
                 const fontSize = Math.max(12, Math.round(imgWidth / 40));
                 ctx.fillStyle = color;
                 ctx.fillRect(rx, ry - fontSize - 6, Math.min(rw, fontSize * 5), fontSize + 6);
@@ -1474,18 +1415,15 @@
         }
 
         async function analyzeKBankSlipOCR(img) {
-            scanStatus.textContent = "กำลังวิเคราะห์ข้อมูล (Local OCR)...";
+            scanStatus.textContent = "กำลังส่งข้อมูลไปที่ Cloud AI (API)...";
             scanStatus.className = "text-xs font-bold py-1.5 px-4 rounded-full inline-block bg-indigo-100 text-indigo-800 animate-pulse";
-            detailStatus.textContent = "กำลังเตรียมวิเคราะห์กล่องพิกัด...";
+            detailStatus.textContent = "(อาจใช้เวลาปลุกเซิร์ฟเวอร์ฟรีประมาณ 30-60 วินาทีในครั้งแรก)";
 
             try {
-                if (!isOcrReady) {
-                    await preInitializeOCR();
-                }
-
                 const w = img.naturalWidth || img.width;
                 const h = img.naturalHeight || img.height;
 
+                // 1. เตรียมภาพครอป
                 const amX = Math.round(w * (gridSettings.am.x / 100));
                 const amY = Math.round(h * (gridSettings.am.y / 100));
                 const amW = Math.round(w * (gridSettings.am.w / 100));
@@ -1507,10 +1445,9 @@
                 ocrProgressContainer.classList.remove('hidden');
                 ocrProgressBar.style.width = '10%';
 
-                // Scan 1: Date Time
-                detailStatus.textContent = "กำลังวิเคราะห์วันเวลาในภาพคิว...";
-                const dtResult = await ocrWorker.recognize(cropDateTimeCanvas);
-                const rawDateText = dtResult.data.text;
+                // Scan 1: ยิง API ถามวันเวลา
+                detailStatus.textContent = "กำลังให้ Cloud วิเคราะห์วันเวลา... (1/3)";
+                const rawDateText = await fetchTextFromCloudAPI(cropDateTimeCanvas);
                 ocrRawDatetime.value = rawDateText.replace(/\s+/g, ' ').trim();
                 
                 const dateData = parseThaiSlipDateTime(rawDateText);
@@ -1522,32 +1459,27 @@
                     formTime.value = dateData.time;
                     highlightFilledInputs();
                 }
-
                 ocrProgressBar.style.width = '40%';
 
-                // Scan 2: Recipient Name
-                detailStatus.textContent = "กำลังวิเคราะห์ชื่อผู้รับโอน...";
-                const recResult = await ocrWorker.recognize(cropRecipientCanvas);
-                const rawRecipientText = recResult.data.text;
+                // Scan 2: ยิง API ถามชื่อผู้รับโอน
+                detailStatus.textContent = "กำลังให้ Cloud วิเคราะห์ชื่อผู้รับโอน... (2/3)";
+                const rawRecipientText = await fetchTextFromCloudAPI(cropRecipientCanvas);
                 ocrRawRecipient.value = rawRecipientText.replace(/\s+/g, ' ').trim();
                 
                 let cleanedRecipient = cleanRecipientName(rawRecipientText);
                 cleanedRecipient = applyAliasToName(cleanedRecipient);
-                
-                formRecipient.value = cleanedRecipient || "ผู้รับกสิกรไทย";
-
-                // Scan 3: Amount
+                formRecipient.value = cleanedRecipient || "ผู้รับเงินโอน";
                 ocrProgressBar.style.width = '70%';
-                detailStatus.textContent = "กำลังประมวลผลตัวเลขยอดเงิน...";
-                const amtResult = await ocrWorker.recognize(cropAmountCanvas);
-                const rawAmountText = amtResult.data.text;
+
+                // Scan 3: ยิง API ถามยอดเงิน
+                detailStatus.textContent = "กำลังให้ Cloud วิเคราะห์ตัวเลขยอดเงิน... (3/3)";
+                const rawAmountText = await fetchTextFromCloudAPI(cropAmountCanvas);
                 ocrRawAmount.value = rawAmountText.replace(/\s+/g, ' ').trim();
                 
                 const cleanedAmount = extractFloatAmount(rawAmountText);
-
                 if (cleanedAmount) {
                     formAmount.value = parseFloat(cleanedAmount).toFixed(2);
-                    amountSourceBadge.textContent = "วิเคราะห์ยอดสลิปสำเร็จ";
+                    amountSourceBadge.textContent = "วิเคราะห์ผ่าน Cloud สำเร็จ";
                     amountSourceBadge.className = "text-[9px] px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-bold";
                 } else {
                     formAmount.value = "";
@@ -1555,22 +1487,25 @@
                     amountSourceBadge.className = "text-[9px] px-2.5 py-0.5 rounded-full bg-rose-100 text-rose-800 font-bold animate-pulse";
                 }
 
-                // FEATURE 3: Keep Memo Blank
                 formMemo.value = ""; 
-
                 ocrProgressBar.style.width = '100%';
+                
                 scanStatus.className = "text-xs font-bold py-1.5 px-4 rounded-full inline-block bg-emerald-100 text-emerald-800";
-                scanStatus.textContent = "สแกนสำเร็จเรียบร้อย!";
+                scanStatus.textContent = "Cloud สแกนสำเร็จเรียบร้อย!";
                 detailStatus.textContent = "โปรดตรวจสอบความถูกต้องและกดยืนยัน";
 
             } catch (err) {
-                console.error("Focused OCR Engine crash:", err);
-                showCustomAlert('สแกนล้มเหลว', 'เกิดความขัดข้องในการสแกน คุณสามารถป้อนข้อมูลเองได้เลยครับ');
+                console.error("Cloud OCR Fetch Failed:", err);
+                showCustomAlert('Cloud ขัดข้องหรือหลับอยู่', 'เซิร์ฟเวอร์อาจจะกำลังบูท (ลองอัปโหลดซ้ำอีกครั้ง) หรือเซิร์ฟเวอร์ล่ม กรุณาป้อนข้อมูลด้วยตนเองครับ');
+                scanStatus.className = "text-xs font-bold py-1.5 px-4 rounded-full inline-block bg-red-100 text-red-800";
+                scanStatus.textContent = "การเชื่อมต่อ API ล้มเหลว";
+                detailStatus.textContent = "กรุณาใส่ข้อมูลด้วยตนเองชั่วคราว";
             } finally {
-                ocrProgressContainer.classList.add('hidden');
+                setTimeout(() => { ocrProgressContainer.classList.add('hidden'); }, 2000);
             }
         }
 
+        // ย่อฟังก์ชันปรับภาพให้เหมาะกับการส่ง API
         function cropAndRenderToCanvas(sourceImg, x, y, w, h, targetCanvas, applyOcrOptimizations = false) {
             const ctx = targetCanvas.getContext('2d');
             if (applyOcrOptimizations) {
@@ -1843,7 +1778,7 @@
                 date: date,
                 time: time,
                 category: rawCategory,
-                memo: memo // Optional Blank Memo
+                memo: memo 
             };
 
             const isDuplicate = checkDuplicateRecord(record);
