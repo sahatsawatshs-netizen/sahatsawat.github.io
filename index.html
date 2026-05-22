@@ -3,13 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>สมุดบัญชีสแกนสลิป Cloud AI Pro</title>
-    <!-- Tailwind CSS for Modern Premium UI Layout -->
+    <title>สมุดบัญชีสแกนสลิป ออฟไลน์ Pro</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
-    <!-- jsQR for Instant Local QR Code Decoding -->
     <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5.0.5/dist/tesseract.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700;800&display=swap');
         body {
@@ -50,13 +48,11 @@
 </head>
 <body class="max-w-md mx-auto min-h-screen bg-slate-50 flex flex-col shadow-2xl relative pb-20 notebook-grid">
 
-    <!-- Top Navigation Bar -->
     <header class="bg-white border-b border-slate-100 px-4 py-3.5 sticky top-0 z-20 shadow-sm flex justify-between items-center">
         <div class="flex items-center space-x-2">
             <div class="p-1.5 text-slate-500 bg-slate-50 rounded-lg">
                 <i data-lucide="book-open" class="w-5 h-5 text-indigo-600"></i>
             </div>
-            <!-- Month selector header clickable -->
             <button id="current-month-display-header" class="text-base font-extrabold text-slate-800 flex items-center gap-1 hover:bg-slate-50 px-2 py-1 rounded-xl transition-all">
                 <span>พ.ค. 2569</span> <i data-lucide="chevron-down" class="w-4 h-4 text-indigo-600"></i>
             </button>
@@ -66,35 +62,36 @@
                 <i data-lucide="user-cog" class="w-4.5 h-4.5"></i>
                 <span id="rules-count-badge" class="absolute top-1 right-1 w-2 h-2 bg-indigo-600 rounded-full hidden"></span>
             </button>
-            <button id="export-csv-btn" class="p-2 text-slate-500 hover:bg-slate-100 rounded-xl" title="ส่งออก CSV">
+            
+            <input type="file" id="import-csv-input" accept=".csv" class="hidden">
+            <button id="import-csv-btn" class="p-2 text-indigo-500 hover:bg-indigo-50 rounded-xl" title="นำเข้า CSV">
+                <i data-lucide="upload" class="w-4.5 h-4.5"></i>
+            </button>
+
+            <button id="export-csv-btn" class="p-2 text-emerald-500 hover:bg-emerald-50 rounded-xl" title="บันทึกส่งออก CSV">
                 <i data-lucide="download" class="w-4.5 h-4.5"></i>
             </button>
         </div>
     </header>
 
-    <!-- Main Dynamic Content Frame -->
     <main class="flex-1 p-4 overflow-y-auto space-y-4 pb-20">
 
-        <!-- Top Overview -->
         <div class="bg-white p-4 rounded-3xl border border-slate-100 shadow-sm grid grid-cols-2 gap-4">
             <div class="flex flex-col">
                 <span class="text-xs font-semibold text-slate-400">รายจ่ายรวมเดือนนี้</span>
                 <span id="stat-monthly-expense" class="text-xl font-extrabold text-red-600 mt-1">0.00 ฿</span>
             </div>
             <div class="flex flex-col border-l border-slate-100 pl-4">
-                <span class="text-xs font-semibold text-slate-400">รายการบันทึกแล้ว</span>
+                <span class="text-xs font-semibold text-slate-400">รายการในระบบ</span>
                 <span id="stat-monthly-count" class="text-xl font-extrabold text-slate-800 mt-1">0 รายการ</span>
             </div>
         </div>
 
-        <!-- Tab Content Area -->
         <div id="tab-content-container" class="space-y-4">
-            <!-- Content will be injected dynamically -->
-        </div>
+            </div>
 
     </main>
 
-    <!-- NAVIGATION SYSTEM (Bottom Tabs) -->
     <nav class="fixed bottom-0 max-w-md w-full bg-white border-t border-slate-100 px-3 py-2 flex justify-around items-center z-30 shadow-[0_-2px_10px_rgba(0,0,0,0.03)]">
         <button id="tab-list-btn" class="flex flex-col items-center gap-1 text-indigo-600 font-bold text-[10px] transition-all">
             <i data-lucide="list-ordered" class="w-5 h-5"></i>
@@ -110,14 +107,12 @@
         </button>
     </nav>
 
-    <!-- FLOATING ADD BUTTON -->
     <div class="fixed bottom-14 inset-x-0 flex justify-center z-30 pointer-events-none">
         <button id="floating-plus-btn" class="pointer-events-auto w-12 h-12 rounded-full bg-gradient-to-tr from-indigo-600 to-indigo-500 text-white flex items-center justify-center shadow-lg hover:scale-105 active:scale-95 transition-all">
             <i data-lucide="plus" class="w-6 h-6"></i>
         </button>
     </div>
 
-    <!-- MAIN CONTROL FORM SLIDE SHEET -->
     <div id="form-slide-sheet" class="hidden fixed inset-0 z-40 bg-black/60 flex flex-col justify-end">
         <div class="bg-white rounded-t-[2.5rem] p-5 max-h-[90vh] overflow-y-auto flex flex-col space-y-4 shadow-2xl relative custom-scrollbar">
             <div class="w-12 h-1.5 bg-slate-200 rounded-full mx-auto cursor-pointer" id="close-sheet-handle"></div>
@@ -132,7 +127,6 @@
                 </button>
             </div>
 
-            <!-- SLIP SCANNER WITH CALIBRATOR -->
             <div id="content-mode-scan" class="space-y-4">
                 <div id="batch-queue-badge" class="hidden w-full bg-indigo-50 text-indigo-700 text-[10px] font-extrabold p-2 rounded-xl flex justify-between items-center">
                     <span>คิวตรวจสอบรูปภาพสลิป: <span id="batch-current-num">1</span> จากทั้งหมด <span id="batch-total-num">1</span> ใบ</span>
@@ -143,18 +137,16 @@
                     <div class="w-9 h-9 bg-indigo-50 text-indigo-600 rounded-full flex items-center justify-center">
                         <i data-lucide="scan" class="w-4.5 h-4.5"></i>
                     </div>
-                    <span class="text-xs font-bold text-slate-700">สแกนสลิปผ่าน Cloud AI (เลือกได้หลายรูป)</span>
-                    <span class="text-[9px] text-slate-400">หรือระบุข้อมูลด้วยตนเองที่แบบฟอร์มด้านล่างได้ทันที</span>
+                    <span class="text-xs font-bold text-slate-700">สแกนสลิปอัตโนมัติ (เลือกภาพสลิปได้ทีละหลายรูป)</span>
+                    <span class="text-[9px] text-slate-400">รูปภาพจะไม่ถูกบันทึกลงในระบบเพื่อประหยัดพื้นที่</span>
                 </div>
                 
                 <input type="file" id="slip-file-input" accept="image/*" class="hidden" multiple>
 
-                <!-- Slip Upload Preview Area -->
                 <div id="image-preview-container" class="hidden space-y-3">
                     <div class="relative w-full max-w-xs mx-auto text-center">
                         <div class="relative inline-block mx-auto overflow-hidden rounded-xl border">
                             <img id="image-preview" src="#" alt="สลิปโอนเงิน" class="max-h-64 object-contain mx-auto block">
-                            <!-- Canvas overlays matching the image geometry -->
                             <canvas id="crop-overlay-canvas" class="absolute inset-0 w-full h-full pointer-events-none"></canvas>
                         </div>
                         <div class="flex gap-2 justify-center mt-2">
@@ -167,33 +159,31 @@
                         </div>
                     </div>
 
-                    <!-- Live Crop Preview Boxes -->
                     <div class="bg-slate-50 p-2.5 rounded-xl border border-slate-100 space-y-3 text-left">
                         <span class="text-[10px] font-bold text-slate-500 flex items-center gap-1">
-                            <i data-lucide="cloud-lightning" class="w-3.5 h-3.5 text-indigo-500"></i>
-                            ตัวอย่างภาพครอปและข้อความถอดรหัส (Cloud AI)
+                            <i data-lucide="eye" class="w-3.5 h-3.5 text-indigo-500"></i>
+                            ตัวอย่างภาพครอปและข้อความถอดรหัส
                         </span>
                         
                         <div class="grid grid-cols-3 gap-2 text-center text-[8px] text-slate-400 font-bold">
                             <div class="bg-white p-1 rounded-lg border flex flex-col justify-between min-h-[90px]">
                                 <span class="block mb-1 text-indigo-600">1. วันเวลา (Top)</span>
                                 <canvas id="crop-datetime-canvas" class="mx-auto border bg-slate-100 max-h-8 max-w-full rounded mb-1"></canvas>
-                                <input type="text" id="ocr-raw-datetime" class="w-full text-center border rounded py-0.5 px-1 font-semibold text-slate-700 text-[9px] bg-slate-50" readonly placeholder="รอส่ง API...">
+                                <input type="text" id="ocr-raw-datetime" class="w-full text-center border rounded py-0.5 px-1 font-semibold text-slate-700 text-[9px] bg-slate-50" readonly placeholder="กำลังอ่าน...">
                             </div>
                             <div class="bg-white p-1 rounded-lg border flex flex-col justify-between min-h-[90px]">
                                 <span class="block mb-1 text-indigo-600">2. ชื่อผู้รับ (Middle)</span>
                                 <canvas id="crop-recipient-canvas" class="mx-auto border bg-slate-100 max-h-8 max-w-full rounded mb-1"></canvas>
-                                <input type="text" id="ocr-raw-recipient" class="w-full text-center border rounded py-0.5 px-1 font-semibold text-slate-700 text-[9px] bg-slate-50" readonly placeholder="รอส่ง API...">
+                                <input type="text" id="ocr-raw-recipient" class="w-full text-center border rounded py-0.5 px-1 font-semibold text-slate-700 text-[9px] bg-slate-50" readonly placeholder="กำลังอ่าน...">
                             </div>
                             <div class="bg-white p-1 rounded-lg border flex flex-col justify-between min-h-[90px]">
                                 <span class="block mb-1 text-indigo-600">3. ยอดเงิน (Bottom)</span>
                                 <canvas id="crop-amount-canvas" class="mx-auto border bg-slate-100 max-h-8 max-w-full rounded mb-1"></canvas>
-                                <input type="text" id="ocr-raw-amount" class="w-full text-center border rounded py-0.5 px-1 font-semibold text-slate-700 text-[9px] bg-slate-50" readonly placeholder="รอส่ง API...">
+                                <input type="text" id="ocr-raw-amount" class="w-full text-center border rounded py-0.5 px-1 font-semibold text-slate-700 text-[9px] bg-slate-50" readonly placeholder="กำลังอ่าน...">
                             </div>
                         </div>
                     </div>
 
-                    <!-- Calibration settings sliders panel -->
                     <div id="calibration-controls" class="hidden bg-indigo-50/70 p-3.5 rounded-xl border border-indigo-100 space-y-3 text-left">
                         <div class="flex justify-between items-center border-b border-indigo-100 pb-1.5">
                             <span class="text-[10px] font-bold text-indigo-800 flex items-center gap-1">
@@ -241,7 +231,6 @@
                 </div>
             </div>
 
-            <!-- SHARED DETAIL CONFIRMATION FORM -->
             <div class="space-y-3 pt-2">
                 <div>
                     <div class="flex justify-between items-center mb-1">
@@ -290,13 +279,12 @@
 
                 <button id="save-record-btn" class="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold transition-all text-xs shadow-md flex items-center justify-center gap-1.5">
                     <i data-lucide="check-circle" class="w-4 h-4"></i>
-                    <span id="save-btn-text">บันทึกข้อมูลลงสมุดบัญชี</span>
+                    <span id="save-btn-text">บันทึกลงหน่วยความจำ (RAM)</span>
                 </button>
             </div>
         </div>
     </div>
 
-    <!-- MONTH PICKER INTERACTIVE OVERLAY MODAL -->
     <div id="month-picker-modal" class="hidden fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4">
         <div class="bg-white rounded-3xl p-6 w-full max-w-sm space-y-4 shadow-2xl">
             <div class="flex justify-between items-center border-b pb-3">
@@ -322,7 +310,6 @@
         </div>
     </div>
 
-    <!-- RECIPIENT ALIAS RULES MANAGER MODAL -->
     <div id="alias-rules-modal" class="hidden fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4">
         <div class="bg-white rounded-3xl p-5 w-full max-w-sm space-y-4 shadow-2xl flex flex-col max-h-[85vh]">
             <div class="flex justify-between items-center border-b pb-3 shrink-0">
@@ -349,7 +336,6 @@
         </div>
     </div>
 
-    <!-- DUPLICATE CONFIRMATION MODAL -->
     <div id="duplicate-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
         <div class="bg-white rounded-3xl p-6 max-w-xs w-full text-center space-y-4 shadow-2xl">
             <div class="w-12 h-12 rounded-full bg-amber-50 text-amber-600 flex items-center justify-center mx-auto">
@@ -357,7 +343,7 @@
             </div>
             <div>
                 <h4 class="text-base font-bold text-slate-800">แจ้งเตือนข้อมูลซ้ำซ้อน</h4>
-                <p class="text-xs text-slate-500 mt-2">พบธุรกรรมที่มี ยอดเงิน, ชื่อผู้รับโอน และวันเวลา ตรงกับที่บันทึกไว้ในคลังบัญชีเดิมเรียบร้อยแล้ว ต้องการบันทึกซ้ำหรือไม่?</p>
+                <p class="text-xs text-slate-500 mt-2">พบธุรกรรมที่มี ยอดเงิน, ชื่อผู้รับโอน และวันเวลา ตรงกับที่มีอยู่แล้ว ต้องการบันทึกซ้ำหรือไม่?</p>
             </div>
             <div class="flex gap-2.5">
                 <button id="cancel-duplicate-btn" class="flex-1 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl font-bold text-xs">
@@ -370,7 +356,6 @@
         </div>
     </div>
 
-    <!-- UI Alert Modal -->
     <div id="alert-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 transition-all">
         <div class="bg-white rounded-3xl p-6 max-w-xs w-full text-center space-y-4 shadow-2xl scale-100">
             <div class="w-12 h-12 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center mx-auto" id="alert-icon">
@@ -386,46 +371,40 @@
         </div>
     </div>
 
-    <!-- Hidden canvases -->
     <canvas id="qr-canvas" class="hidden"></canvas>
     <canvas id="util-canvas" class="hidden"></canvas>
 
     <script>
-        // --- API CONFIGURATION ---
-        const CLOUD_API_URL = "https://cran3lz-thai-ocr-api.hf.space/extract-text/";
-
-        // Store Application Records
+        // ------------------------- FEATURE: OFFLINE RAM STORAGE -------------------------
+        // เปลี่ยนระบบเป็นเริ่มจาก 0 เสมอ ไม่โหลดจากเบราว์เซอร์
         let expenses = [];
+        
         let recipientRules = {}; 
+        let ocrWorker = null;
+        let isOcrReady = false;
         let currentLoadedImage = null;
         
         // Month filter states
-        let calendarYear = 2026;
-        let calendarMonth = 4; // May (0-indexed)
+        let calendarYear = new Date().getFullYear();
+        let calendarMonth = new Date().getMonth(); 
         let scanTimeout = null;
-        let currentTab = 'list'; // 'list', 'calendar', 'chart'
-        
-        // Context storage for Calendar & List
+        let currentTab = 'list'; 
         let selectedCalendarDate = null; 
         
-        // Queue state
         let fileBatchQueue = [];
         let batchIndex = 0;
         let editingRecordId = null;
         let pendingSaveRecord = null;
-        let tempPickerYear = 2026;
+        let tempPickerYear = new Date().getFullYear();
 
-        // Custom order for Drag and Drop cards
         let dashboardOrder = ['stats-card', 'donut-card', 'drilldown-card'];
 
-        // KBank coordinates settings fallback
         const DEFAULT_GRID_SETTINGS = {
             dt: { x: 5, y: 7, w: 61, h: 8 },
             rc: { x: 21, y: 42, w: 62, h: 8 },
             am: { x: 10, y: 79, w: 54, h: 6 }
         };
-
-        let gridSettings = {};
+        let gridSettings = { ...DEFAULT_GRID_SETTINGS };
 
         // DOM elements mapping
         const currentMonthDisplayHeader = document.getElementById('current-month-display-header');
@@ -450,7 +429,6 @@
         const cropOverlayCanvas = document.getElementById('crop-overlay-canvas');
         const removeImageBtn = document.getElementById('remove-image-btn');
         
-        // Form inputs
         const formAmount = document.getElementById('form-amount');
         const formRecipient = document.getElementById('form-recipient');
         const formDate = document.getElementById('form-date');
@@ -460,7 +438,6 @@
         const saveRecordBtn = document.getElementById('save-record-btn');
         const amountSourceBadge = document.getElementById('amount-source-badge');
 
-        // OCR preview elements
         const ocrRawDatetime = document.getElementById('ocr-raw-datetime');
         const ocrRawRecipient = document.getElementById('ocr-raw-recipient');
         const ocrRawAmount = document.getElementById('ocr-raw-amount');
@@ -472,13 +449,14 @@
         const cropRecipientCanvas = document.getElementById('crop-recipient-canvas');
         const cropAmountCanvas = document.getElementById('crop-amount-canvas');
 
-        // Calibration
         const toggleCalibrationBtn = document.getElementById('toggle-calibration-btn');
         const calibrationControls = document.getElementById('calibration-controls');
         const resetCalibrationBtn = document.getElementById('reset-calibration-btn');
 
-        // Utils & Modals
         const exportCsvBtn = document.getElementById('export-csv-btn');
+        const importCsvBtn = document.getElementById('import-csv-btn');
+        const importCsvInput = document.getElementById('import-csv-input');
+        
         const alertModal = document.getElementById('alert-modal');
         const alertTitle = document.getElementById('alert-title');
         const alertMessage = document.getElementById('alert-message');
@@ -488,7 +466,6 @@
         const cancelDuplicateBtn = document.getElementById('cancel-duplicate-btn');
         const confirmDuplicateBtn = document.getElementById('confirm-duplicate-btn');
 
-        // Month selector
         const monthPickerModal = document.getElementById('month-picker-modal');
         const closeMonthPickerBtn = document.getElementById('close-month-picker-btn');
         const prevPickerYear = document.getElementById('prev-picker-year');
@@ -496,13 +473,11 @@
         const pickerYearDisplay = document.getElementById('picker-year-display');
         const monthsGridContainer = document.getElementById('months-grid-container');
 
-        // Batch Queue
         const batchQueueBadge = document.getElementById('batch-queue-badge');
         const batchCurrentNum = document.getElementById('batch-current-num');
         const batchTotalNum = document.getElementById('batch-total-num');
         const skipBatchItemBtn = document.getElementById('skip-batch-item-btn');
 
-        // Alias Rules Manager
         const aliasRulesBtn = document.getElementById('alias-rules-btn');
         const aliasRulesModal = document.getElementById('alias-rules-modal');
         const closeAliasRulesBtn = document.getElementById('close-alias-rules-btn');
@@ -512,22 +487,151 @@
         const rulesListContainer = document.getElementById('rules-list-container');
         const rulesCountBadge = document.getElementById('rules-count-badge');
 
+        // ------------------------- แจ้งเตือนเมื่อปิดหน้าเว็บ -------------------------
+        window.addEventListener('beforeunload', function (e) {
+            if (expenses.length > 0) {
+                e.preventDefault();
+                e.returnValue = ''; // บังคับให้เบราว์เซอร์โชว์ Popup เตือน
+            }
+        });
+
         // ------------------------- INITIALIZATION -------------------------
         window.addEventListener('DOMContentLoaded', () => {
             lucide.createIcons();
-            loadGridSettings();
-            loadExpenses();
-            loadAliasRules();
-            loadDashboardOrder();
-            
+            updateSlidersUI(); // No localStorage for grid
             updateDashboard();
+            preInitializeOCR();
             setupCalibrationListeners();
             setupFormListeners();
             setupMonthPicker();
             setupDuplicateConfirmHandlers();
             setupTabNavigation();
             setupAliasRulesManager();
+            setupImportExport();
         });
+
+        // ------------------------- IMPORT / EXPORT CSV -------------------------
+        function setupImportExport() {
+            // EXPORT
+            exportCsvBtn.addEventListener('click', () => {
+                if (expenses.length === 0) {
+                    showCustomAlert('ไม่มีข้อมูล', 'คุณยังไม่มีข้อมูลรายจ่ายให้ส่งออกครับ');
+                    return;
+                }
+
+                let csvContent = "data:text/csv;charset=utf-8,\uFEFF";
+                csvContent += "รหัสรายการ,วันที่,เวลา,หมวดหมู่,ชื่อผู้รับโอน/รายการ,จำนวนเงิน(บาท),บันทึกช่วยจำ\n";
+
+                expenses.forEach(x => {
+                    const formattedRow = [
+                        x.id,
+                        x.date,
+                        x.time,
+                        `"${x.category.replace(/"/g, '""')}"`,
+                        `"${x.recipient.replace(/"/g, '""')}"`,
+                        x.amount.toFixed(2),
+                        `"${(x.memo || '').replace(/"/g, '""')}"`
+                    ].join(",");
+                    csvContent += formattedRow + "\n";
+                });
+
+                const encodedUri = encodeURI(csvContent);
+                const downloadLink = document.createElement("a");
+                downloadLink.setAttribute("href", encodedUri);
+                downloadLink.setAttribute("download", `expenses_backup_${new Date().toISOString().slice(0, 10)}.csv`);
+                document.body.appendChild(downloadLink);
+                downloadLink.click();
+                document.body.removeChild(downloadLink);
+            });
+
+            // IMPORT
+            importCsvBtn.addEventListener('click', () => {
+                importCsvInput.click();
+            });
+
+            importCsvInput.addEventListener('change', (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+
+                const reader = new FileReader();
+                reader.onload = function(evt) {
+                    parseCSVToExpenses(evt.target.result);
+                };
+                reader.readAsText(file);
+                // Clear input so same file can be selected again if needed
+                importCsvInput.value = ''; 
+            });
+        }
+
+        function parseCSVToExpenses(csvText) {
+            const lines = csvText.split('\n');
+            let importedCount = 0;
+
+            for (let i = 1; i < lines.length; i++) { // ข้ามบรรทัดแรก (Header)
+                const line = lines[i].trim();
+                if (!line) continue;
+
+                // Regex พิเศษสำหรับแยก CSV ที่มีเครื่องหมาย " คั่นอยู่ได้อย่างถูกต้อง
+                const row = line.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
+
+                if (row.length >= 6) {
+                    const id = row[0].replace(/^"|"$/g, '');
+                    
+                    // ป้องกันการอิมพอร์ตข้อมูลซ้ำซ้อน
+                    if (!expenses.find(x => x.id === id)) {
+                        expenses.push({
+                            id: id,
+                            date: row[1].replace(/^"|"$/g, ''),
+                            time: row[2].replace(/^"|"$/g, ''),
+                            category: row[3].replace(/^"|"$/g, ''),
+                            recipient: row[4].replace(/^"|"$/g, ''),
+                            amount: parseFloat(row[5].replace(/^"|"$/g, '')),
+                            memo: row[6] ? row[6].replace(/^"|"$/g, '') : ''
+                        });
+                        importedCount++;
+                    }
+                }
+            }
+
+            if (importedCount > 0) {
+                updateDashboard();
+                showCustomAlert('นำเข้าสำเร็จ!', `โหลดข้อมูลเข้าสู่ความจำ (RAM) แล้ว ${importedCount} รายการ \n\nอย่าลืม Export ก่อนปิดแอปนะครับ`, true);
+            } else {
+                showCustomAlert('ไม่มีข้อมูลใหม่', 'ไม่พบรายการใหม่ หรือไฟล์ CSV อาจจะไม่ถูกต้องครับ');
+            }
+        }
+
+        // ------------------------- PRELOAD SENSORS & OCR (TESSERACT V5) -------------------------
+        async function preInitializeOCR() {
+            if (isOcrReady) return;
+            try {
+                if (typeof Tesseract === "undefined") {
+                    await new Promise((resolve) => {
+                        const checkInterval = setInterval(() => {
+                            if (typeof Tesseract !== "undefined") {
+                                clearInterval(checkInterval);
+                                resolve();
+                            }
+                        }, 100);
+                    });
+                }
+                
+                ocrWorker = await Tesseract.createWorker('tha+eng', 1, {
+                    logger: m => {
+                        if (m.status === 'recognizing text' && scanStatus.textContent.includes('Local OCR')) {
+                            const percent = Math.round(m.progress * 100);
+                            ocrProgressBar.style.width = percent + '%';
+                            detailStatus.textContent = `กำลังวิเคราะห์ประมวลภาพสลิป: ${percent}%`;
+                        }
+                    }
+                });
+                
+                isOcrReady = true;
+                console.log("Tesseract v5 Ready");
+            } catch (err) {
+                console.error("Local Tesseract Worker Load Error:", err);
+            }
+        }
 
         // ------------------------- TAB NAVIGATION -------------------------
         function setupTabNavigation() {
@@ -727,21 +831,6 @@
         };
 
         // ------------------------- DRAG & DROP DASHBOARD COMPILATION -------------------------
-        function loadDashboardOrder() {
-            const stored = localStorage.getItem('dashboard_cards_sequence_v2');
-            if (stored) {
-                try {
-                    dashboardOrder = JSON.parse(stored);
-                } catch (e) {
-                    dashboardOrder = ['stats-card', 'donut-card', 'drilldown-card'];
-                }
-            }
-        }
-
-        function saveDashboardOrder() {
-            localStorage.setItem('dashboard_cards_sequence_v2', JSON.stringify(dashboardOrder));
-        }
-
         function createStatsCard(records) {
             const card = document.createElement('div');
             card.id = 'stats-card';
@@ -793,7 +882,7 @@
 
             let svgContent = '';
             let cumulativePercent = 0;
-            const radius = 30;
+            const radius = 35; 
             const circumference = 2 * Math.PI * radius;
 
             const categoryColors = {
@@ -810,21 +899,23 @@
 
             if (totalSum === 0) {
                 svgContent = `
-                    <circle cx="50" cy="50" r="${radius}" fill="transparent" stroke="#e2e8f0" stroke-width="12"></circle>
-                    <text x="50" y="54" text-anchor="middle" font-size="8" font-weight="extrabold" fill="#cbd5e1">0%</text>
+                    <circle cx="50" cy="50" r="${radius}" fill="transparent" stroke="#e2e8f0" stroke-width="20"></circle>
+                    <text x="50" y="54" text-anchor="middle" font-size="9" font-weight="extrabold" fill="#cbd5e1">0%</text>
                 `;
             } else {
                 entries.forEach(([cat, val]) => {
                     const percent = val / totalSum;
                     const strokeLength = percent * circumference;
-                    const strokeOffset = circumference - (cumulativePercent * circumference);
+                    const offset = -cumulativePercent * circumference;
                     const strokeColor = categoryColors[cat] || "#64748b";
+                    
+                    const overlap = entries.length > 1 ? 1 : 0; 
 
                     svgContent += `
                         <circle cx="50" cy="50" r="${radius}" fill="transparent" 
-                                stroke="${strokeColor}" stroke-width="12" 
-                                stroke-dasharray="${strokeLength} ${circumference}" 
-                                stroke-dashoffset="${strokeOffset}" 
+                                stroke="${strokeColor}" stroke-width="20" 
+                                stroke-dasharray="${strokeLength + overlap} ${circumference}" 
+                                stroke-dashoffset="${offset}" 
                                 transform="rotate(-90 50 50)"></circle>
                     `;
                     cumulativePercent += percent;
@@ -835,8 +926,8 @@
             entries.slice(0, 3).forEach(([cat, val]) => {
                 const color = categoryColors[cat] || "#64748b";
                 miniLegendHTML += `
-                    <div class="flex items-center gap-1 text-[9px] font-bold text-slate-500">
-                        <span class="w-2 h-2 rounded-full shrink-0" style="background-color: ${color}"></span>
+                    <div class="flex items-center gap-1.5 text-[10px] font-bold text-slate-500">
+                        <span class="w-2.5 h-2.5 rounded-full shrink-0" style="background-color: ${color}"></span>
                         <span class="truncate">${cat} (${Math.round((val / totalSum) * 100)}%)</span>
                     </div>
                 `;
@@ -851,16 +942,15 @@
                         <i data-lucide="pie-chart" class="w-4 h-4 text-indigo-600"></i> กราฟสัดส่วนรายจ่ายในเดือน
                     </span>
                     <div class="flex items-center justify-around gap-4 py-2">
-                        <div class="w-24 h-24 shrink-0">
+                        <div class="w-32 h-32 shrink-0 drop-shadow-sm">
                             <svg viewBox="0 0 100 100" class="w-full h-full">
-                                <circle cx="50" cy="50" r="${radius}" fill="transparent" stroke="#f1f5f9" stroke-width="12"></circle>
+                                <circle cx="50" cy="50" r="${radius}" fill="transparent" stroke="#f1f5f9" stroke-width="20"></circle>
                                 ${svgContent}
-                                <circle cx="50" cy="50" r="23" fill="#ffffff"></circle>
                             </svg>
                         </div>
                         <div class="flex-1 space-y-1.5 min-w-0">
-                            <span class="text-[9px] font-bold text-slate-400 uppercase tracking-wider block">สัดส่วนหลัก</span>
-                            ${miniLegendHTML || '<p class="text-[9px] text-slate-400">ยังไม่มีข้อมูลใช้จ่าย</p>'}
+                            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">สัดส่วนหลัก</span>
+                            ${miniLegendHTML || '<p class="text-[10px] text-slate-400">ยังไม่มีข้อมูลใช้จ่าย</p>'}
                         </div>
                     </div>
                 </div>
@@ -910,16 +1000,33 @@
 
                     let subRowsHTML = '';
                     data.items.forEach(item => {
+                        let iconClass = "bg-slate-50 text-slate-500";
+                        let iconName = "receipt";
+                        if (item.category === "อาหาร") { iconClass = "bg-amber-50 text-amber-500"; iconName = "utensils"; }
+                        else if (item.category === "การเดินทาง") { iconClass = "bg-blue-50 text-blue-500"; iconName = "car"; }
+                        else if (item.category === "ช้อปปิ้ง") { iconClass = "bg-purple-50 text-purple-500"; iconName = "shopping-bag"; }
+                        else if (item.category === "ที่อยู่อาศัย") { iconClass = "bg-rose-50 text-rose-500"; iconName = "home"; }
+                        else if (item.category === "ความบันเทิง") { iconClass = "bg-teal-50 text-teal-500"; iconName = "clapperboard"; }
+                        else if (item.category === "จัดการ") { iconClass = "bg-sky-50 text-sky-500"; iconName = "smile"; }
+
                         subRowsHTML += `
-                            <div onclick="event.stopPropagation(); startEditExpenseItem('${item.id}')" class="flex items-center justify-between p-2 hover:bg-white border border-transparent hover:border-slate-100 rounded-2xl cursor-pointer transition-all mt-1 bg-white/40">
-                                <div class="min-w-0 flex-1">
-                                    <p class="text-[10px] font-bold text-slate-800 truncate">${item.recipient}</p>
-                                    <p class="text-[8px] text-slate-400">${formatThaiCalendar(item.date)} • ${item.time} น.</p>
+                            <div onclick="event.stopPropagation(); startEditExpenseItem('${item.id}')" class="flex items-center justify-between gap-3 cursor-pointer hover:bg-slate-100 p-2.5 rounded-2xl transition-all mt-1 bg-white border border-slate-50 shadow-sm">
+                                <div class="flex items-center gap-3.5 min-w-0 flex-1">
+                                    <div class="w-10 h-10 rounded-full ${iconClass} flex items-center justify-center shrink-0">
+                                        <i data-lucide="${iconName}" class="w-4.5 h-4.5"></i>
+                                    </div>
+                                    <div class="min-w-0 flex-1 space-y-0.5">
+                                        <p class="text-[11px] font-extrabold text-slate-800 truncate">${item.recipient}</p>
+                                        <p class="text-[9px] text-slate-400 font-medium">${formatThaiCalendar(item.date)} • ${item.time} น.</p>
+                                        ${item.memo ? `<div class="flex items-center mt-1"><span class="text-[9px] text-slate-400 italic truncate max-w-[120px]">${item.memo}</span></div>` : ''}
+                                    </div>
                                 </div>
-                                <div class="flex items-center gap-1 shrink-0 ml-1">
-                                    <span class="text-[10px] font-extrabold text-slate-700">-฿${item.amount.toLocaleString()}</span>
-                                    <button onclick="event.stopPropagation(); removeExpenseItem('${item.id}')" class="text-slate-300 hover:text-red-500 p-1" title="ลบ">
-                                        <i data-lucide="trash-2" class="w-3 h-3"></i>
+                                <div class="flex items-center gap-1.5 shrink-0">
+                                    <div class="text-right">
+                                        <span class="text-xs font-extrabold text-slate-800">-฿${item.amount.toLocaleString('th-TH', { minimumFractionDigits: 0 })}</span>
+                                    </div>
+                                    <button onclick="event.stopPropagation(); removeExpenseItem('${item.id}')" class="text-slate-300 hover:text-red-500 p-2 transition-colors ml-1" title="ลบรายการ">
+                                        <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
                                     </button>
                                 </div>
                             </div>
@@ -928,7 +1035,6 @@
 
                     breakdownHTML += `
                         <div class="border border-slate-100 rounded-2xl overflow-hidden bg-slate-50/50">
-                            <!-- Header toggler -->
                             <button onclick="toggleDrilldownAccordion(event, '${cat}')" class="w-full flex justify-between items-center p-3 text-left hover:bg-slate-100/50 transition-all font-bold text-xs">
                                 <span class="flex items-center gap-1.5 text-slate-800">
                                     <span class="w-2 h-2 rounded-full ${badgeColor}"></span>
@@ -940,8 +1046,7 @@
                                     <i data-lucide="chevron-down" id="chevron-${cat}" class="w-4 h-4 text-slate-400 transition-transform duration-200"></i>
                                 </div>
                             </button>
-                            <!-- Collapsible container -->
-                            <div id="accordion-panel-${cat}" class="hidden p-2 border-t border-slate-100 space-y-1">
+                            <div id="accordion-panel-${cat}" class="hidden p-2 border-t border-slate-100 bg-slate-100/30">
                                 ${subRowsHTML}
                             </div>
                         </div>
@@ -957,7 +1062,7 @@
                     <span class="text-xs font-extrabold text-slate-800 flex items-center gap-1 border-b pb-2">
                         <i data-lucide="list-collapse" class="w-4 h-4 text-indigo-600"></i> แจกแจงรายการรายหมวดหมู่
                     </span>
-                    <div class="space-y-2 max-h-72 overflow-y-auto custom-scrollbar pr-0.5">
+                    <div class="space-y-2 max-h-80 overflow-y-auto custom-scrollbar pr-0.5">
                         ${breakdownHTML}
                     </div>
                 </div>
@@ -981,7 +1086,6 @@
             }
         };
 
-        // ------------------------- DRAG & DROP EVENT LISTENERS -------------------------
         function setupDragAndDrop() {
             const root = document.getElementById('draggable-dashboard-root');
             if (!root) return;
@@ -1064,7 +1168,8 @@
             if (!root) return;
             const cards = [...root.querySelectorAll('[draggable="true"]')];
             dashboardOrder = cards.map(c => c.id);
-            saveDashboardOrder();
+            // We can still use localStorage for visual UI preferences like dashboard order & settings
+            localStorage.setItem('dashboard_cards_sequence_v2', JSON.stringify(dashboardOrder));
         }
 
         // ------------------------- POPUP FORMS TRIGGER -------------------------
@@ -1074,7 +1179,7 @@
                 <i data-lucide="plus-circle" class="w-4 h-4 text-indigo-600"></i>
                 เพิ่มรายการรายจ่ายใหม่
             `;
-            document.getElementById('save-btn-text').textContent = "บันทึกข้อมูลลงสมุดบัญชี";
+            document.getElementById('save-btn-text').textContent = "บันทึกข้อมูลลงหน่วยความจำ (RAM)";
             lucide.createIcons();
 
             formSlideSheet.classList.remove('hidden');
@@ -1199,8 +1304,8 @@
         }
         closeAlertBtn.addEventListener('click', () => alertModal.classList.add('hidden'));
 
-        // ------------------------- SLIDE / CROP CALIBRATION -------------------------
         function loadGridSettings() {
+            // UI Preferences can stay in localStorage safely
             const stored = localStorage.getItem('kbank_grid_calibration_settings');
             if (stored) {
                 try {
@@ -1210,7 +1315,6 @@
                 }
             }
             gridSettings = { ...DEFAULT_GRID_SETTINGS, ...gridSettings };
-            updateSlidersUI();
         }
 
         function updateSlidersUI() {
@@ -1226,10 +1330,6 @@
                     }
                 });
             });
-        }
-
-        function saveGridSettings() {
-            localStorage.setItem('kbank_grid_calibration_settings', JSON.stringify(gridSettings));
         }
 
         function setupCalibrationListeners() {
@@ -1252,7 +1352,7 @@
                             if (currentLoadedImage) {
                                 renderCropsOnly(currentLoadedImage);
                             }
-                            saveGridSettings();
+                            localStorage.setItem('kbank_grid_calibration_settings', JSON.stringify(gridSettings));
                         });
 
                         el.addEventListener('change', () => {
@@ -1268,7 +1368,7 @@
                 e.preventDefault();
                 e.stopPropagation();
                 gridSettings = JSON.parse(JSON.stringify(DEFAULT_GRID_SETTINGS));
-                saveGridSettings();
+                localStorage.setItem('kbank_grid_calibration_settings', JSON.stringify(gridSettings));
                 updateSlidersUI();
                 if (currentLoadedImage) {
                     renderCropsOnly(currentLoadedImage);
@@ -1285,494 +1385,6 @@
                 }
             }, 600);
         }
-
-        // --- NEW CLOUD API FUNCTION (COMPRESSED JPEG FOR SPEED) ---
-        async function fetchTextFromCloudAPI(canvasElement) {
-            return new Promise((resolve, reject) => {
-                // บีบอัดรูปเป็น JPEG 85% เพื่อลดขนาดไฟล์ อัปโหลดไวขึ้นแต่ยังคงความชัด
-                canvasElement.toBlob(async (blob) => {
-                    const formData = new FormData();
-                    formData.append("file", blob, "crop_image.jpg");
-
-                    try {
-                        const response = await fetch(CLOUD_API_URL, {
-                            method: "POST",
-                            body: formData
-                        });
-                        
-                        if (!response.ok) throw new Error("API Server Error");
-                        
-                        const result = await response.json();
-                        resolve(result.text || "");
-                    } catch (error) {
-                        console.error("Cloud API Error:", error);
-                        reject(error);
-                    }
-                }, "image/jpeg", 0.85); 
-            });
-        }
-
-        // ------------------------- SLIP SCAN CONTROLLER -------------------------
-        function processFile(file) {
-            if (!file.type.startsWith('image/')) {
-                showCustomAlert('ไฟล์ไม่ถูกต้อง', 'กรุณาอัปโหลดรูปภาพสลิปธุรกรรมเท่านั้นครับ');
-                return;
-            }
-
-            const reader = new FileReader();
-            reader.onload = function(event) {
-                imagePreview.src = event.target.result;
-                imagePreviewContainer.classList.remove('hidden');
-                triggerFilePicker.classList.add('hidden');
-                
-                scanStatus.className = "text-xs font-bold py-1.5 px-4 rounded-full inline-block bg-amber-100 text-amber-800 animate-pulse";
-                scanStatus.textContent = "เตรียมส่งภาพขึ้น Cloud AI Server...";
-                detailStatus.textContent = "กำลังวิเคราะห์โครงสร้างพิกัดสลิป...";
-
-                const img = new Image();
-                img.onload = function() {
-                    currentLoadedImage = img;
-                    analyzeKBankSlipQR(img); 
-                    renderCropsOnly(img);
-                    analyzeKBankSlipOCR(img); 
-                };
-                img.src = event.target.result;
-            };
-            reader.readAsDataURL(file);
-        }
-
-        function renderCropsOnly(img) {
-            const w = img.naturalWidth || img.width;
-            const h = img.naturalHeight || img.height;
-
-            const dtX = Math.round(w * (gridSettings.dt.x / 100));
-            const dtY = Math.round(h * (gridSettings.dt.y / 100));
-            const dtW = Math.round(w * (gridSettings.dt.w / 100));
-            const dtH = Math.round(h * (gridSettings.dt.h / 100));
-            cropAndRenderToCanvas(img, dtX, dtY, dtW, dtH, cropDateTimeCanvas, false);
-
-            const rcX = Math.round(w * (gridSettings.rc.x / 100));
-            const rcY = Math.round(h * (gridSettings.rc.y / 100));
-            const rcW = Math.round(w * (gridSettings.rc.w / 100));
-            const rcH = Math.round(h * (gridSettings.rc.h / 100));
-            cropAndRenderToCanvas(img, rcX, rcY, rcW, rcH, cropRecipientCanvas, false);
-
-            const amX = Math.round(w * (gridSettings.am.x / 100));
-            const amY = Math.round(h * (gridSettings.am.y / 100));
-            const amW = Math.round(w * (gridSettings.am.w / 100));
-            const amH = Math.round(h * (gridSettings.am.h / 100));
-            cropAndRenderToCanvas(img, amX, amY, amW, amH, cropAmountCanvas, false);
-
-            drawVisualOverlays(w, h);
-        }
-
-        function drawVisualOverlays(imgWidth, imgHeight) {
-            cropOverlayCanvas.width = imgWidth;
-            cropOverlayCanvas.height = imgHeight;
-
-            const ctx = cropOverlayCanvas.getContext('2d');
-            ctx.clearRect(0, 0, imgWidth, imgHeight);
-
-            function drawGridBox(set, label, color) {
-                const rx = imgWidth * (set.x / 100);
-                const ry = imgHeight * (set.y / 100);
-                const rw = imgWidth * (set.w / 100);
-                const rh = imgHeight * (set.h / 100);
-
-                ctx.strokeStyle = color;
-                ctx.lineWidth = Math.max(3, Math.round(imgWidth / 150));
-                ctx.strokeRect(rx, ry, rw, rh);
-
-                const fontSize = Math.max(12, Math.round(imgWidth / 40));
-                ctx.fillStyle = color;
-                ctx.fillRect(rx, ry - fontSize - 6, Math.min(rw, fontSize * 5), fontSize + 6);
-                
-                ctx.fillStyle = "#ffffff";
-                ctx.font = `bold ${fontSize}px sans-serif`;
-                ctx.fillText(label, rx + 4, ry - 4);
-            }
-
-            drawGridBox(gridSettings.dt, "วันเวลา", "#6366f1");
-            drawGridBox(gridSettings.rc, "ผู้รับโอน", "#f59e0b");
-            drawGridBox(gridSettings.am, "ยอดเงิน", "#ef4444");
-        }
-
-        function analyzeKBankSlipQR(img) {
-            const canvas = document.getElementById('util-canvas');
-            const ctx = canvas.getContext('2d');
-            const w = img.naturalWidth || img.width;
-            const h = img.naturalHeight || img.height;
-            canvas.width = w;
-            canvas.height = h;
-            ctx.drawImage(img, 0, 0, w, h);
-
-            let detectedDate = null;
-            let detectedTime = null;
-
-            try {
-                const imgData = ctx.getImageData(0, 0, w, h);
-                const code = jsQR(imgData.data, imgData.width, imgData.height);
-                if (code && code.data) {
-                    const dtMatch = code.data.match(/(202\d|203\d)(0\d|1[0-2])(0\d|[12]\d|3[01])([01]\d|2[0-3])([0-5]\d)/);
-                    if (dtMatch) {
-                        detectedDate = `${dtMatch[1]}-${dtMatch[2]}-${dtMatch[3]}`;
-                        detectedTime = `${dtMatch[4]}:${dtMatch[5]}`;
-                    }
-                }
-            } catch (err) {
-                console.warn("Local QR analyzer error:", err);
-            }
-
-            if (detectedDate && detectedTime) {
-                formDate.value = detectedDate;
-                formTime.value = detectedTime;
-                highlightFilledInputs();
-            }
-        }
-
-        function highlightFilledInputs() {
-            formDate.classList.add('autofilled-highlight');
-            formTime.classList.add('autofilled-highlight');
-            setTimeout(() => {
-                formDate.classList.remove('autofilled-highlight');
-                formTime.classList.remove('autofilled-highlight');
-            }, 1500);
-        }
-
-        async function analyzeKBankSlipOCR(img) {
-            scanStatus.textContent = "กำลังส่งข้อมูลไปที่ Cloud AI (API)...";
-            scanStatus.className = "text-xs font-bold py-1.5 px-4 rounded-full inline-block bg-indigo-100 text-indigo-800 animate-pulse";
-            detailStatus.textContent = "(อาจใช้เวลาปลุกเซิร์ฟเวอร์ฟรีประมาณ 30-60 วินาทีในครั้งแรก)";
-
-            try {
-                const w = img.naturalWidth || img.width;
-                const h = img.naturalHeight || img.height;
-
-                // 1. เตรียมภาพครอป
-                const amX = Math.round(w * (gridSettings.am.x / 100));
-                const amY = Math.round(h * (gridSettings.am.y / 100));
-                const amW = Math.round(w * (gridSettings.am.w / 100));
-                const amH = Math.round(h * (gridSettings.am.h / 100));
-                cropAndRenderToCanvas(img, amX, amY, amW, amH, cropAmountCanvas, true);
-
-                const rcX = Math.round(w * (gridSettings.rc.x / 100));
-                const rcY = Math.round(h * (gridSettings.rc.y / 100));
-                const rcW = Math.round(w * (gridSettings.rc.w / 100));
-                const rcH = Math.round(h * (gridSettings.rc.h / 100));
-                cropAndRenderToCanvas(img, rcX, rcY, rcW, rcH, cropRecipientCanvas, true);
-
-                const dtX = Math.round(w * (gridSettings.dt.x / 100));
-                const dtY = Math.round(h * (gridSettings.dt.y / 100));
-                const dtW = Math.round(w * (gridSettings.dt.w / 100));
-                const dtH = Math.round(h * (gridSettings.dt.h / 100));
-                cropAndRenderToCanvas(img, dtX, dtY, dtW, dtH, cropDateTimeCanvas, true);
-
-                ocrProgressContainer.classList.remove('hidden');
-                ocrProgressBar.style.width = '10%';
-                
-                detailStatus.textContent = "กำลังให้ Cloud วิเคราะห์ข้อมูลพร้อมกัน 3 จุด...";
-
-                // --- FEATURE: PARALLEL FETCHING (ส่ง 3 คำขอพร้อมกัน) ---
-                
-                // 1. งานวิเคราะห์วันเวลา
-                const promiseDate = fetchTextFromCloudAPI(cropDateTimeCanvas).then(rawDateText => {
-                    ocrRawDatetime.value = rawDateText.replace(/\s+/g, ' ').trim();
-                    const dateData = parseThaiSlipDateTime(rawDateText);
-                    if (dateData.date) { formDate.value = dateData.date; highlightFilledInputs(); }
-                    if (dateData.time) { formTime.value = dateData.time; highlightFilledInputs(); }
-                    ocrProgressBar.style.width = '40%';
-                });
-
-                // 2. งานวิเคราะห์ชื่อผู้รับ
-                const promiseName = fetchTextFromCloudAPI(cropRecipientCanvas).then(rawRecipientText => {
-                    ocrRawRecipient.value = rawRecipientText.replace(/\s+/g, ' ').trim();
-                    let cleanedRecipient = cleanRecipientName(rawRecipientText);
-                    cleanedRecipient = applyAliasToName(cleanedRecipient);
-                    formRecipient.value = cleanedRecipient || "ผู้รับเงินโอน";
-                    ocrProgressBar.style.width = '70%';
-                });
-
-                // 3. งานวิเคราะห์ยอดเงิน
-                const promiseAmount = fetchTextFromCloudAPI(cropAmountCanvas).then(rawAmountText => {
-                    ocrRawAmount.value = rawAmountText.replace(/\s+/g, ' ').trim();
-                    const cleanedAmount = extractFloatAmount(rawAmountText);
-                    if (cleanedAmount) {
-                        formAmount.value = parseFloat(cleanedAmount).toFixed(2);
-                        amountSourceBadge.textContent = "วิเคราะห์ผ่าน Cloud สำเร็จ";
-                        amountSourceBadge.className = "text-[9px] px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-bold";
-                    } else {
-                        formAmount.value = "";
-                        amountSourceBadge.textContent = "ตรวจไม่พบยอดเงิน";
-                        amountSourceBadge.className = "text-[9px] px-2.5 py-0.5 rounded-full bg-rose-100 text-rose-800 font-bold animate-pulse";
-                    }
-                });
-
-                // รอให้ทั้ง 3 งานเสร็จสิ้นพร้อมกันทั้งหมด!
-                await Promise.all([promiseDate, promiseName, promiseAmount]);
-
-                // --------------------------------------------------------
-
-                formMemo.value = ""; 
-                ocrProgressBar.style.width = '100%';
-                
-                scanStatus.className = "text-xs font-bold py-1.5 px-4 rounded-full inline-block bg-emerald-100 text-emerald-800";
-                scanStatus.textContent = "Cloud สแกนสำเร็จเรียบร้อย!";
-                detailStatus.textContent = "โปรดตรวจสอบความถูกต้องและกดยืนยัน";
-
-            } catch (err) {
-                console.error("Cloud OCR Fetch Failed:", err);
-                showCustomAlert('Cloud ขัดข้องหรือหลับอยู่', 'เซิร์ฟเวอร์อาจจะกำลังบูท (ลองอัปโหลดซ้ำอีกครั้ง) หรือเซิร์ฟเวอร์ล่ม กรุณาป้อนข้อมูลด้วยตนเองครับ');
-                scanStatus.className = "text-xs font-bold py-1.5 px-4 rounded-full inline-block bg-red-100 text-red-800";
-                scanStatus.textContent = "การเชื่อมต่อ API ล้มเหลว";
-                detailStatus.textContent = "กรุณาใส่ข้อมูลด้วยตนเองชั่วคราว";
-            } finally {
-                setTimeout(() => { ocrProgressContainer.classList.add('hidden'); }, 2000);
-            }
-        }
-
-        // ย่อฟังก์ชันปรับภาพให้เหมาะกับการส่ง API
-        function cropAndRenderToCanvas(sourceImg, x, y, w, h, targetCanvas, applyOcrOptimizations = false) {
-            const ctx = targetCanvas.getContext('2d');
-            if (applyOcrOptimizations) {
-                const upscaleFactor = 2;
-                targetCanvas.width = w * upscaleFactor;
-                targetCanvas.height = h * upscaleFactor;
-                
-                ctx.imageSmoothingEnabled = true;
-                ctx.imageSmoothingQuality = 'high';
-                ctx.drawImage(sourceImg, x, y, w, h, 0, 0, targetCanvas.width, targetCanvas.height);
-
-                const imgData = ctx.getImageData(0, 0, targetCanvas.width, targetCanvas.height);
-                const data = imgData.data;
-
-                for (let i = 0; i < data.length; i += 4) {
-                    const r = data[i];
-                    const g = data[i + 1];
-                    const b = data[i + 2];
-                    const gray = 0.299 * r + 0.587 * g + 0.114 * b;
-                    const threshold = 160; 
-                    const finalVal = gray > threshold ? 255 : 0;
-                    
-                    data[i] = finalVal;
-                    data[i+1] = finalVal;
-                    data[i+2] = finalVal;
-                }
-                ctx.putImageData(imgData, 0, 0);
-            } else {
-                targetCanvas.width = w;
-                targetCanvas.height = h;
-                ctx.drawImage(sourceImg, x, y, w, h, 0, 0, w, h);
-            }
-        }
-
-        function cleanRecipientName(text) {
-            if (!text) return "";
-            let cleaned = text;
-            cleaned = cleaned.replace(/(\s+)([\u0e31\u0e34-\u0e3a\u0e47-\u0e4e\u0e4d])/g, '$2');
-            cleaned = cleaned.replace(/([\u0e31\u0e34-\u0e3a\u0e47-\u0e4e\u0e4d])(\s+)/g, '$1');
-            cleaned = cleaned.replace(/\s{2,}/g, ' __BREAK__ ');
-            cleaned = cleaned.replace(/([ก-๙])\s([ก-๙])/g, '$1$2');
-            cleaned = cleaned.replace(/([ก-๙])\s([ก-๙])/g, '$1$2'); 
-            cleaned = cleaned.replace(/__BREAK__/g, ' ');
-            cleaned = cleaned.replace(/จ\s*ํ\s*า\s*ก\s*ั\s*ด/g, 'จำกัด');
-            cleaned = cleaned.replace(/บ\s*ร\s*ิ\s*ษ\s*ั\s*ท/g, 'บริษัท');
-            cleaned = cleaned.replace(/จํากัด/g, 'จำกัด');
-            cleaned = cleaned.replace(/บ ร ิ ษ ั ท/g, 'บริษัท');
-            cleaned = cleaned.replace(/[^ก-๙a-zA-Z0-9\s()]/g, '').trim();
-            cleaned = cleaned.replace(/\s+/g, ' ');
-            cleaned = cleaned.replace(/\s*[ฝฟผพพัะ]โค?$/g, '');
-            cleaned = cleaned.replace(/\s*[ฝฟผพพัะ]$/g, '');
-            return cleaned;
-        }
-
-        function extractFloatAmount(text) {
-            if (!text) return null;
-            const clean = text.replace(/\s+/g, '');
-            const rightSideMatch = clean.match(/(\d{1,3}(,\d{3})*\.\d{2})|(\d+\.\d{2})/g);
-            if (rightSideMatch && rightSideMatch.length > 0) {
-                const targetValue = rightSideMatch[rightSideMatch.length - 1];
-                return targetValue.replace(/,/g, '');
-            }
-            return null;
-        }
-
-        function parseThaiSlipDateTime(text) {
-            let date = null;
-            let time = null;
-
-            if (!text) return { date, time };
-            let clean = text.replace(/[\u200B-\u200D\uFEFF\u200E\u200F]/g, '');
-            clean = clean.replace(/\s+/g, '');
-
-            const timeMatch = clean.match(/([01]?\d|2[0-3])[:.](([0-5]\d))/);
-            if (timeMatch) {
-                time = `${timeMatch[1].padStart(2, '0')}:${timeMatch[2]}`;
-            }
-
-            const monthsMap = {
-                'ม.ค.': '01', 'มกราคม': '01',
-                'ก.พ.': '02', 'กุมภาพันธ์': '02',
-                'มี.ค.': '03', 'มีนาคม': '03',
-                'เม.ย.': '04', 'เมษายน': '04',
-                'พ.ค.': '05', 'พฤษภาคม': '05', 'พ.ศ.': '05',
-                'มิ.ย.': '06', 'มิถุนายน': '06',
-                'ก.ค.': '07', 'กรกฎาคม': '07',
-                'ส.ค.': '08', 'สิงหาคม': '08',
-                'ก.ย.': '09', 'กันยายน': '09',
-                'ต.ค.': '10', 'ตุลาคม': '10',
-                'พ.ย.': '11', 'พฤศจิกายน': '11',
-                'ธ.ค.': '12', 'ธันวาคม': '12'
-            };
-
-            let foundMonthStr = null;
-            let monthVal = null;
-            let monthIndex = -1;
-
-            for (const [key, val] of Object.entries(monthsMap)) {
-                monthIndex = clean.indexOf(key);
-                if (monthIndex !== -1) {
-                    foundMonthStr = key;
-                    monthVal = val;
-                    break;
-                }
-            }
-
-            if (foundMonthStr && monthVal && monthIndex !== -1) {
-                const dayStr = clean.substring(Math.max(0, monthIndex - 2), monthIndex);
-                const dayVal = dayStr.match(/\d+/) ? dayStr.match(/\d+/)[0].padStart(2, '0') : null;
-
-                const yearStartIndex = monthIndex + foundMonthStr.length;
-                const yearStr = clean.substring(yearStartIndex, yearStartIndex + 2);
-                const yearVal = yearStr.match(/\d+/) ? yearStr.match(/\d+/)[0] : null;
-
-                if (dayVal && yearVal) {
-                    let rawYear = parseInt(yearVal);
-                    let finalYear = new Date().getFullYear(); 
-                    
-                    if (rawYear < 100) {
-                        rawYear = 2500 + rawYear;
-                    }
-                    
-                    if (rawYear > 2500) {
-                        finalYear = rawYear - 543;
-                    } else if (rawYear > 2000) {
-                        finalYear = rawYear;
-                    }
-
-                    date = `${finalYear}-${monthVal}-${dayVal}`;
-                }
-            }
-
-            return { date, time };
-        }
-
-        // ------------------------- RECIPIENT ALIAS MAPPER -------------------------
-        function loadAliasRules() {
-            const stored = localStorage.getItem('recipient_rules_map');
-            if (stored) {
-                try {
-                    recipientRules = JSON.parse(stored);
-                } catch (e) {
-                    recipientRules = {};
-                }
-            } else {
-                recipientRules = {
-                    "สินธร": "อาหารกลางวัน"
-                };
-                saveAliasRules();
-            }
-            updateRulesBadge();
-        }
-
-        function saveAliasRules() {
-            localStorage.setItem('recipient_rules_map', JSON.stringify(recipientRules));
-            updateRulesBadge();
-        }
-
-        function updateRulesBadge() {
-            const count = Object.keys(recipientRules).length;
-            if (count > 0) {
-                rulesCountBadge.classList.remove('hidden');
-            } else {
-                rulesCountBadge.classList.add('hidden');
-            }
-        }
-
-        function applyAliasToName(rawName) {
-            if (!rawName) return rawName;
-            const searchName = rawName.toLowerCase().trim();
-            for (const [key, val] of Object.entries(recipientRules)) {
-                if (searchName.includes(key.toLowerCase().trim())) {
-                    return val;
-                }
-            }
-            return rawName;
-        }
-
-        function setupAliasRulesManager() {
-            aliasRulesBtn.addEventListener('click', () => {
-                renderRulesList();
-                aliasRulesModal.classList.remove('hidden');
-            });
-
-            closeAliasRulesBtn.addEventListener('click', () => {
-                aliasRulesModal.classList.add('hidden');
-            });
-
-            addRuleBtn.addEventListener('click', () => {
-                const key = ruleKeyInput.value.trim();
-                const val = ruleValInput.value.trim();
-
-                if (!key || !val) {
-                    showCustomAlert('ข้อมูลไม่ครบ', 'กรุณากรอกคำอ้างอิงและคำแปลงชื่อให้ครบถ้วนครับ');
-                    return;
-                }
-
-                recipientRules[key] = val;
-                saveAliasRules();
-                renderRulesList();
-
-                ruleKeyInput.value = '';
-                ruleValInput.value = '';
-                
-                showCustomAlert('บันทึกสำเร็จ', `เพิ่มกฎแปลง '${key}' เป็น '${val}' เรียบร้อยแล้ว`, true);
-            });
-        }
-
-        function renderRulesList() {
-            rulesListContainer.innerHTML = '';
-            const entries = Object.entries(recipientRules);
-
-            if (entries.length === 0) {
-                rulesListContainer.innerHTML = `
-                    <p class="text-[11px] text-slate-400 font-bold text-center py-6">ยังไม่มีการตั้งค่าจับคู่เปลี่ยนชื่อ</p>
-                `;
-                return;
-            }
-
-            entries.forEach(([key, val]) => {
-                const item = document.createElement('div');
-                item.className = "flex items-center justify-between p-2.5 bg-slate-50 border border-slate-100 rounded-xl";
-                item.innerHTML = `
-                    <div class="min-w-0 flex-1 pr-2">
-                        <span class="text-[10px] font-bold text-slate-400 block">หากสลิปมีคำว่า</span>
-                        <span class="text-xs font-extrabold text-slate-700 truncate block">${key}</span>
-                        <span class="text-[10px] font-bold text-indigo-500 block mt-0.5">➔ จะเปลี่ยนเป็น: ${val}</span>
-                    </div>
-                    <button onclick="deleteAliasRule('${key}')" class="text-slate-300 hover:text-red-500 p-1.5 transition-colors shrink-0">
-                        <i data-lucide="trash-2" class="w-4 h-4"></i>
-                    </button>
-                `;
-                rulesListContainer.appendChild(item);
-            });
-            lucide.createIcons();
-        }
-
-        window.deleteAliasRule = function(key) {
-            delete recipientRules[key];
-            saveAliasRules();
-            renderRulesList();
-        };
 
         // ------------------------- DATA SAVING & UPDATING -------------------------
         saveRecordBtn.addEventListener('click', () => {
@@ -1815,16 +1427,6 @@
             }
         });
 
-        function checkDuplicateRecord(newRecord) {
-            return expenses.some(item => 
-                item.id !== newRecord.id && 
-                item.amount === newRecord.amount &&
-                item.recipient.toLowerCase().trim() === newRecord.recipient.toLowerCase().trim() &&
-                item.date === newRecord.date &&
-                item.time === newRecord.time
-            );
-        }
-
         function executeSaveRecord(record) {
             if (editingRecordId) {
                 const index = expenses.findIndex(x => x.id === editingRecordId);
@@ -1835,10 +1437,8 @@
                 showCustomAlert('แก้ไขสำเร็จ!', `ปรับปรุงยอดธุรกรรม ${record.amount.toFixed(2)} บาท เรียบร้อยแล้ว`, true);
             } else {
                 expenses.unshift(record);
-                showCustomAlert('บันทึกสำเร็จ!', `จดบันทึกยอดชำระโอน ${record.amount.toFixed(2)} บาท เรียบร้อยแล้ว`, true);
+                showCustomAlert('บันทึกสำเร็จ!', `จดบันทึกยอดชำระโอน ${record.amount.toFixed(2)} บาท เข้าสู่ระบบจำชั่วคราวแล้ว\n(อย่าลืมกด Export เพื่อบันทึกลงไฟล์นะครับ)`, true);
             }
-
-            saveExpensesToStorage();
 
             const parts = record.date.split('-');
             if (parts.length === 3) {
@@ -1908,34 +1508,8 @@
             formSlideSheet.classList.remove('hidden');
         };
 
-        function saveExpensesToStorage() {
-            localStorage.setItem('notebook_expense_records_v4', JSON.stringify(expenses));
-        }
-
-        function loadExpenses() {
-            const stored = localStorage.getItem('notebook_expense_records_v4');
-            if (stored) {
-                try {
-                    expenses = JSON.parse(stored);
-                } catch (e) {
-                    expenses = [];
-                }
-            } else {
-                expenses = [
-                    { id: 'exp_1', amount: 36.00, recipient: 'อาหารกลางวัน', date: '2026-05-21', time: '11:42', category: 'อาหาร', memo: '' },
-                    { id: 'exp_2', amount: 120.00, recipient: 'อาหารกลางวัน', date: '2026-05-22', time: '12:24', category: 'อาหาร', memo: 'กะเพราไข่ดาว' },
-                    { id: 'exp_3', amount: 635.58, recipient: 'บจก. สินธร ฟู้ด มาร์เก็ต', date: '2026-05-19', time: '21:11', category: 'ช้อปปิ้ง', memo: '' },
-                    { id: 'exp_4', amount: 300.00, recipient: 'เติมน้ำมัน ปตท.', date: '2026-05-17', time: '18:30', category: 'การเดินทาง', memo: 'น้ำมันแก๊สโซฮอล์ 95' },
-                    { id: 'exp_5', amount: 1500.00, recipient: 'การไฟฟ้าส่วนภูมิภาค', date: '2026-05-16', time: '12:15', category: 'ที่อยู่อาศัย', memo: 'ค่าไฟบ้านสวน' },
-                    { id: 'exp_6', amount: 178.00, recipient: 'เน็ตฟลิกซ์ ไทยแลนด์', date: '2026-05-16', time: '15:40', category: 'ความบันเทิง', memo: '' }
-                ];
-                saveExpensesToStorage();
-            }
-        }
-
         window.removeExpenseItem = function(id) {
             expenses = expenses.filter(x => x.id !== id);
-            saveExpensesToStorage();
             updateDashboard();
         };
 
@@ -1971,6 +1545,7 @@
                     <div class="bg-white p-10 rounded-2xl text-center border border-dashed border-slate-200 text-slate-400">
                         <i data-lucide="inbox" class="w-10 h-10 mx-auto mb-2 text-slate-300"></i>
                         <p class="text-xs font-bold">ไม่มีข้อมูลบันทึกในเดือนนี้</p>
+                        <p class="text-[10px] mt-1">กดปุ่ม + เพื่อเพิ่มรายการ หรือกดนำเข้า (Import) CSV ด้านบน</p>
                     </div>
                 `;
                 return;
@@ -2125,38 +1700,6 @@
                 monthsGridContainer.appendChild(btn);
             });
         }
-
-        exportCsvBtn.addEventListener('click', () => {
-            if (expenses.length === 0) {
-                showCustomAlert('ไม่มีข้อมูลรายการ', 'กรุณาสแกนหรือบันทึกข้อมูลเพื่อใช้ในการออกรายงานด้วยครับ');
-                return;
-            }
-
-            let csvContent = "data:text/csv;charset=utf-8,\uFEFF";
-            csvContent += "รหัสรายการ,วันที่,เวลา,หมวดหมู่,ชื่อผู้รับโอน/รายการ,จำนวนเงิน(บาท),บันทึกช่วยจำ\n";
-
-            expenses.forEach(x => {
-                const formattedRow = [
-                    x.id,
-                    x.date,
-                    x.time,
-                    `"${x.category.replace(/"/g, '""')}"`,
-                    `"${x.recipient.replace(/"/g, '""')}"`,
-                    x.amount.toFixed(2),
-                    `"${(x.memo || '').replace(/"/g, '""')}"`
-                ].join(",");
-                csvContent += formattedRow + "\n";
-            });
-
-            const encodedUri = encodeURI(csvContent);
-            const downloadLink = document.createElement("a");
-            downloadLink.setAttribute("href", encodedUri);
-            downloadLink.setAttribute("download", `notebook_expenses_${new Date().toISOString().slice(0, 10)}.csv`);
-            document.body.appendChild(downloadLink);
-
-            downloadLink.click();
-            document.body.removeChild(downloadLink);
-        });
 
         function resetAppScanner() {
             slipFileInput.value = '';
