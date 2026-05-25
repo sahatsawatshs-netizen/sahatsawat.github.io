@@ -13,8 +13,9 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
-    <!-- jsQR & Tesseract.js v5 -->
+    <!-- jsQR -->
     <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
+    <!-- Tesseract.js v5 (สำหรับ K-Plus Offline Backup) -->
     <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5.0.5/dist/tesseract.min.js"></script>
     
     <style>
@@ -24,7 +25,7 @@
             user-select: none;
             -webkit-tap-highlight-color: transparent;
         }
-        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; height: 4px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: #f1f5f9; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
         .notebook-grid {
@@ -125,21 +126,31 @@
 
         <!-- MAIN CONTROL FORM SLIDE SHEET -->
         <div id="form-slide-sheet" class="hidden absolute inset-0 z-40 bg-black/60 flex flex-col justify-end">
-            <div class="bg-white w-full rounded-t-[2.5rem] p-5 max-h-[90%] overflow-y-auto flex flex-col space-y-4 shadow-2xl relative custom-scrollbar">
-                <div class="w-12 h-1.5 bg-slate-200 rounded-full mx-auto cursor-pointer" id="close-sheet-handle"></div>
+            <div class="bg-white w-full rounded-t-[2.5rem] p-5 max-h-[95%] overflow-y-auto flex flex-col space-y-4 shadow-2xl relative custom-scrollbar">
+                <div class="w-12 h-1.5 bg-slate-200 rounded-full mx-auto cursor-pointer shrink-0" id="close-sheet-handle"></div>
                 
-                <div class="flex justify-between items-center">
+                <div class="flex justify-between items-center shrink-0">
                     <h3 id="form-sheet-title" class="text-sm font-bold text-slate-800 flex items-center gap-1.5">
                         <i data-lucide="plus-circle" class="w-4 h-4 text-indigo-600"></i>
-                        เพิ่มรายการรายจ่ายใหม่
+                        เพิ่มประวัติรายการรายจ่าย
                     </h3>
                     <button id="close-sheet-btn" class="p-1 text-slate-400 hover:bg-slate-100 rounded-full cursor-pointer">
                         <i data-lucide="x" class="w-4 h-4"></i>
                     </button>
                 </div>
 
-                <!-- SLIP SCANNER WITH CALIBRATOR -->
-                <div id="content-mode-scan" class="space-y-4">
+                <!-- SEGMENTED SCAN MODE SELECTOR -->
+                <div class="flex bg-slate-100 p-1 rounded-2xl shrink-0" id="scan-mode-tab-bar">
+                    <button id="tab-kbank-mode" class="flex-1 py-2 text-[11px] font-extrabold rounded-xl transition-all bg-white text-indigo-600 shadow cursor-pointer">
+                        📱 K-Plus (สลิปเดี่ยว)
+                    </button>
+                    <button id="tab-truemoney-mode" class="flex-1 py-2 text-[11px] font-extrabold rounded-xl transition-all text-slate-500 hover:text-slate-800 cursor-pointer">
+                        🧡 TrueMoney (สแกนประวัติรวมด้วย AI)
+                    </button>
+                </div>
+
+                <!-- ==================== KBANK (SLIP SINGLE) MODE PANEL ==================== -->
+                <div id="kbank-scan-panel" class="space-y-4">
                     <div id="batch-queue-badge" class="hidden w-full bg-indigo-50 text-indigo-700 text-[10px] font-extrabold p-2 rounded-xl flex justify-between items-center">
                         <span>คิวตรวจสอบรูปภาพสลิป: <span id="batch-current-num">1</span> จากทั้งหมด <span id="batch-total-num">1</span> ใบ</span>
                         <button id="skip-batch-item-btn" class="text-red-500 hover:text-red-700 underline">ข้ามใบนี้</button>
@@ -149,7 +160,7 @@
                         <div class="w-9 h-9 bg-indigo-50 text-indigo-600 rounded-full flex items-center justify-center">
                             <i data-lucide="scan" class="w-4.5 h-4.5"></i>
                         </div>
-                        <span class="text-xs font-bold text-slate-700">สแกนสลิปอัตโนมัติ (Tesseract v5)</span>
+                        <span class="text-xs font-bold text-slate-700">สแกนสลิป KBank อัตโนมัติ (Tesseract v5)</span>
                         <span class="text-[9px] text-slate-400">รูปภาพจะไม่ถูกบันทึกลงในระบบเพื่อประหยัดพื้นที่</span>
                     </div>
                     
@@ -241,60 +252,103 @@
                             <span id="detail-status" class="block text-[8px] text-slate-400 font-semibold"></span>
                         </div>
                     </div>
+
+                    <!-- SINGLE CONFIRMATION FORM FIELDS -->
+                    <div class="space-y-3 pt-2">
+                        <div>
+                            <div class="flex justify-between items-center mb-1">
+                                <label class="block text-xs font-bold text-slate-500">จำนวนเงิน (บาท)</label>
+                                <span id="amount-source-badge" class="text-[9px] px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-500 font-bold">รอการสแกนหรือระบุข้อมูล</span>
+                            </div>
+                            <div class="relative">
+                                <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400 font-extrabold text-sm">฿</span>
+                                <input type="number" step="0.01" id="form-amount" placeholder="0.00" class="w-full pl-8 pr-3 py-2 border rounded-xl focus:outline-none focus:ring-1 focus:ring-indigo-500 font-extrabold text-slate-800 text-lg">
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-bold text-slate-500 mb-1">ชื่อผู้รับโอนเงิน / รายละเอียด</label>
+                            <input type="text" id="form-recipient" placeholder="เช่น ร้านส้มตำ, นาย สมชาย" class="w-full px-3 py-2 border rounded-xl focus:outline-none focus:ring-1 focus:ring-indigo-500 text-xs font-bold text-slate-700">
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-xs font-bold text-slate-500 mb-1">วันที่ทำรายการ</label>
+                                <input type="date" id="form-date" class="w-full px-3 py-2 border rounded-xl focus:outline-none focus:ring-1 focus:ring-indigo-500 text-xs font-bold text-slate-600 transition-all">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-500 mb-1">เวลาที่โอน</label>
+                                <input type="time" id="form-time" class="w-full px-3 py-2 border rounded-xl focus:outline-none focus:ring-1 focus:ring-indigo-500 text-xs font-bold text-slate-600 transition-all">
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-bold text-slate-500 mb-1">หมวดหมู่</label>
+                            <select id="form-category" class="w-full px-3 py-2 border rounded-xl focus:outline-none focus:ring-1 focus:ring-indigo-500 text-xs font-bold text-slate-600">
+                                <option value="อาหาร">🍔 อาหาร</option>
+                                <option value="การเดินทาง">🚗 การเดินทาง / เติมน้ำมัน</option>
+                                <option value="ช้อปปิ้ง">🛍️ ช้อปปิ้ง / ซื้อของ</option>
+                                <option value="ที่อยู่อาศัย">🏠 ค่าน้ำ ค่าไฟ ค่าเช่า</option>
+                                <option value="ความบันเทิง">🎬 ความบันเทิง / พักผ่อน</option>
+                                <option value="จัดการ">🐻 จัดการ / ลงทุน</option>
+                                <option value="อื่นๆ">📦 อื่นๆ ทั่วไป</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-bold text-slate-500 mb-1">บันทึกความจำเพิ่มเติม</label>
+                            <input type="text" id="form-memo" placeholder="บันทึกย่อเพิ่มเติม..." class="w-full px-3 py-2 border rounded-xl focus:outline-none focus:ring-1 focus:ring-indigo-500 text-xs font-medium">
+                        </div>
+
+                        <button id="save-record-btn" class="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold transition-all text-xs shadow-md flex items-center justify-center gap-1.5 cursor-pointer">
+                            <i data-lucide="check-circle" class="w-4 h-4"></i>
+                            <span id="save-btn-text">บันทึกรายการ</span>
+                        </button>
+                    </div>
                 </div>
 
-                <!-- SHARED DETAIL CONFIRMATION FORM -->
-                <div class="space-y-3 pt-2">
-                    <div>
-                        <div class="flex justify-between items-center mb-1">
-                            <label class="block text-xs font-bold text-slate-500">จำนวนเงิน (บาท)</label>
-                            <span id="amount-source-badge" class="text-[9px] px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-500 font-bold">รอการสแกนหรือระบุข้อมูล</span>
+                <!-- ==================== TRUEMONEY (AI IMAGE RECOGNITION) PANEL ==================== -->
+                <div id="truemoney-scan-panel" class="hidden space-y-4">
+                    <div class="border-2 border-dashed border-orange-200 bg-orange-50/20 rounded-2xl p-5 text-center cursor-pointer hover:bg-orange-50/50 transition-all flex flex-col items-center justify-center space-y-1.5" id="trigger-truemoney-picker">
+                        <div class="w-9 h-9 bg-orange-100 text-orange-600 rounded-full flex items-center justify-center">
+                            <i data-lucide="sparkles" class="w-5 h-5"></i>
                         </div>
-                        <div class="relative">
-                            <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400 font-extrabold text-sm">฿</span>
-                            <input type="number" step="0.01" id="form-amount" placeholder="0.00" class="w-full pl-8 pr-3 py-2 border rounded-xl focus:outline-none focus:ring-1 focus:ring-indigo-500 font-extrabold text-slate-800 text-lg">
+                        <span class="text-xs font-extrabold text-slate-700">อัปโหลดรูปภาพประวัติ TrueMoney (ใช้ Vision AI)</span>
+                        <span class="text-[9px] text-slate-400">ระบบใช้โมเดล Gemini อัจฉริยะวิเคราะห์ความเข้าใจในภาพประวัติ</span>
+                    </div>
+
+                    <input type="file" id="truemoney-file-input" accept="image/*" class="hidden">
+
+                    <!-- Truemoney Progress Indicator -->
+                    <div id="tmn-scan-status-card" class="hidden p-4 rounded-2xl bg-white border border-slate-100 text-center space-y-3 shadow-sm">
+                        <div class="flex justify-center">
+                            <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-500"></div>
                         </div>
+                        <span id="tmn-scan-status-text" class="block text-xs font-bold text-orange-600">กำลังส่งภาพให้ระบบ Gemini Vision AI ประมวลผล...</span>
+                        <span id="tmn-detail-status" class="block text-[10px] text-slate-400 font-semibold">ขั้นตอนการมองเห็นโครงสร้างบิลและจำนวนเงิน อาจใช้เวลาประมาณ 3-5 วินาที</span>
                     </div>
 
-                    <div>
-                        <label class="block text-xs font-bold text-slate-500 mb-1">ชื่อผู้รับโอนเงิน / รายละเอียด</label>
-                        <input type="text" id="form-recipient" placeholder="เช่น ร้านส้มตำ, นาย สมชาย" class="w-full px-3 py-2 border rounded-xl focus:outline-none focus:ring-1 focus:ring-indigo-500 text-xs font-bold text-slate-700">
-                    </div>
-
-                    <div class="grid grid-cols-2 gap-3">
-                        <div>
-                            <label class="block text-xs font-bold text-slate-500 mb-1">วันที่ทำรายการ</label>
-                            <input type="date" id="form-date" class="w-full px-3 py-2 border rounded-xl focus:outline-none focus:ring-1 focus:ring-indigo-500 text-xs font-bold text-slate-600 transition-all">
+                    <!-- Truemoney Results Checklist Container -->
+                    <div id="truemoney-results-wrapper" class="hidden space-y-3">
+                        <div class="flex justify-between items-center border-b pb-2">
+                            <span class="text-xs font-extrabold text-slate-800 flex items-center gap-1">
+                                <i data-lucide="check-square" class="w-4 h-4 text-orange-500"></i> ตรวจพบประวัติจากภาพ (<span id="tmn-detected-count">0</span> รายการ)
+                            </span>
+                            <button id="tmn-select-all-btn" class="text-[9px] text-indigo-600 hover:text-indigo-800 font-extrabold bg-slate-100 px-2 py-1 rounded cursor-pointer">เลือกทั้งหมด</button>
                         </div>
-                        <div>
-                            <label class="block text-xs font-bold text-slate-500 mb-1">เวลาที่โอน</label>
-                            <input type="time" id="form-time" class="w-full px-3 py-2 border rounded-xl focus:outline-none focus:ring-1 focus:ring-indigo-500 text-xs font-bold text-slate-600 transition-all">
+
+                        <!-- Scrollable transaction list editor -->
+                        <div id="truemoney-list-editor" class="space-y-2.5 max-h-[320px] overflow-y-auto custom-scrollbar pr-1 pb-2">
+                            <!-- Injected Dynamic Row Items -->
                         </div>
-                    </div>
 
-                    <div>
-                        <label class="block text-xs font-bold text-slate-500 mb-1">หมวดหมู่</label>
-                        <select id="form-category" class="w-full px-3 py-2 border rounded-xl focus:outline-none focus:ring-1 focus:ring-indigo-500 text-xs font-bold text-slate-600">
-                            <option value="อาหาร">🍔 อาหาร</option>
-                            <option value="การเดินทาง">🚗 การเดินทาง / เติมน้ำมัน</option>
-                            <option value="ช้อปปิ้ง">🛍️ ช้อปปิ้ง / ซื้อของ</option>
-                            <option value="ที่อยู่อาศัย">🏠 ค่าน้ำ ค่าไฟ ค่าเช่า</option>
-                            <option value="ความบันเทิง">🎬 ความบันเทิง / พักผ่อน</option>
-                            <option value="จัดการ">🐻 จัดการ / ลงทุน</option>
-                            <option value="อื่นๆ">📦 อื่นๆ ทั่วไป</option>
-                        </select>
+                        <button id="tmn-save-all-btn" class="w-full py-3 bg-orange-500 hover:bg-orange-600 text-white rounded-xl font-bold transition-all text-xs shadow-md flex items-center justify-center gap-1.5 cursor-pointer">
+                            <i data-lucide="check-square" class="w-4 h-4"></i>
+                            ยืนยันนำเข้ารายการที่เลือก (<span id="tmn-import-count">0</span>)
+                        </button>
                     </div>
-
-                    <div>
-                        <label class="block text-xs font-bold text-slate-500 mb-1">บันทึกความจำเพิ่มเติม</label>
-                        <input type="text" id="form-memo" placeholder="บันทึกย่อเพิ่มเติม..." class="w-full px-3 py-2 border rounded-xl focus:outline-none focus:ring-1 focus:ring-indigo-500 text-xs font-medium">
-                    </div>
-
-                    <button id="save-record-btn" class="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold transition-all text-xs shadow-md flex items-center justify-center gap-1.5 cursor-pointer">
-                        <i data-lucide="check-circle" class="w-4 h-4"></i>
-                        <span id="save-btn-text">บันทึกรายการ</span>
-                    </button>
                 </div>
+
             </div>
         </div>
 
@@ -371,19 +425,12 @@
 
     <script>
         // ------------------------- SMART AUTO-GRID GEOMETRY ENGINE -------------------------
-        // ฟังก์ชันนี้จะทำหน้าที่คำนวณและล็อกความสูงเสมือน (Virtual Height) ของสลิป
         function getSmartGeometry(imgWidth, imgHeight) {
-            // สลิปไม่มีบันทึกช่วยจำ (1164x1394) อัตราส่วน = 1.1975
-            // สลิปมีบันทึกช่วยจำ (1164x1450) อัตราส่วน = 1.2457
             const STANDARD_RATIO = 1394 / 1164;
             let virtualH = imgHeight;
-            
-            // ตรวจจับว่าสลิปยืดออก (มีบันทึกช่วยจำ) หรือไม่ (เกิน 1.21 เท่าของความกว้าง)
             if (imgHeight / imgWidth > 1.21) {
-                // ถ้ายืดออก ให้ล็อกความสูงเสมือนเพื่อไม่ให้กล่องแกน Y ถูกดึงตกลงมา
                 virtualH = imgWidth * STANDARD_RATIO;
             }
-            
             return { w: imgWidth, h: imgHeight, virtualH: virtualH };
         }
 
@@ -401,6 +448,8 @@
         // ------------------------- FEATURE: OFFLINE RAM STORAGE & FILE SYSTEM API -------------------------
         let expenses = [];
         let fileHandle = null; 
+        let fileBatchQueue = [];
+        let batchIndex = 0;
         
         let recipientRules = {}; 
         let ocrWorker = null;
@@ -440,6 +489,14 @@
         const formSlideSheet = document.getElementById('form-slide-sheet');
         const closeSheetBtn = document.getElementById('close-sheet-btn');
         const closeSheetHandle = document.getElementById('close-sheet-handle');
+        
+        // Mode switch elements
+        const tabKBankMode = document.getElementById('tab-kbank-mode');
+        const tabTrueMoneyMode = document.getElementById('tab-truemoney-mode');
+        const kbankScanPanel = document.getElementById('kbank-scan-panel');
+        const truemoneyScanPanel = document.getElementById('truemoney-scan-panel');
+
+        // KBank Panel elements
         const triggerFilePicker = document.getElementById('trigger-file-picker');
         const slipFileInput = document.getElementById('slip-file-input');
         const imagePreviewContainer = document.getElementById('image-preview-container');
@@ -469,7 +526,24 @@
 
         const toggleCalibrationBtn = document.getElementById('toggle-calibration-btn');
         const calibrationControls = document.getElementById('calibration-controls');
-        const resetCalibrationBtn = document.getElementById('reset-calibration-btn'); // เพิ่มตัวแปรที่ตกหล่น
+        const resetCalibrationBtn = document.getElementById('reset-calibration-btn');
+
+        // TrueMoney Panel elements
+        const triggerTrueMoneyPicker = document.getElementById('trigger-truemoney-picker');
+        const truemoneyFileInput = document.getElementById('truemoney-file-input');
+        const tmnScanStatusCard = document.getElementById('tmn-scan-status-card');
+        const tmnScanStatusText = document.getElementById('tmn-scan-status-text');
+        const tmnOcrProgressContainer = document.getElementById('tmn-ocr-progress-container');
+        const tmnOcrProgressBar = document.getElementById('tmn-ocr-progress-bar');
+        const tmnDetailStatus = document.getElementById('tmn-detail-status');
+        const truemoneyResultsWrapper = document.getElementById('truemoney-results-wrapper');
+        const tmnDetectedCount = document.getElementById('tmn-detected-count');
+        const tmnSelectAllBtn = document.getElementById('tmn-select-all-btn');
+        const truemoneyListEditor = document.getElementById('truemoney-list-editor');
+        const tmnSaveAllBtn = document.getElementById('tmn-save-all-btn');
+        const tmnImportCount = document.getElementById('tmn-import-count');
+
+        let truemoneyRecords = []; 
 
         const exportCsvBtn = document.getElementById('export-csv-btn');
         const importCsvBtn = document.getElementById('import-csv-btn');
@@ -531,6 +605,7 @@
             setupTabNavigation();
             setupAliasRulesManager();
             setupImportExport();
+            setupTrueMoneyListeners();
 
             if (expenses.length === 0) {
                 setTimeout(() => {
@@ -699,10 +774,12 @@
                 
                 ocrWorker = await Tesseract.createWorker('tha+eng', 1, {
                     logger: m => {
-                        if (m.status === 'recognizing text' && scanStatus.textContent.includes('Local OCR')) {
+                        if (m.status === 'recognizing text') {
                             const percent = Math.round(m.progress * 100);
-                            ocrProgressBar.style.width = percent + '%';
-                            detailStatus.textContent = `กำลังวิเคราะห์ประมวลภาพสลิป: ${percent}%`;
+                            if (!kbankScanPanel.classList.contains('hidden')) {
+                                ocrProgressBar.style.width = percent + '%';
+                                detailStatus.textContent = `กำลังวิเคราะห์ประมวลภาพสลิป: ${percent}%`;
+                            }
                         }
                     }
                 });
@@ -735,9 +812,9 @@
 
             buttons.forEach(b => {
                 if (b.id === tabId) {
-                    b.el.className = "flex flex-col items-center gap-1 text-indigo-600 font-bold text-[10px] transition-all";
+                    b.el.className = "flex flex-col items-center gap-1 text-indigo-600 font-bold text-[10px] transition-all cursor-pointer";
                 } else {
-                    b.el.className = "flex flex-col items-center gap-1 text-slate-400 font-medium text-[10px] transition-all";
+                    b.el.className = "flex flex-col items-center gap-1 text-slate-400 font-medium text-[10px] transition-all cursor-pointer";
                 }
             });
 
@@ -1266,9 +1343,9 @@
             editingRecordId = null;
             document.getElementById('form-sheet-title').innerHTML = `
                 <i data-lucide="plus-circle" class="w-4 h-4 text-indigo-600"></i>
-                เพิ่มรายการรายจ่ายใหม่
+                เพิ่มรายการใหม่
             `;
-            document.getElementById('save-btn-text').textContent = "บันทึกข้อมูลลงหน่วยความจำ (RAM)";
+            document.getElementById('save-btn-text').textContent = "บันทึกรายการกดยืนยัน";
             lucide.createIcons();
 
             formSlideSheet.classList.remove('hidden');
@@ -1296,11 +1373,31 @@
             ocrRawAmount.value = "";
 
             resetAppScanner();
+            resetTrueMoneyScanner();
+            switchScanMode('kbank'); 
         });
+
+        function switchScanMode(mode) {
+            if (mode === 'kbank') {
+                tabKBankMode.className = "flex-1 py-2 text-[11px] font-extrabold rounded-xl transition-all bg-white text-indigo-600 shadow cursor-pointer";
+                tabTrueMoneyMode.className = "flex-1 py-2 text-[11px] font-extrabold rounded-xl transition-all text-slate-500 hover:text-slate-800 cursor-pointer";
+                kbankScanPanel.classList.remove('hidden');
+                truemoneyScanPanel.classList.add('hidden');
+            } else if (mode === 'truemoney') {
+                tabTrueMoneyMode.className = "flex-1 py-2 text-[11px] font-extrabold rounded-xl transition-all bg-white text-orange-600 shadow cursor-pointer";
+                tabKBankMode.className = "flex-1 py-2 text-[11px] font-extrabold rounded-xl transition-all text-slate-500 hover:text-slate-800 cursor-pointer";
+                kbankScanPanel.classList.add('hidden');
+                truemoneyScanPanel.classList.remove('hidden');
+            }
+        }
+
+        tabKBankMode.addEventListener('click', () => switchScanMode('kbank'));
+        tabTrueMoneyMode.addEventListener('click', () => switchScanMode('truemoney'));
 
         const closeFormSheet = () => {
             formSlideSheet.classList.add('hidden');
             resetAppScanner();
+            resetTrueMoneyScanner();
             fileBatchQueue = [];
             batchQueueBadge.classList.add('hidden');
         };
@@ -1607,6 +1704,7 @@
 
             resetAppScanner();
             formSlideSheet.classList.remove('hidden');
+            switchScanMode('kbank'); 
         };
 
         window.removeExpenseItem = async function(id) {
@@ -1661,6 +1759,7 @@
                 grouped[r.date].push(r);
             });
 
+            listWrapper.innerHTML = '';
             Object.keys(grouped).sort((a,b) => new Date(b) - new Date(a)).forEach(dateStr => {
                 const dayRecords = grouped[dateStr];
                 const dayTotal = dayRecords.reduce((sum, item) => sum + item.amount, 0);
@@ -2204,7 +2303,7 @@
             drawGridBox(gridSettings.am, "ยอดเงิน", "#ef4444");
         }
 
-        // ฟังก์ชันอ่านข้อความด้วย Tesseract v5 (ออฟไลน์ 100%)
+        // ฟังก์ชันอ่านข้อความด้วย Tesseract v5 (ออฟไลน์ 100% สำหรับสลิปเดี่ยว)
         async function analyzeKBankSlipOCR(img, geo) {
             scanStatus.textContent = "กำลังวิเคราะห์ข้อมูล (Local OCR v5)...";
             scanStatus.className = "text-xs font-bold py-1.5 px-4 rounded-full inline-block bg-indigo-100 text-indigo-800 animate-pulse";
@@ -2238,7 +2337,7 @@
                 // Scan 1: วันเวลา
                 // ==========================================
                 detailStatus.textContent = "กำลังวิเคราะห์วันเวลา... (1/3)";
-                await ocrWorker.setParameters({ tessedit_char_whitelist: '' }); // ล้างค่า Whitelist
+                await ocrWorker.setParameters({ tessedit_char_whitelist: '' }); 
                 const dtResult = await ocrWorker.recognize(cropDateTimeCanvas);
                 const rawDateText = dtResult.data.text;
                 ocrRawDatetime.value = rawDateText.replace(/\s+/g, ' ').trim();
@@ -2265,7 +2364,6 @@
                 // Scan 3: ยอดเงิน (ใช้ Whitelist เพื่อความไวและแม่นยำ)
                 // ==========================================
                 detailStatus.textContent = "กำลังวิเคราะห์ตัวเลขยอดเงิน... (3/3)";
-                // เคล็ดลับ: บังคับให้อ่านเฉพาะตัวเลขและจุดทศนิยมเท่านั้น! 
                 await ocrWorker.setParameters({
                     tessedit_char_whitelist: '0123456789.,'
                 });
@@ -2300,6 +2398,288 @@
             } finally {
                 setTimeout(() => { ocrProgressContainer.classList.add('hidden'); }, 2000);
             }
+        }
+
+        // ==========================================================================
+        // FEATURE: TRUEMONEY HISTORY OVERVIEW VISION AI ENGINE (GEMINI POWERED)
+        // ==========================================================================
+        function setupTrueMoneyListeners() {
+            triggerTrueMoneyPicker.addEventListener('click', (e) => {
+                e.preventDefault();
+                truemoneyFileInput.click();
+            });
+
+            truemoneyFileInput.addEventListener('change', (e) => {
+                const file = e.target.files[0];
+                if (file) {
+                    processTrueMoneyFileWithAI(file);
+                }
+            });
+
+            tmnSelectAllBtn.addEventListener('click', () => {
+                const checkboxes = truemoneyListEditor.querySelectorAll('input[type="checkbox"]');
+                const allChecked = Array.from(checkboxes).every(cb => cb.checked);
+                checkboxes.forEach(cb => cb.checked = !allChecked);
+                updateTmnImportCountBadge();
+            });
+
+            tmnSaveAllBtn.addEventListener('click', async () => {
+                const checkedRows = truemoneyListEditor.querySelectorAll('.tmn-item-row');
+                let importCounter = 0;
+
+                checkedRows.forEach(row => {
+                    const cb = row.querySelector('.tmn-item-check');
+                    if (cb && cb.checked) {
+                        const id = cb.dataset.id;
+                        const originalRecord = truemoneyRecords.find(r => r.id === id);
+                        if (originalRecord) {
+                            const recNameInput = row.querySelector('.tmn-item-recipient').value.trim();
+                            const amtValInput = parseFloat(row.querySelector('.tmn-item-amount').value);
+                            const catSelVal = row.querySelector('.tmn-item-category').value;
+                            const dateVal = row.querySelector('.tmn-item-date').value;
+
+                            const finalRecord = {
+                                id: 'exp_tmn_' + Date.now() + '_' + importCounter + '_' + Math.random().toString(36).substr(2, 4),
+                                amount: isNaN(amtValInput) ? originalRecord.amount : amtValInput,
+                                recipient: recNameInput || 'รายจ่าย TrueMoney',
+                                date: dateVal || originalRecord.date,
+                                time: originalRecord.time || "12:00",
+                                category: catSelVal,
+                                memo: originalRecord.memo || "นำเข้าจาก TrueMoney"
+                            };
+
+                            expenses.unshift(finalRecord);
+                            importCounter++;
+                        }
+                    }
+                });
+
+                if (importCounter > 0) {
+                    updateDashboard();
+                    if (fileHandle) {
+                        await executeSyncOrDownload(true);
+                    }
+                    closeFormSheet();
+                    showCustomAlert('นำเข้าประวัติสำเร็จ!', `นำเข้าประวัติรายจ่าย TrueMoney ทั้งหมด ${importCounter} รายการ เรียบร้อยแล้วครับ`, true);
+                } else {
+                    showCustomAlert('ไม่พบรายการ', 'กรุณาเลือกอย่างน้อย 1 รายการเพื่อบันทึกประวัติครับ');
+                }
+            });
+        }
+
+        function resetTrueMoneyScanner() {
+            truemoneyFileInput.value = '';
+            tmnScanStatusCard.classList.add('hidden');
+            truemoneyResultsWrapper.classList.add('hidden');
+            triggerTrueMoneyPicker.classList.remove('hidden');
+            truemoneyListEditor.innerHTML = '';
+            truemoneyRecords = [];
+        }
+
+        async function processTrueMoneyFileWithAI(file) {
+            if (!file.type.startsWith('image/')) {
+                showCustomAlert('ไฟล์ไม่ถูกต้อง', 'กรุณาอัปโหลดรูปภาพแคปหน้าจอประวัติเท่านั้นครับ');
+                return;
+            }
+
+            tmnScanStatusCard.classList.remove('hidden');
+            triggerTrueMoneyPicker.classList.add('hidden');
+            tmnScanStatusText.textContent = "กำลังส่งรูปภาพประวัติให้ Gemini Vision AI วิเคราะห์...";
+
+            const reader = new FileReader();
+            reader.onload = async function(event) {
+                const base64Data = event.target.result.split(',')[1];
+                await callGeminiVisionAI(base64Data);
+            };
+            reader.readAsDataURL(file);
+        }
+
+        // เชื่อมต่อ Gemini 2.5 Flash Vision API ในการตรวจจับรูปภาพอย่างอัจฉริยะแบบโครงสร้าง JSON
+        async function callGeminiVisionAI(base64ImageData) {
+            const apiKey = ""; // โครงสร้าง runtime จัดการส่ง key อัตโนมัติ
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
+            
+            const systemPrompt = `You are a professional bank statement receipt scanner. Extract transaction details from the provided Thai TrueMoney wallet transaction history screenshot image. 
+Return the result strictly as a valid JSON object in this format:
+{
+  "transactions": [
+    {
+      "date": "YYYY-MM-DD",
+      "time": "HH:MM",
+      "recipient": "Name of Shop or person",
+      "amount": 123.45,
+      "isExpense": true
+    }
+  ]
+}
+Guideline:
+- Look for groups of transactions under date headers (e.g. '24 พฤษภาคม 2569' translates to '2026-05-24'. Year 2569 BE is 2026 AD).
+- Deduce merchant/recipient names (e.g. "เซเว่น อีเลฟเว่น ออนไลน์", "WWW.GRAB.COM", "กูเกิล เพลย์สโตร์").
+- Detect whether it is expense (usually marked with '-' sign, like -฿133.00) or income ('+' sign, like +฿200.00). Only mark isExpense as true if it has minus sign.
+- Output ONLY the JSON object. Do not include any markdown format or additional text.`;
+
+            const payload = {
+                contents: [
+                    {
+                        role: "user",
+                        parts: [
+                            { text: "Extract all transactions from this image and output as JSON according to system instruction." },
+                            { inlineData: { mimeType: "image/png", data: base64ImageData } }
+                        ]
+                    }
+                ],
+                systemInstruction: {
+                    parts: [{ text: systemPrompt }]
+                },
+                generationConfig: {
+                    responseMimeType: "application/json"
+                }
+            };
+
+            // ดำเนินการเรียกใช้งาน API พร้อม Exponential Backoff
+            let delay = 1000;
+            let success = false;
+            let resultText = "";
+
+            for (let retry = 0; retry < 5; retry++) {
+                try {
+                    const response = await fetch(url, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+                    
+                    if (response.ok) {
+                        const responseData = await response.json();
+                        resultText = responseData.candidates?.[0]?.content?.parts?.[0]?.text;
+                        success = true;
+                        break;
+                    }
+                } catch (e) {
+                    console.error(`Gemini call error on retry ${retry}:`, e);
+                }
+                
+                await new Promise(resolve => setTimeout(resolve, delay));
+                delay *= 2; // เพิ่มเวลาดีเลย์แบบทวีคูณ
+            }
+
+            if (!success || !resultText) {
+                tmnScanStatusCard.classList.add('hidden');
+                triggerTrueMoneyPicker.classList.remove('hidden');
+                showCustomAlert('การเชื่อมต่อขัดข้อง', 'ไม่สามารถเชื่อมต่อระบบ Vision AI ได้ในขณะนี้ กรุณาตรวจสอบอินเทอร์เน็ตหรือทำรายการกรอกมือครับ');
+                return;
+            }
+
+            try {
+                const cleanJson = JSON.parse(resultText);
+                const rawTransactions = cleanJson.transactions || [];
+
+                if (rawTransactions.length === 0) {
+                    tmnScanStatusCard.classList.add('hidden');
+                    triggerTrueMoneyPicker.classList.remove('hidden');
+                    showCustomAlert('ไม่พบรายการ', 'สแกนสำเร็จแต่ตรวจไม่พบข้อมูลธุรกรรมในภาพ กรุณาตรวจสอบว่าหน้านี้มีบิลรายจ่ายจริงหรือไม่ครับ');
+                    return;
+                }
+
+                // สรุปข้อมูลเข้าสู่รายการระบบ
+                truemoneyRecords = rawTransactions.map((tx, idx) => {
+                    let category = "อื่นๆ";
+                    const recLower = (tx.recipient || "").toLowerCase();
+                    if (recLower.includes("เซเว่น") || recLower.includes("seven") || recLower.includes("7-11") || recLower.includes("อาหาร") || recLower.includes("ส้มตำ")) {
+                        category = "อาหาร";
+                    } else if (recLower.includes("grab") || recLower.includes("bts") || recLower.includes("mrt") || recLower.includes("เติมน้ำมัน") || recLower.includes("taxi")) {
+                        category = "การเดินทาง";
+                    } else if (recLower.includes("playstore") || recLower.includes("กูเกิล") || recLower.includes("google") || recLower.includes("netflix") || recLower.includes("youtube") || recLower.includes("เกม")) {
+                        category = "ความบันเทิง";
+                    } else if (recLower.includes("ช้อปปิ้ง") || recLower.includes("lazada") || recLower.includes("shopee") || recLower.includes("ซื้อของ")) {
+                        category = "ช้อปปิ้ง";
+                    }
+
+                    return {
+                        id: 'tmn_ai_' + Date.now() + '_' + idx + '_' + Math.random().toString(36).substr(2, 4),
+                        date: tx.date || new Date().toISOString().slice(0, 10),
+                        time: tx.time || "12:00",
+                        recipient: tx.recipient || "รายจ่าย TrueMoney",
+                        amount: parseFloat(tx.amount) || 0,
+                        isExpense: tx.isExpense !== false,
+                        category: category,
+                        memo: "สแกนอัจฉริยะผ่าน Gemini"
+                    };
+                });
+
+                renderTrueMoneyChecklistEditor();
+                tmnScanStatusCard.classList.add('hidden');
+                truemoneyResultsWrapper.classList.remove('hidden');
+
+            } catch (err) {
+                console.error("Failed to parse Vision JSON response:", err, resultText);
+                tmnScanStatusCard.classList.add('hidden');
+                triggerTrueMoneyPicker.classList.remove('hidden');
+                showCustomAlert('วิเคราะห์ผิดพลาด', 'ระบบปลายทางตอบกลับด้วยรูปแบบที่ไม่ถูกต้อง กรุณาทดลองใหม่อีกครั้งครับ');
+            }
+        }
+
+        function renderTrueMoneyChecklistEditor() {
+            truemoneyListEditor.innerHTML = '';
+            tmnDetectedCount.textContent = truemoneyRecords.length;
+
+            truemoneyRecords.forEach(item => {
+                const row = document.createElement('div');
+                row.className = "tmn-item-row bg-white p-3.5 rounded-2xl border border-slate-100 flex flex-col space-y-2.5 shadow-sm";
+                
+                const badgeStyle = item.isExpense ? "bg-red-50 text-red-600 border-red-100" : "bg-emerald-50 text-emerald-600 border-emerald-100";
+                const badgeLabel = item.isExpense ? "รายจ่าย" : "รายรับ";
+
+                row.innerHTML = `
+                    <div class="flex items-start gap-2.5">
+                        <input type="checkbox" data-id="${item.id}" class="tmn-item-check mt-1 w-4 h-4 text-orange-600 border-slate-300 rounded focus:ring-orange-500 cursor-pointer" ${item.isExpense ? 'checked' : ''}>
+                        
+                        <div class="flex-1 min-w-0 grid grid-cols-1 gap-2">
+                            <!-- บรรทัดหัวเรื่อง -->
+                            <div class="flex justify-between items-center">
+                                <span class="text-[9px] font-bold px-2 py-0.5 rounded-full border ${badgeStyle}">${badgeLabel}</span>
+                                <input type="date" class="tmn-item-date text-[10px] font-bold text-slate-400 bg-transparent text-right border-none p-0 focus:ring-0 cursor-pointer" value="${item.date}">
+                            </div>
+
+                            <!-- ส่วนแก้อินพุตตัวหนังสือและยอดเงิน -->
+                            <div class="grid grid-cols-3 gap-1.5">
+                                <div class="col-span-2">
+                                    <span class="block text-[8px] font-bold text-slate-400 uppercase">ชื่อรายการ / ผู้รับ</span>
+                                    <input type="text" class="tmn-item-recipient w-full px-2 py-1 text-xs font-bold text-slate-800 border rounded-lg focus:outline-none focus:ring-1 focus:ring-orange-500" value="${item.recipient}">
+                                </div>
+                                <div>
+                                    <span class="block text-[8px] font-bold text-slate-400 uppercase">ยอดเงิน (฿)</span>
+                                    <input type="number" step="0.01" class="tmn-item-amount w-full px-2 py-1 text-xs font-extrabold text-slate-800 border rounded-lg focus:outline-none focus:ring-1 focus:ring-orange-500" value="${item.amount}">
+                                </div>
+                            </div>
+
+                            <!-- ส่วนหมวดหมู่ -->
+                            <div>
+                                <span class="block text-[8px] font-bold text-slate-400 uppercase">หมวดหมู่ระบบ</span>
+                                <select class="tmn-item-category w-full px-2 py-1.5 text-[10px] font-bold text-slate-600 border rounded-lg bg-slate-50 focus:outline-none cursor-pointer">
+                                    <option value="อาหาร" ${item.category === 'อาหาร' ? 'selected' : ''}>🍔 อาหาร</option>
+                                    <option value="การเดินทาง" ${item.category === 'การเดินทาง' ? 'selected' : ''}>🚗 การเดินทาง</option>
+                                    <option value="ช้อปปิ้ง" ${item.category === 'ช้อปปิ้ง' ? 'selected' : ''}>🛍️ ช้อปปิ้ง</option>
+                                    <option value="ที่อยู่อาศัย" ${item.category === 'ที่อยู่อาศัย' ? 'selected' : ''}>🏠 ที่อยู่อาศัย</option>
+                                    <option value="ความบันเทิง" ${item.category === 'ความบันเทิง' ? 'selected' : ''}>🎬 ความบันเทิง</option>
+                                    <option value="จัดการ" ${item.category === 'จัดการ' ? 'selected' : ''}>🐻 ลงทุน/จัดการ</option>
+                                    <option value="อื่นๆ" ${item.category === 'อื่นๆ' ? 'selected' : ''}>📦 อื่นๆ ทั่วไป</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+                row.querySelector('.tmn-item-check').addEventListener('change', updateTmnImportCountBadge);
+                truemoneyListEditor.appendChild(row);
+            });
+
+            updateTmnImportCountBadge();
+        }
+
+        function updateTmnImportCountBadge() {
+            const checkedBoxes = truemoneyListEditor.querySelectorAll('.tmn-item-check:checked');
+            tmnImportCount.textContent = checkedBoxes.length;
         }
 
     </script>
