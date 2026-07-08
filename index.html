@@ -450,6 +450,24 @@
         let fileHandle = null; 
         let fileBatchQueue = [];
         let batchIndex = 0;
+
+        // ------------------------- GOOGLE SHEETS CLOUD SYNC -------------------------
+        // 1. นำ URL ที่ได้จาก Google Apps Script มาใส่ในเครื่องหมายคำพูดด้านล่าง (ดูวิธีทำในไฟล์ตั้งค่า)
+        const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycby2APsI9m1vtTnkw5Yl5LRn8EGwB-pzN1OMpTcJGKpe2szw2vtunbxPqjp09E2N3cQi/exec'; 
+
+        function syncWithGoogleSheets(action, record) {
+            if (!GOOGLE_SCRIPT_URL) return;
+            try {
+                // ส่งข้อมูลโดยใช้โหมด no-cors เพื่อข้ามข้อจำกัดของ Browser และทำงานเบื้องหลัง
+                fetch(GOOGLE_SCRIPT_URL, {
+                    method: 'POST',
+                    mode: 'no-cors', 
+                    body: JSON.stringify({ action: action, data: record })
+                });
+            } catch (err) {
+                console.error("Google Sheets Sync Error:", err);
+            }
+        }
         
         let recipientRules = {}; 
         let ocrWorker = null;
@@ -1642,6 +1660,9 @@
 
             updateDashboard();
 
+            // ส่งข้อมูลเพิ่ม/อัปเดต ขึ้น Google Sheets
+            syncWithGoogleSheets('save', record);
+
             if (fileHandle) {
                 await executeSyncOrDownload(true);
             }
@@ -1710,6 +1731,10 @@
         window.removeExpenseItem = async function(id) {
             expenses = expenses.filter(x => x.id !== id);
             updateDashboard();
+            
+            // ส่งคำสั่งลบข้อมูลบน Google Sheets
+            syncWithGoogleSheets('delete', { id: id });
+
             if (fileHandle) {
                 await executeSyncOrDownload(true);
             }
@@ -2450,6 +2475,9 @@
 
                             expenses.unshift(finalRecord);
                             importCounter++;
+
+                            // ส่งรายการจากการสแกน TrueMoney ขึ้น Google Sheets ทีละแถว
+                            syncWithGoogleSheets('save', finalRecord);
                         }
                     }
                 });
