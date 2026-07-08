@@ -4,60 +4,30 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>สมุดบัญชีสแกนสลิป PWA</title>
-    <!-- เรียกใช้ PWA Manifest -->
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#f8fafc">
     <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/3135/3135679.png">
-
-    <!-- Tailwind CSS for Modern Premium UI Layout -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
-    <!-- jsQR -->
     <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
-    <!-- Tesseract.js v5 (สำหรับ K-Plus Offline Backup) -->
     <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5.0.5/dist/tesseract.min.js"></script>
     
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700;800&display=swap');
-        body {
-            font-family: 'Sarabun', sans-serif;
-            user-select: none;
-            -webkit-tap-highlight-color: transparent;
-        }
+        body { font-family: 'Sarabun', sans-serif; user-select: none; -webkit-tap-highlight-color: transparent; }
         .custom-scrollbar::-webkit-scrollbar { width: 4px; height: 4px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: #f1f5f9; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
-        .notebook-grid {
-            background-size: 20px 20px;
-            background-image: linear-gradient(to right, #f1f5f9 1px, transparent 1px),
-                              linear-gradient(to bottom, #f1f5f9 1px, transparent 1px);
-        }
+        .notebook-grid { background-size: 20px 20px; background-image: linear-gradient(to right, #f1f5f9 1px, transparent 1px), linear-gradient(to bottom, #f1f5f9 1px, transparent 1px); }
         .autofilled-highlight { animation: pulse-border 1.5s ease-in-out; }
-        @keyframes pulse-border {
-            0% { border-color: #6366f1; box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.4); }
-            100% { border-color: #cbd5e1; box-shadow: none; }
-        }
+        @keyframes pulse-border { 0% { border-color: #6366f1; box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.4); } 100% { border-color: #cbd5e1; box-shadow: none; } }
         .dragging { opacity: 0.5; transform: scale(0.98); }
-        
-        /* Toast Animation */
-        #toast-notification {
-            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease;
-            transform: translateY(100%);
-            opacity: 0;
-        }
-        #toast-notification.show {
-            transform: translateY(0);
-            opacity: 1;
-        }
+        #toast-notification { transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease; transform: translateY(100%); opacity: 0; }
+        #toast-notification.show { transform: translateY(0); opacity: 1; }
     </style>
 </head>
 <body class="bg-slate-800 flex justify-center items-center min-h-screen">
-
-    <!-- Mobile Viewport Container -->
     <div id="app-container" class="w-full max-w-md bg-slate-50 min-h-screen shadow-2xl relative flex flex-col notebook-grid overflow-hidden">
-
-        <!-- Top Navigation Bar -->
         <header class="bg-white border-b border-slate-100 px-4 py-3.5 sticky top-0 z-20 shadow-sm flex justify-between items-center w-full">
             <div class="flex items-center space-x-2">
                 <div class="p-1.5 text-slate-500 bg-slate-50 rounded-lg relative cursor-pointer" id="file-status-indicator" title="สถานะไฟล์">
@@ -69,26 +39,26 @@
                 </button>
             </div>
             <div class="flex items-center space-x-1">
+                <!-- ปุ่มตั้งค่าคลาวด์เพิ่มใหม่ -->
+                <button id="cloud-settings-btn" class="p-2 text-sky-500 hover:bg-sky-50 rounded-xl relative cursor-pointer" title="ตั้งค่าเชื่อมต่อ Google Sheets">
+                    <i data-lucide="cloud-cog" class="w-4.5 h-4.5"></i>
+                </button>
+
                 <button id="alias-rules-btn" class="p-2 text-slate-500 hover:bg-slate-100 rounded-xl relative cursor-pointer" title="ตั้งค่าแปลงชื่อผู้รับ">
                     <i data-lucide="user-cog" class="w-4.5 h-4.5"></i>
                     <span id="rules-count-badge" class="absolute top-1 right-1 w-2 h-2 bg-indigo-600 rounded-full hidden"></span>
                 </button>
-                
                 <input type="file" id="import-csv-input" accept=".csv" class="hidden">
                 <button id="import-csv-btn" class="p-2 text-indigo-500 hover:bg-indigo-50 rounded-xl cursor-pointer" title="นำเข้า / เชื่อมโยงไฟล์ CSV">
                     <i data-lucide="folder-open" class="w-4.5 h-4.5"></i>
                 </button>
-
                 <button id="export-csv-btn" class="p-2 text-emerald-500 hover:bg-emerald-50 rounded-xl cursor-pointer" title="บันทึก / ส่งออก CSV">
                     <i data-lucide="save" class="w-4.5 h-4.5"></i>
                 </button>
             </div>
         </header>
 
-        <!-- Main Dynamic Content Frame -->
         <main class="flex-1 p-4 overflow-y-auto space-y-4 pb-24 custom-scrollbar">
-
-            <!-- Top Overview -->
             <div class="bg-white p-4 rounded-3xl border border-slate-100 shadow-sm grid grid-cols-2 gap-4">
                 <div class="flex flex-col">
                     <span class="text-xs font-semibold text-slate-400">รายจ่ายรวมเดือนนี้</span>
@@ -99,12 +69,9 @@
                     <span id="stat-monthly-count" class="text-xl font-extrabold text-slate-800 mt-1">0 รายการ</span>
                 </div>
             </div>
-
-            <!-- Tab Content Area -->
             <div id="tab-content-container" class="space-y-4"></div>
         </main>
 
-        <!-- NAVIGATION SYSTEM (Bottom Tabs) -->
         <nav class="absolute bottom-0 w-full bg-white border-t border-slate-100 px-3 py-2 flex justify-around items-center z-30 shadow-[0_-2px_10px_rgba(0,0,0,0.03)]">
             <button id="tab-list-btn" class="flex flex-col items-center gap-1 text-indigo-600 font-bold text-[10px] transition-all cursor-pointer">
                 <i data-lucide="list-ordered" class="w-5 h-5"></i> รายการ
@@ -117,56 +84,40 @@
             </button>
         </nav>
 
-        <!-- FLOATING ADD BUTTON -->
         <div class="absolute bottom-14 w-full flex justify-center z-30 pointer-events-none">
             <button id="floating-plus-btn" class="pointer-events-auto w-12 h-12 rounded-full bg-gradient-to-tr from-indigo-600 to-indigo-500 text-white flex items-center justify-center shadow-lg hover:scale-105 active:scale-95 transition-all cursor-pointer">
                 <i data-lucide="plus" class="w-6 h-6"></i>
             </button>
         </div>
 
-        <!-- MAIN CONTROL FORM SLIDE SHEET -->
         <div id="form-slide-sheet" class="hidden absolute inset-0 z-40 bg-black/60 flex flex-col justify-end">
             <div class="bg-white w-full rounded-t-[2.5rem] p-5 max-h-[95%] overflow-y-auto flex flex-col space-y-4 shadow-2xl relative custom-scrollbar">
                 <div class="w-12 h-1.5 bg-slate-200 rounded-full mx-auto cursor-pointer shrink-0" id="close-sheet-handle"></div>
-                
                 <div class="flex justify-between items-center shrink-0">
                     <h3 id="form-sheet-title" class="text-sm font-bold text-slate-800 flex items-center gap-1.5">
-                        <i data-lucide="plus-circle" class="w-4 h-4 text-indigo-600"></i>
-                        เพิ่มประวัติรายการรายจ่าย
+                        <i data-lucide="plus-circle" class="w-4 h-4 text-indigo-600"></i> เพิ่มประวัติรายการรายจ่าย
                     </h3>
-                    <button id="close-sheet-btn" class="p-1 text-slate-400 hover:bg-slate-100 rounded-full cursor-pointer">
-                        <i data-lucide="x" class="w-4 h-4"></i>
-                    </button>
+                    <button id="close-sheet-btn" class="p-1 text-slate-400 hover:bg-slate-100 rounded-full cursor-pointer"><i data-lucide="x" class="w-4 h-4"></i></button>
                 </div>
 
-                <!-- SEGMENTED SCAN MODE SELECTOR -->
                 <div class="flex bg-slate-100 p-1 rounded-2xl shrink-0" id="scan-mode-tab-bar">
-                    <button id="tab-kbank-mode" class="flex-1 py-2 text-[11px] font-extrabold rounded-xl transition-all bg-white text-indigo-600 shadow cursor-pointer">
-                        📱 K-Plus (สลิปเดี่ยว)
-                    </button>
-                    <button id="tab-truemoney-mode" class="flex-1 py-2 text-[11px] font-extrabold rounded-xl transition-all text-slate-500 hover:text-slate-800 cursor-pointer">
-                        🧡 TrueMoney (สแกนประวัติรวมด้วย AI)
-                    </button>
+                    <button id="tab-kbank-mode" class="flex-1 py-2 text-[11px] font-extrabold rounded-xl transition-all bg-white text-indigo-600 shadow cursor-pointer">📱 K-Plus (สลิปเดี่ยว)</button>
+                    <button id="tab-truemoney-mode" class="flex-1 py-2 text-[11px] font-extrabold rounded-xl transition-all text-slate-500 hover:text-slate-800 cursor-pointer">🧡 TrueMoney (สแกนประวัติรวมด้วย AI)</button>
                 </div>
 
-                <!-- ==================== KBANK (SLIP SINGLE) MODE PANEL ==================== -->
+                <!-- KBANK PANEL -->
                 <div id="kbank-scan-panel" class="space-y-4">
                     <div id="batch-queue-badge" class="hidden w-full bg-indigo-50 text-indigo-700 text-[10px] font-extrabold p-2 rounded-xl flex justify-between items-center">
                         <span>คิวตรวจสอบรูปภาพสลิป: <span id="batch-current-num">1</span> จากทั้งหมด <span id="batch-total-num">1</span> ใบ</span>
                         <button id="skip-batch-item-btn" class="text-red-500 hover:text-red-700 underline">ข้ามใบนี้</button>
                     </div>
-
                     <div class="border-2 border-dashed border-slate-200 rounded-2xl p-5 text-center cursor-pointer hover:bg-slate-50 transition-all flex flex-col items-center justify-center space-y-1.5" id="trigger-file-picker">
-                        <div class="w-9 h-9 bg-indigo-50 text-indigo-600 rounded-full flex items-center justify-center">
-                            <i data-lucide="scan" class="w-4.5 h-4.5"></i>
-                        </div>
+                        <div class="w-9 h-9 bg-indigo-50 text-indigo-600 rounded-full flex items-center justify-center"><i data-lucide="scan" class="w-4.5 h-4.5"></i></div>
                         <span class="text-xs font-bold text-slate-700">สแกนสลิป KBank อัตโนมัติ (Tesseract v5)</span>
                         <span class="text-[9px] text-slate-400">รูปภาพจะไม่ถูกบันทึกลงในระบบเพื่อประหยัดพื้นที่</span>
                     </div>
-                    
                     <input type="file" id="slip-file-input" accept="image/*" class="hidden" multiple>
 
-                    <!-- Slip Upload Preview Area -->
                     <div id="image-preview-container" class="hidden space-y-3">
                         <div class="relative w-full max-w-xs mx-auto text-center">
                             <div class="relative inline-block mx-auto overflow-hidden rounded-xl border bg-slate-100">
@@ -183,11 +134,8 @@
                             </div>
                         </div>
 
-                        <!-- Live Crop Preview Boxes -->
                         <div class="bg-slate-50 p-2.5 rounded-xl border border-slate-100 space-y-3 text-left">
-                            <span class="text-[10px] font-bold text-slate-500 flex items-center gap-1">
-                                <i data-lucide="eye" class="w-3.5 h-3.5 text-indigo-500"></i> ตัวอย่างภาพครอปและข้อความถอดรหัส
-                            </span>
+                            <span class="text-[10px] font-bold text-slate-500 flex items-center gap-1"><i data-lucide="eye" class="w-3.5 h-3.5 text-indigo-500"></i> ตัวอย่างภาพครอปและข้อความถอดรหัส</span>
                             <div class="grid grid-cols-3 gap-2 text-center text-[8px] text-slate-400 font-bold">
                                 <div class="bg-white p-1 rounded-lg border flex flex-col justify-between min-h-[90px]">
                                     <span class="block mb-1 text-indigo-600">1. วันเวลา (Top)</span>
@@ -207,12 +155,9 @@
                             </div>
                         </div>
 
-                        <!-- Calibration settings sliders panel -->
                         <div id="calibration-controls" class="hidden bg-indigo-50/70 p-3.5 rounded-xl border border-indigo-100 space-y-3 text-left">
                             <div class="flex justify-between items-center border-b border-indigo-100 pb-1.5">
-                                <span class="text-[10px] font-bold text-indigo-800 flex items-center gap-1">
-                                    <i data-lucide="sliders-horizontal" class="w-3.5 h-3.5"></i> แผงปรับพิกัดกล่องครอป %
-                                </span>
+                                <span class="text-[10px] font-bold text-indigo-800 flex items-center gap-1"><i data-lucide="sliders-horizontal" class="w-3.5 h-3.5"></i> แผงปรับพิกัดกล่องครอป %</span>
                                 <button id="reset-calibration-btn" class="text-[8px] bg-white px-2 py-0.5 rounded border border-indigo-300 font-bold text-indigo-700 cursor-pointer">คืนค่ามาตรฐาน</button>
                             </div>
                             <div class="text-[9px] space-y-1">
@@ -253,7 +198,6 @@
                         </div>
                     </div>
 
-                    <!-- SINGLE CONFIRMATION FORM FIELDS -->
                     <div class="space-y-3 pt-2">
                         <div>
                             <div class="flex justify-between items-center mb-1">
@@ -265,12 +209,10 @@
                                 <input type="number" step="0.01" id="form-amount" placeholder="0.00" class="w-full pl-8 pr-3 py-2 border rounded-xl focus:outline-none focus:ring-1 focus:ring-indigo-500 font-extrabold text-slate-800 text-lg">
                             </div>
                         </div>
-
                         <div>
                             <label class="block text-xs font-bold text-slate-500 mb-1">ชื่อผู้รับโอนเงิน / รายละเอียด</label>
                             <input type="text" id="form-recipient" placeholder="เช่น ร้านส้มตำ, นาย สมชาย" class="w-full px-3 py-2 border rounded-xl focus:outline-none focus:ring-1 focus:ring-indigo-500 text-xs font-bold text-slate-700">
                         </div>
-
                         <div class="grid grid-cols-2 gap-3">
                             <div>
                                 <label class="block text-xs font-bold text-slate-500 mb-1">วันที่ทำรายการ</label>
@@ -281,7 +223,6 @@
                                 <input type="time" id="form-time" class="w-full px-3 py-2 border rounded-xl focus:outline-none focus:ring-1 focus:ring-indigo-500 text-xs font-bold text-slate-600 transition-all">
                             </div>
                         </div>
-
                         <div>
                             <label class="block text-xs font-bold text-slate-500 mb-1">หมวดหมู่</label>
                             <select id="form-category" class="w-full px-3 py-2 border rounded-xl focus:outline-none focus:ring-1 focus:ring-indigo-500 text-xs font-bold text-slate-600">
@@ -294,12 +235,10 @@
                                 <option value="อื่นๆ">📦 อื่นๆ ทั่วไป</option>
                             </select>
                         </div>
-
                         <div>
                             <label class="block text-xs font-bold text-slate-500 mb-1">บันทึกความจำเพิ่มเติม</label>
                             <input type="text" id="form-memo" placeholder="บันทึกย่อเพิ่มเติม..." class="w-full px-3 py-2 border rounded-xl focus:outline-none focus:ring-1 focus:ring-indigo-500 text-xs font-medium">
                         </div>
-
                         <button id="save-record-btn" class="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold transition-all text-xs shadow-md flex items-center justify-center gap-1.5 cursor-pointer">
                             <i data-lucide="check-circle" class="w-4 h-4"></i>
                             <span id="save-btn-text">บันทึกรายการ</span>
@@ -307,52 +246,54 @@
                     </div>
                 </div>
 
-                <!-- ==================== TRUEMONEY (AI IMAGE RECOGNITION) PANEL ==================== -->
+                <!-- TRUEMONEY PANEL -->
                 <div id="truemoney-scan-panel" class="hidden space-y-4">
                     <div class="border-2 border-dashed border-orange-200 bg-orange-50/20 rounded-2xl p-5 text-center cursor-pointer hover:bg-orange-50/50 transition-all flex flex-col items-center justify-center space-y-1.5" id="trigger-truemoney-picker">
-                        <div class="w-9 h-9 bg-orange-100 text-orange-600 rounded-full flex items-center justify-center">
-                            <i data-lucide="sparkles" class="w-5 h-5"></i>
-                        </div>
+                        <div class="w-9 h-9 bg-orange-100 text-orange-600 rounded-full flex items-center justify-center"><i data-lucide="sparkles" class="w-5 h-5"></i></div>
                         <span class="text-xs font-extrabold text-slate-700">อัปโหลดรูปภาพประวัติ TrueMoney (ใช้ Vision AI)</span>
                         <span class="text-[9px] text-slate-400">ระบบใช้โมเดล Gemini อัจฉริยะวิเคราะห์ความเข้าใจในภาพประวัติ</span>
                     </div>
-
                     <input type="file" id="truemoney-file-input" accept="image/*" class="hidden">
-
-                    <!-- Truemoney Progress Indicator -->
                     <div id="tmn-scan-status-card" class="hidden p-4 rounded-2xl bg-white border border-slate-100 text-center space-y-3 shadow-sm">
-                        <div class="flex justify-center">
-                            <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-500"></div>
-                        </div>
+                        <div class="flex justify-center"><div class="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-500"></div></div>
                         <span id="tmn-scan-status-text" class="block text-xs font-bold text-orange-600">กำลังส่งภาพให้ระบบ Gemini Vision AI ประมวลผล...</span>
                         <span id="tmn-detail-status" class="block text-[10px] text-slate-400 font-semibold">ขั้นตอนการมองเห็นโครงสร้างบิลและจำนวนเงิน อาจใช้เวลาประมาณ 3-5 วินาที</span>
                     </div>
-
-                    <!-- Truemoney Results Checklist Container -->
                     <div id="truemoney-results-wrapper" class="hidden space-y-3">
                         <div class="flex justify-between items-center border-b pb-2">
-                            <span class="text-xs font-extrabold text-slate-800 flex items-center gap-1">
-                                <i data-lucide="check-square" class="w-4 h-4 text-orange-500"></i> ตรวจพบประวัติจากภาพ (<span id="tmn-detected-count">0</span> รายการ)
-                            </span>
+                            <span class="text-xs font-extrabold text-slate-800 flex items-center gap-1"><i data-lucide="check-square" class="w-4 h-4 text-orange-500"></i> ตรวจพบประวัติจากภาพ (<span id="tmn-detected-count">0</span> รายการ)</span>
                             <button id="tmn-select-all-btn" class="text-[9px] text-indigo-600 hover:text-indigo-800 font-extrabold bg-slate-100 px-2 py-1 rounded cursor-pointer">เลือกทั้งหมด</button>
                         </div>
-
-                        <!-- Scrollable transaction list editor -->
-                        <div id="truemoney-list-editor" class="space-y-2.5 max-h-[320px] overflow-y-auto custom-scrollbar pr-1 pb-2">
-                            <!-- Injected Dynamic Row Items -->
-                        </div>
-
+                        <div id="truemoney-list-editor" class="space-y-2.5 max-h-[320px] overflow-y-auto custom-scrollbar pr-1 pb-2"></div>
                         <button id="tmn-save-all-btn" class="w-full py-3 bg-orange-500 hover:bg-orange-600 text-white rounded-xl font-bold transition-all text-xs shadow-md flex items-center justify-center gap-1.5 cursor-pointer">
-                            <i data-lucide="check-square" class="w-4 h-4"></i>
-                            ยืนยันนำเข้ารายการที่เลือก (<span id="tmn-import-count">0</span>)
+                            <i data-lucide="check-square" class="w-4 h-4"></i> ยืนยันนำเข้ารายการที่เลือก (<span id="tmn-import-count">0</span>)
                         </button>
                     </div>
                 </div>
-
             </div>
         </div>
 
-        <!-- ------------------------- MODALS ------------------------- -->
+        <!-- MODALS -->
+        <!-- เพิ่ม Modal สำหรับใส่ลิงก์คลาวด์ -->
+        <div id="cloud-settings-modal" class="hidden absolute inset-0 z-50 bg-black/60 flex items-center justify-center p-4">
+            <div class="bg-white w-full rounded-3xl p-5 max-w-sm space-y-4 shadow-2xl flex flex-col">
+                <div class="flex justify-between items-center border-b pb-3 shrink-0">
+                    <h3 class="font-extrabold text-slate-800 text-sm flex items-center gap-1.5">
+                        <i data-lucide="cloud-cog" class="w-4 h-4 text-sky-600"></i> ตั้งค่า Google Sheets
+                    </h3>
+                    <button id="close-cloud-settings-btn" class="p-1 text-slate-400 hover:bg-slate-100 rounded-full cursor-pointer"><i data-lucide="x" class="w-4 h-4"></i></button>
+                </div>
+                <div class="bg-sky-50/50 p-3.5 rounded-2xl border border-sky-100/50 space-y-3 shrink-0">
+                    <span class="text-[10px] font-bold text-sky-800 block">ใส่ลิงก์ Web App URL (ลงท้ายด้วย /exec)</span>
+                    <input type="text" id="cloud-url-input" placeholder="https://script.google.com/.../exec" class="w-full px-3 py-2 border rounded-lg text-[10px] font-medium focus:ring-1 focus:ring-sky-500 text-slate-600 bg-white">
+                    <div class="flex gap-2 pt-1">
+                        <button id="clear-cloud-btn" class="flex-1 py-2 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl font-bold text-[10px] shadow-sm transition-all cursor-pointer">ทำงานแบบออฟไลน์</button>
+                        <button id="save-cloud-btn" class="flex-1 py-2 bg-sky-600 hover:bg-sky-700 text-white rounded-xl font-bold text-[10px] shadow-sm transition-all cursor-pointer">บันทึก & ซิงค์ทันที</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <div id="month-picker-modal" class="hidden absolute inset-0 z-50 bg-black/60 flex items-center justify-center p-4">
             <div class="bg-white w-full rounded-3xl p-6 max-w-sm space-y-4 shadow-2xl">
                 <div class="flex justify-between items-center border-b pb-3">
@@ -411,20 +352,17 @@
             </div>
         </div>
 
-        <!-- Custom Toast Notification -->
         <div id="toast-notification" class="absolute bottom-20 left-1/2 transform -translate-x-1/2 bg-slate-800 text-white text-xs font-bold py-2 px-4 rounded-full shadow-lg z-50 flex items-center gap-2 pointer-events-none">
             <i data-lucide="check-circle" class="w-4 h-4 text-emerald-400"></i>
             <span id="toast-message">บันทึกอัตโนมัติสำเร็จ</span>
         </div>
 
-        <!-- Hidden canvases -->
         <canvas id="qr-canvas" class="hidden"></canvas>
         <canvas id="util-canvas" class="hidden"></canvas>
 
-    </div> <!-- End of App Container -->
+    </div>
 
     <script>
-        // ------------------------- SMART AUTO-GRID GEOMETRY ENGINE -------------------------
         function getSmartGeometry(imgWidth, imgHeight) {
             const STANDARD_RATIO = 1394 / 1164;
             let virtualH = imgHeight;
@@ -434,41 +372,98 @@
             return { w: imgWidth, h: imgHeight, virtualH: virtualH };
         }
 
-        // ------------------------- REGISTER SERVICE WORKER (PWA) -------------------------
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('./sw.js').then((registration) => {
-                    console.log('ServiceWorker registered with scope:', registration.scope);
+                    console.log('ServiceWorker registered');
                 }, (err) => {
-                    console.log('ServiceWorker registration failed:', err);
+                    console.log('ServiceWorker failed:', err);
                 });
             });
         }
 
-        // ------------------------- FEATURE: OFFLINE RAM STORAGE & FILE SYSTEM API -------------------------
         let expenses = [];
         let fileHandle = null; 
         let fileBatchQueue = [];
         let batchIndex = 0;
 
-        // ------------------------- GOOGLE SHEETS CLOUD SYNC -------------------------
-        // 1. นำ URL ที่ได้จาก Google Apps Script มาใส่ในเครื่องหมายคำพูดด้านล่าง (ดูวิธีทำในไฟล์ตั้งค่า)
-        const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwnp5rGtY140crYTLHKu2qeuF_WMNPHr3DOvGjDDoTIBUfJ2FTXapAIZpTty1zr3cX_/exec'; 
+        // ⚠️ ระบบดึง URL จาก LocalStorage ถ้าไม่มีให้ใช้ลิงก์ค่าเริ่มต้นของคุณ
+        let GOOGLE_SCRIPT_URL = localStorage.getItem('google_script_url') || 'https://script.google.com/macros/s/AKfycbwBh5l6X-rIhsZcz5Qvm0XLLiF9h10ggkEV850rZd0-p3Ev0l5TuwkSjuqdmdqYnf1q/exec';
 
+        // ส่วนของการตั้งค่าคลาวด์
+        const cloudSettingsBtn = document.getElementById('cloud-settings-btn');
+        const cloudSettingsModal = document.getElementById('cloud-settings-modal');
+        const closeCloudSettingsBtn = document.getElementById('close-cloud-settings-btn');
+        const cloudUrlInput = document.getElementById('cloud-url-input');
+        const saveCloudBtn = document.getElementById('save-cloud-btn');
+        const clearCloudBtn = document.getElementById('clear-cloud-btn');
+
+        // ส่งข้อมูลเป็นแบบ text/plain พร้อม no-cors เพื่อแก้ปัญหา CORS Preflight ตอนบันทึกข้อมูล
         function syncWithGoogleSheets(action, record) {
             if (!GOOGLE_SCRIPT_URL) return;
             try {
-                // ส่งข้อมูลโดยใช้โหมด no-cors เพื่อข้ามข้อจำกัดของ Browser และทำงานเบื้องหลัง
                 fetch(GOOGLE_SCRIPT_URL, {
                     method: 'POST',
-                    mode: 'no-cors', 
+                    mode: 'no-cors',
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
                     body: JSON.stringify({ action: action, data: record })
-                });
+                }).catch(err => console.warn("Fetch API Error:", err));
             } catch (err) {
-                console.error("Google Sheets Sync Error:", err);
+                console.warn("Google Sheets Sync Error:", err);
             }
         }
         
+        async function fetchDataFromGoogleSheets() {
+            if (!GOOGLE_SCRIPT_URL) {
+                linkedFileDot.classList.replace('bg-emerald-500', 'bg-slate-300');
+                linkedFileDot.classList.replace('bg-amber-500', 'bg-slate-300');
+                linkedFileDot.classList.replace('bg-rose-500', 'bg-slate-300');
+                document.getElementById('file-status-indicator').title = "ทำงานในโหมดออฟไลน์";
+                return;
+            }
+            
+            linkedFileDot.classList.replace('bg-slate-300', 'bg-amber-500');
+            linkedFileDot.classList.replace('bg-rose-500', 'bg-amber-500');
+            linkedFileDot.classList.replace('bg-emerald-500', 'bg-amber-500');
+            document.getElementById('file-status-indicator').title = "กำลังโหลดข้อมูลจากคลาวด์...";
+
+            try {
+                // ส่งคำขอแบบธรรมดาโดยไม่ระบุโหมด cors เพื่อป้องกันเบราว์เซอร์บล็อก Redirect ของ Google
+                const url = GOOGLE_SCRIPT_URL + '?action=read&t=' + Date.now();
+                const response = await fetch(url);
+                const text = await response.text(); // อ่านแบบข้อความก่อน
+                
+                try {
+                    const result = JSON.parse(text);
+                    if (result.status === 'success' && result.data) {
+                        expenses = result.data;
+                        updateDashboard();
+                        linkedFileDot.classList.replace('bg-amber-500', 'bg-emerald-500');
+                        document.getElementById('file-status-indicator').title = "ซิงค์คลาวด์สำเร็จแล้ว";
+                        showToast('โหลดข้อมูลจากคลาวด์สำเร็จ!');
+                    } else if (result.status === 'error') {
+                        console.warn("Server Error:", result.message);
+                        throw new Error(result.message);
+                    }
+                } catch (parseErr) {
+                    console.warn("ข้อมูลที่ตอบกลับมาไม่ใช่ JSON:", text);
+                    throw new Error("Invalid response");
+                }
+            } catch (err) {
+                console.warn("Failed to load from Google Sheets", err);
+                linkedFileDot.classList.replace('bg-amber-500', 'bg-rose-500');
+                document.getElementById('file-status-indicator').title = "ซิงค์คลาวด์ล้มเหลว";
+                showToast('แอปทำงานในโหมดออฟไลน์ (Local)');
+                
+                setTimeout(() => {
+                    showCustomAlert(
+                        'สคริปต์ยังไม่ได้รับสิทธิ์เข้าถึง 🔒', 
+                        'วิธีแก้ปัญหา Failed to fetch:\n1. ไปที่หน้า Google Apps Script\n2. กดปุ่ม "เรียกใช้" (Run) ด้านบน\n3. กด "ตรวจสอบสิทธิ์" (Review Permissions)\n4. กดยอมรับให้สคริปต์เข้าถึง Sheets\n5. กด New Deployment อีกครั้งเพื่อเอาลิงก์ใหม่ครับ'
+                    );
+                }, 1500);
+            }
+        }
+
         let recipientRules = {}; 
         let ocrWorker = null;
         let isOcrReady = false;
@@ -493,35 +488,27 @@
         };
         let gridSettings = { ...DEFAULT_GRID_SETTINGS };
 
-        // DOM elements mapping
         const currentMonthDisplayHeader = document.getElementById('current-month-display-header');
         const tabContentContainer = document.getElementById('tab-content-container');
         const statMonthlyExpense = document.getElementById('stat-monthly-expense');
         const statMonthlyCount = document.getElementById('stat-monthly-count');
-
         const tabListBtn = document.getElementById('tab-list-btn');
         const tabCalendarBtn = document.getElementById('tab-calendar-btn');
         const tabChartBtn = document.getElementById('tab-chart-btn');
-
         const floatingPlusBtn = document.getElementById('floating-plus-btn');
         const formSlideSheet = document.getElementById('form-slide-sheet');
         const closeSheetBtn = document.getElementById('close-sheet-btn');
         const closeSheetHandle = document.getElementById('close-sheet-handle');
-        
-        // Mode switch elements
         const tabKBankMode = document.getElementById('tab-kbank-mode');
         const tabTrueMoneyMode = document.getElementById('tab-truemoney-mode');
         const kbankScanPanel = document.getElementById('kbank-scan-panel');
         const truemoneyScanPanel = document.getElementById('truemoney-scan-panel');
-
-        // KBank Panel elements
         const triggerFilePicker = document.getElementById('trigger-file-picker');
         const slipFileInput = document.getElementById('slip-file-input');
         const imagePreviewContainer = document.getElementById('image-preview-container');
         const imagePreview = document.getElementById('image-preview');
         const cropOverlayCanvas = document.getElementById('crop-overlay-canvas');
         const removeImageBtn = document.getElementById('remove-image-btn');
-        
         const formAmount = document.getElementById('form-amount');
         const formRecipient = document.getElementById('form-recipient');
         const formDate = document.getElementById('form-date');
@@ -530,7 +517,6 @@
         const formMemo = document.getElementById('form-memo');
         const saveRecordBtn = document.getElementById('save-record-btn');
         const amountSourceBadge = document.getElementById('amount-source-badge');
-
         const ocrRawDatetime = document.getElementById('ocr-raw-datetime');
         const ocrRawRecipient = document.getElementById('ocr-raw-recipient');
         const ocrRawAmount = document.getElementById('ocr-raw-amount');
@@ -541,12 +527,9 @@
         const cropDateTimeCanvas = document.getElementById('crop-datetime-canvas');
         const cropRecipientCanvas = document.getElementById('crop-recipient-canvas');
         const cropAmountCanvas = document.getElementById('crop-amount-canvas');
-
         const toggleCalibrationBtn = document.getElementById('toggle-calibration-btn');
         const calibrationControls = document.getElementById('calibration-controls');
         const resetCalibrationBtn = document.getElementById('reset-calibration-btn');
-
-        // TrueMoney Panel elements
         const triggerTrueMoneyPicker = document.getElementById('trigger-truemoney-picker');
         const truemoneyFileInput = document.getElementById('truemoney-file-input');
         const tmnScanStatusCard = document.getElementById('tmn-scan-status-card');
@@ -567,7 +550,6 @@
         const importCsvBtn = document.getElementById('import-csv-btn');
         const importCsvInput = document.getElementById('import-csv-input');
         const linkedFileDot = document.getElementById('linked-file-dot');
-        
         const alertModal = document.getElementById('alert-modal');
         const alertTitle = document.getElementById('alert-title');
         const alertMessage = document.getElementById('alert-message');
@@ -576,19 +558,16 @@
         const duplicateModal = document.getElementById('duplicate-modal');
         const cancelDuplicateBtn = document.getElementById('cancel-duplicate-btn');
         const confirmDuplicateBtn = document.getElementById('confirm-duplicate-btn');
-
         const monthPickerModal = document.getElementById('month-picker-modal');
         const closeMonthPickerBtn = document.getElementById('close-month-picker-btn');
         const prevPickerYear = document.getElementById('prev-picker-year');
         const nextPickerYear = document.getElementById('next-picker-year');
         const pickerYearDisplay = document.getElementById('picker-year-display');
         const monthsGridContainer = document.getElementById('months-grid-container');
-
         const batchQueueBadge = document.getElementById('batch-queue-badge');
         const batchCurrentNum = document.getElementById('batch-current-num');
         const batchTotalNum = document.getElementById('batch-total-num');
         const skipBatchItemBtn = document.getElementById('skip-batch-item-btn');
-
         const aliasRulesBtn = document.getElementById('alias-rules-btn');
         const aliasRulesModal = document.getElementById('alias-rules-modal');
         const closeAliasRulesBtn = document.getElementById('close-alias-rules-btn');
@@ -598,15 +577,13 @@
         const rulesListContainer = document.getElementById('rules-list-container');
         const rulesCountBadge = document.getElementById('rules-count-badge');
 
-        // ------------------------- ป้องกันการเผลอปิดเว็บโดยไม่ Export -------------------------
         window.addEventListener('beforeunload', function (e) {
-            if (expenses.length > 0 && !fileHandle) {
+            if (expenses.length > 0 && !fileHandle && !GOOGLE_SCRIPT_URL) {
                 e.preventDefault();
                 e.returnValue = ''; 
             }
         });
 
-        // ------------------------- INITIALIZATION -------------------------
         window.addEventListener('DOMContentLoaded', () => {
             lucide.createIcons();
             loadGridSettings(); 
@@ -625,14 +602,59 @@
             setupImportExport();
             setupTrueMoneyListeners();
 
-            if (expenses.length === 0) {
+            // ระบบจัดการตั้งค่า URL คลาวด์ใหม่
+            cloudSettingsBtn.addEventListener('click', () => {
+                cloudUrlInput.value = localStorage.getItem('google_script_url') || GOOGLE_SCRIPT_URL;
+                cloudSettingsModal.classList.remove('hidden');
+            });
+
+            closeCloudSettingsBtn.addEventListener('click', () => {
+                cloudSettingsModal.classList.add('hidden');
+            });
+
+            saveCloudBtn.addEventListener('click', () => {
+                const url = cloudUrlInput.value.trim();
+                if (url && !url.includes('/exec')) {
+                    showCustomAlert('URL ไม่ถูกต้อง', 'กรุณาใส่ลิงก์ Web App ของ Google Sheets ที่ลงท้ายด้วย /exec ให้ถูกต้องครับ');
+                    return;
+                }
+                
+                if (url) {
+                    GOOGLE_SCRIPT_URL = url;
+                    localStorage.setItem('google_script_url', url);
+                    cloudSettingsModal.classList.add('hidden');
+                    fetchDataFromGoogleSheets(); // ทริกเกอร์โหลดข้อมูลใหม่
+                } else {
+                    localStorage.removeItem('google_script_url');
+                    GOOGLE_SCRIPT_URL = '';
+                    cloudSettingsModal.classList.add('hidden');
+                    showToast('ยกเลิกการซิงค์ (เข้าสู่โหมดออฟไลน์)');
+                    linkedFileDot.classList.replace('bg-emerald-500', 'bg-slate-300');
+                    linkedFileDot.classList.replace('bg-amber-500', 'bg-slate-300');
+                    linkedFileDot.classList.replace('bg-rose-500', 'bg-slate-300');
+                }
+            });
+
+            clearCloudBtn.addEventListener('click', () => {
+                cloudUrlInput.value = '';
+                localStorage.removeItem('google_script_url');
+                GOOGLE_SCRIPT_URL = '';
+                cloudSettingsModal.classList.add('hidden');
+                showToast('เข้าสู่โหมดออฟไลน์');
+                linkedFileDot.classList.replace('bg-emerald-500', 'bg-slate-300');
+                linkedFileDot.classList.replace('bg-amber-500', 'bg-slate-300');
+                linkedFileDot.classList.replace('bg-rose-500', 'bg-slate-300');
+            });
+
+            if (GOOGLE_SCRIPT_URL) {
+                fetchDataFromGoogleSheets();
+            } else if (expenses.length === 0) {
                 setTimeout(() => {
                     showCustomAlert('ยินดีต้อนรับสู่ระบบ Local-First', 'ระบบใช้พื้นที่ความจำหลัก (RAM) เพื่อความปลอดภัยสูงสุด\nกรุณากดปุ่ม 📂 ด้านบนเพื่อนำเข้า/เชื่อมโยงกับไฟล์ CSV ครับ');
                 }, 500);
             }
         });
 
-        // ------------------------- IMPORT / EXPORT CSV & FILE SYSTEM API -------------------------
         function setupImportExport() {
             importCsvBtn.addEventListener('click', async () => {
                 if ('showOpenFilePicker' in window) {
@@ -649,7 +671,7 @@
                         linkedFileDot.classList.replace('bg-rose-500', 'bg-emerald-500');
                         showCustomAlert('เชื่อมโยงไฟล์สำเร็จ!', `เชื่อมต่อกับไฟล์ "${file.name}" เรียบร้อยแล้ว\n\nหลังจากนี้เมื่อเพิ่ม/แก้ไขรายการ ระบบจะ Auto-Save ทับไฟล์นี้ให้อัตโนมัติครับ`, true);
                     } catch (e) {
-                        console.log('User cancelled or API failed, using standard upload fallback.', e);
+                        console.log('User cancelled or API failed', e);
                         importCsvInput.click();
                     }
                 } else {
@@ -711,7 +733,7 @@
                     }
                     return;
                 } catch (e) {
-                    console.log("Auto-save failed, fallback to download", e);
+                    console.log("Auto-save failed", e);
                     fileHandle = null;
                     linkedFileDot.classList.replace('bg-emerald-500', 'bg-amber-500');
                 }
@@ -762,7 +784,7 @@
             updateDashboard();
             
             if (!fileHandle) {
-                showCustomAlert('สรุปการนำเข้าข้อมูล', `เพิ่มรายการใหม่: ${importedCount} รายการ\nอัปเดตข้อมูลซ้ำ: ${updatedCount} รายการ\n\n(ระบบนี้ไม่มี Auto-save อย่าลืมกด Export เพื่อเซฟด้วยนะครับ)`, true);
+                showCustomAlert('สรุปการนำเข้าข้อมูล', `เพิ่มรายการใหม่: ${importedCount} รายการ\nอัปเดตข้อมูลซ้ำ: ${updatedCount} รายการ`, true);
             }
         }
 
@@ -770,12 +792,9 @@
             const toast = document.getElementById('toast-notification');
             document.getElementById('toast-message').textContent = message;
             toast.classList.add('show');
-            setTimeout(() => {
-                toast.classList.remove('show');
-            }, 2500);
+            setTimeout(() => { toast.classList.remove('show'); }, 2500);
         }
 
-        // ------------------------- PRELOAD OCR (TESSERACT V5) -------------------------
         async function preInitializeOCR() {
             if (isOcrReady) return;
             try {
@@ -803,18 +822,13 @@
                 });
                 
                 isOcrReady = true;
-                console.log("Tesseract v5 Ready");
             } catch (err) {
-                console.error("Local Tesseract Worker Load Error:", err);
+                console.error("OCR Load Error:", err);
             }
         }
 
-        // ------------------------- TAB NAVIGATION -------------------------
         function setupTabNavigation() {
-            tabListBtn.addEventListener('click', () => {
-                selectedCalendarDate = null;
-                switchTab('list');
-            });
+            tabListBtn.addEventListener('click', () => { selectedCalendarDate = null; switchTab('list'); });
             tabCalendarBtn.addEventListener('click', () => switchTab('calendar'));
             tabChartBtn.addEventListener('click', () => switchTab('chart'));
             switchTab('list');
@@ -858,19 +872,14 @@
                 
                 const daysHeader = ['อา', 'จ', 'อ', 'พ', 'พฤ', 'ศ', 'ส'];
                 let gridHTML = `<div class="grid grid-cols-7 gap-1 text-center font-bold text-[10px] text-slate-400 mb-2">`;
-                daysHeader.forEach(d => {
-                    gridHTML += `<div>${d}</div>`;
-                });
+                daysHeader.forEach(d => { gridHTML += `<div>${d}</div>`; });
                 gridHTML += `</div>`;
 
                 const firstDayIndex = new Date(calendarYear, calendarMonth, 1).getDay();
                 const totalDays = new Date(calendarYear, calendarMonth + 1, 0).getDate();
                 
                 gridHTML += `<div class="grid grid-cols-7 gap-y-2 gap-x-1">`;
-                
-                for (let i = 0; i < firstDayIndex; i++) {
-                    gridHTML += `<div class="aspect-square bg-slate-50/50 rounded-xl"></div>`;
-                }
+                for (let i = 0; i < firstDayIndex; i++) { gridHTML += `<div class="aspect-square bg-slate-50/50 rounded-xl"></div>`; }
 
                 for (let dayNum = 1; dayNum <= totalDays; dayNum++) {
                     const dStr = `${calendarYear}-${(calendarMonth + 1).toString().padStart(2, '0')}-${dayNum.toString().padStart(2, '0')}`;
@@ -881,30 +890,20 @@
                     const isToday = (new Date().getDate() === dayNum && new Date().getMonth() === calendarMonth && new Date().getFullYear() === calendarYear);
 
                     let dayStyle = 'bg-white border-slate-100 text-slate-700 hover:bg-slate-50 cursor-pointer';
-                    if (isSelected) {
-                        dayStyle = 'bg-indigo-600 border-indigo-600 text-white shadow-md shadow-indigo-100 scale-105';
-                    } else if (isToday) {
-                        dayStyle = 'bg-indigo-50/70 border-indigo-200 text-indigo-800 font-extrabold';
-                    }
+                    if (isSelected) dayStyle = 'bg-indigo-600 border-indigo-600 text-white shadow-md shadow-indigo-100 scale-105';
+                    else if (isToday) dayStyle = 'bg-indigo-50/70 border-indigo-200 text-indigo-800 font-extrabold';
 
                     gridHTML += `
                         <div onclick="window.handleCalendarDaySelection('${dStr}')" class="aspect-square flex flex-col justify-between p-1.5 rounded-xl border relative transition-all ${dayStyle}">
                             <span class="text-[10px] font-bold ${isSelected ? 'text-white' : (isToday ? 'text-indigo-700 font-extrabold' : 'text-slate-500')}">${dayNum}</span>
-                            ${
-                                dayTotal > 0 
-                                ? `<span class="text-[7.5px] font-extrabold truncate w-full text-center leading-none ${isSelected ? 'text-indigo-100' : 'text-red-500'}">-฿${Math.round(dayTotal).toLocaleString()}</span>` 
-                                : '<span class="h-1"></span>'
-                            }
+                            ${dayTotal > 0 ? `<span class="text-[7.5px] font-extrabold truncate w-full text-center leading-none ${isSelected ? 'text-indigo-100' : 'text-red-500'}">-฿${Math.round(dayTotal).toLocaleString()}</span>` : '<span class="h-1"></span>'}
                         </div>
                     `;
                 }
-
                 gridHTML += `</div>`;
                 calendarWrapper.innerHTML = `
                     <div class="flex items-center justify-between border-b pb-2">
-                        <span class="text-xs font-extrabold text-slate-800 flex items-center gap-1">
-                            <i data-lucide="calendar" class="w-4 h-4 text-indigo-600"></i> ปฏิทินแสดงรายจ่ายรายวัน
-                        </span>
+                        <span class="text-xs font-extrabold text-slate-800 flex items-center gap-1"><i data-lucide="calendar" class="w-4 h-4 text-indigo-600"></i> ปฏิทินแสดงรายจ่ายรายวัน</span>
                         <span class="text-[9px] text-slate-400">แตะเพื่อไฮไลต์และล็อกวันบันทึก</span>
                     </div>
                     ${gridHTML}
@@ -913,9 +912,7 @@
                 tabContentContainer.appendChild(calendarWrapper);
                 lucide.createIcons();
 
-                if (selectedCalendarDate) {
-                    filterShowDayRecords(selectedCalendarDate);
-                }
+                if (selectedCalendarDate) filterShowDayRecords(selectedCalendarDate);
 
             } else if (currentTab === 'chart') {
                 const dashboardContainer = document.createElement('div');
@@ -924,13 +921,9 @@
                 tabContentContainer.appendChild(dashboardContainer);
 
                 dashboardOrder.forEach(cardId => {
-                    if (cardId === 'stats-card') {
-                        dashboardContainer.appendChild(createStatsCard(monthlyRecords));
-                    } else if (cardId === 'donut-card') {
-                        dashboardContainer.appendChild(createDonutCard(monthlyRecords));
-                    } else if (cardId === 'drilldown-card') {
-                        dashboardContainer.appendChild(createDrilldownCard(monthlyRecords));
-                    }
+                    if (cardId === 'stats-card') dashboardContainer.appendChild(createStatsCard(monthlyRecords));
+                    else if (cardId === 'donut-card') dashboardContainer.appendChild(createDonutCard(monthlyRecords));
+                    else if (cardId === 'drilldown-card') dashboardContainer.appendChild(createDrilldownCard(monthlyRecords));
                 });
 
                 setupDragAndDrop();
@@ -938,10 +931,7 @@
             }
         }
 
-        window.handleCalendarDaySelection = function(dateStr) {
-            selectedCalendarDate = dateStr;
-            renderTabContent(); 
-        };
+        window.handleCalendarDaySelection = function(dateStr) { selectedCalendarDate = dateStr; renderTabContent(); };
 
         window.filterShowDayRecords = function(dateStr) {
             const detailBox = document.getElementById('calendar-day-details');
@@ -949,11 +939,7 @@
 
             const dayRecords = expenses.filter(x => x.date === dateStr);
             if (dayRecords.length === 0) {
-                detailBox.innerHTML = `
-                    <div class="p-4 text-center text-xs text-slate-400 bg-slate-50/50 rounded-2xl border border-dashed">
-                        ไม่มีประวัติรายจ่ายสำหรับวันที่ ${formatTimelineHeaderDate(dateStr)}
-                    </div>
-                `;
+                detailBox.innerHTML = `<div class="p-4 text-center text-xs text-slate-400 bg-slate-50/50 rounded-2xl border border-dashed">ไม่มีประวัติรายจ่ายสำหรับวันที่ ${formatTimelineHeaderDate(dateStr)}</div>`;
                 detailBox.classList.remove('hidden');
                 return;
             }
@@ -967,8 +953,7 @@
             `;
 
             dayRecords.forEach(item => {
-                let iconClass = "bg-slate-50 text-slate-500";
-                let iconName = "receipt";
+                let iconClass = "bg-slate-50 text-slate-500"; let iconName = "receipt";
                 if (item.category === "อาหาร") { iconClass = "bg-amber-50 text-amber-500"; iconName = "utensils"; }
                 else if (item.category === "การเดินทาง") { iconClass = "bg-blue-50 text-blue-500"; iconName = "car"; }
                 else if (item.category === "ช้อปปิ้ง") { iconClass = "bg-purple-50 text-purple-500"; iconName = "shopping-bag"; }
@@ -979,9 +964,7 @@
                 rowsHTML += `
                     <div onclick="window.startEditExpenseItem('${item.id}')" class="flex items-center justify-between gap-3 cursor-pointer hover:bg-slate-50 p-2.5 bg-slate-50/50 border border-slate-100 rounded-2xl transition-all">
                         <div class="flex items-center gap-3 min-w-0 flex-1">
-                            <div class="w-9 h-9 rounded-full ${iconClass} flex items-center justify-center shrink-0">
-                                <i data-lucide="${iconName}" class="w-4.5 h-4.5"></i>
-                            </div>
+                            <div class="w-9 h-9 rounded-full ${iconClass} flex items-center justify-center shrink-0"><i data-lucide="${iconName}" class="w-4.5 h-4.5"></i></div>
                             <div class="min-w-0 flex-1 space-y-0.5">
                                 <p class="text-xs font-extrabold text-slate-800 truncate">${item.recipient}</p>
                                 <div class="flex items-center gap-1.5">
@@ -992,9 +975,7 @@
                         </div>
                         <div class="flex items-center gap-1.5 shrink-0">
                             <span class="text-xs font-extrabold text-slate-800">-฿${item.amount.toLocaleString()}</span>
-                            <button onclick="event.stopPropagation(); window.removeExpenseItem('${item.id}')" class="text-slate-300 hover:text-red-500 p-1.5 transition-colors cursor-pointer" title="ลบ">
-                                <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
-                            </button>
+                            <button onclick="event.stopPropagation(); window.removeExpenseItem('${item.id}')" class="text-slate-300 hover:text-red-500 p-1.5 transition-colors cursor-pointer" title="ลบ"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button>
                         </div>
                     </div>
                 `;
@@ -1006,35 +987,24 @@
             lucide.createIcons();
         };
 
-        // ------------------------- DASHBOARD ENGINE -------------------------
         function createStatsCard(records) {
             const card = document.createElement('div');
             card.id = 'stats-card';
             card.className = "bg-white p-4 rounded-3xl border border-slate-100 shadow-sm relative group cursor-grab active:cursor-grabbing";
             card.setAttribute('draggable', 'true');
-            
             const total = records.reduce((sum, x) => sum + x.amount, 0);
-            
             card.innerHTML = `
-                <div class="absolute top-3.5 right-3.5 text-slate-300 grip-handle p-1 hover:text-indigo-600 transition-colors cursor-row-resize">
-                    <i data-lucide="grip-horizontal" class="w-4.5 h-4.5"></i>
-                </div>
+                <div class="absolute top-3.5 right-3.5 text-slate-300 grip-handle p-1 hover:text-indigo-600 transition-colors cursor-row-resize"><i data-lucide="grip-horizontal" class="w-4.5 h-4.5"></i></div>
                 <div class="space-y-3">
-                    <span class="text-xs font-extrabold text-slate-800 flex items-center gap-1 border-b pb-2">
-                        <i data-lucide="bar-chart-3" class="w-4 h-4 text-indigo-600"></i> สถิติการเงินประจำเดือน
-                    </span>
+                    <span class="text-xs font-extrabold text-slate-800 flex items-center gap-1 border-b pb-2"><i data-lucide="bar-chart-3" class="w-4 h-4 text-indigo-600"></i> สถิติการเงินประจำเดือน</span>
                     <div class="grid grid-cols-2 gap-3 text-center pt-1">
                         <div class="bg-slate-50 p-2.5 rounded-2xl">
                             <span class="text-[9px] font-bold text-slate-400 block mb-0.5">เฉลี่ย/วัน</span>
-                            <span class="text-xs font-extrabold text-slate-800">
-                                ฿${(total / 30).toLocaleString('th-TH', {maximumFractionDigits: 1})}
-                            </span>
+                            <span class="text-xs font-extrabold text-slate-800">฿${(total / 30).toLocaleString('th-TH', {maximumFractionDigits: 1})}</span>
                         </div>
                         <div class="bg-slate-50 p-2.5 rounded-2xl">
                             <span class="text-[9px] font-bold text-slate-400 block mb-0.5">ยอดใช้สูงสุดหนึ่งบิล</span>
-                            <span class="text-xs font-extrabold text-red-600 truncate block">
-                                ฿${(records.length > 0 ? Math.max(...records.map(x => x.amount)) : 0).toLocaleString()}
-                            </span>
+                            <span class="text-xs font-extrabold text-red-600 truncate block">฿${(records.length > 0 ? Math.max(...records.map(x => x.amount)) : 0).toLocaleString()}</span>
                         </div>
                     </div>
                 </div>
@@ -1049,51 +1019,19 @@
             card.setAttribute('draggable', 'true');
 
             const categorySums = {};
-            records.forEach(r => {
-                const cat = r.category || "อื่นๆ";
-                categorySums[cat] = (categorySums[cat] || 0) + r.amount;
-            });
-
+            records.forEach(r => { const cat = r.category || "อื่นๆ"; categorySums[cat] = (categorySums[cat] || 0) + r.amount; });
             const totalSum = Object.values(categorySums).reduce((sum, val) => sum + val, 0);
 
-            let svgContent = '';
-            let cumulativePercent = 0;
-            const radius = 38; 
-            const circumference = 2 * Math.PI * radius;
-
-            const categoryColors = {
-                "อาหาร": "#f59e0b",
-                "การเดินทาง": "#3b82f6",
-                "ช้อปปิ้ง": "#a855f7",
-                "ที่อยู่อาศัย": "#f43f5e",
-                "ความบันเทิง": "#14b8a6",
-                "จัดการ": "#0ea5e9",
-                "อื่นๆ": "#64748b"
-            };
-
+            let svgContent = ''; let cumulativePercent = 0; const radius = 38; const circumference = 2 * Math.PI * radius;
+            const categoryColors = { "อาหาร": "#f59e0b", "การเดินทาง": "#3b82f6", "ช้อปปิ้ง": "#a855f7", "ที่อยู่อาศัย": "#f43f5e", "ความบันเทิง": "#14b8a6", "จัดการ": "#0ea5e9", "อื่นๆ": "#64748b" };
             const entries = Object.entries(categorySums).sort((a,b) => b[1] - a[1]);
 
             if (totalSum === 0) {
-                svgContent = `
-                    <circle cx="50" cy="50" r="${radius}" fill="transparent" stroke="#e2e8f0" stroke-width="22"></circle>
-                    <text x="50" y="54" text-anchor="middle" font-size="9" font-weight="extrabold" fill="#cbd5e1">0%</text>
-                `;
+                svgContent = `<circle cx="50" cy="50" r="${radius}" fill="transparent" stroke="#e2e8f0" stroke-width="22"></circle><text x="50" y="54" text-anchor="middle" font-size="9" font-weight="extrabold" fill="#cbd5e1">0%</text>`;
             } else {
                 entries.forEach(([cat, val]) => {
-                    const percent = val / totalSum;
-                    const strokeLength = percent * circumference;
-                    const offset = -cumulativePercent * circumference;
-                    const strokeColor = categoryColors[cat] || "#64748b";
-                    
-                    const overlap = entries.length > 1 ? 1.5 : 0; 
-
-                    svgContent += `
-                        <circle cx="50" cy="50" r="${radius}" fill="transparent" 
-                                stroke="${strokeColor}" stroke-width="22" 
-                                stroke-dasharray="${strokeLength + overlap} ${circumference}" 
-                                stroke-dashoffset="${offset}" 
-                                transform="rotate(-90 50 50)"></circle>
-                    `;
+                    const percent = val / totalSum; const strokeLength = percent * circumference; const offset = -cumulativePercent * circumference; const strokeColor = categoryColors[cat] || "#64748b"; const overlap = entries.length > 1 ? 1.5 : 0; 
+                    svgContent += `<circle cx="50" cy="50" r="${radius}" fill="transparent" stroke="${strokeColor}" stroke-width="22" stroke-dasharray="${strokeLength + overlap} ${circumference}" stroke-dashoffset="${offset}" transform="rotate(-90 50 50)"></circle>`;
                     cumulativePercent += percent;
                 });
             }
@@ -1101,29 +1039,15 @@
             let miniLegendHTML = '';
             entries.slice(0, 3).forEach(([cat, val]) => {
                 const color = categoryColors[cat] || "#64748b";
-                miniLegendHTML += `
-                    <div class="flex items-center gap-1.5 text-[10px] font-bold text-slate-500">
-                        <span class="w-2.5 h-2.5 rounded-full shrink-0" style="background-color: ${color}"></span>
-                        <span class="truncate">${cat} (${Math.round((val / totalSum) * 100)}%)</span>
-                    </div>
-                `;
+                miniLegendHTML += `<div class="flex items-center gap-1.5 text-[10px] font-bold text-slate-500"><span class="w-2.5 h-2.5 rounded-full shrink-0" style="background-color: ${color}"></span><span class="truncate">${cat} (${Math.round((val / totalSum) * 100)}%)</span></div>`;
             });
 
             card.innerHTML = `
-                <div class="absolute top-3.5 right-3.5 text-slate-300 grip-handle p-1 hover:text-indigo-600 transition-colors cursor-row-resize">
-                    <i data-lucide="grip-horizontal" class="w-4.5 h-4.5"></i>
-                </div>
+                <div class="absolute top-3.5 right-3.5 text-slate-300 grip-handle p-1 hover:text-indigo-600 transition-colors cursor-row-resize"><i data-lucide="grip-horizontal" class="w-4.5 h-4.5"></i></div>
                 <div class="space-y-2">
-                    <span class="text-xs font-extrabold text-slate-800 flex items-center gap-1 border-b pb-2">
-                        <i data-lucide="pie-chart" class="w-4 h-4 text-indigo-600"></i> กราฟสัดส่วนรายจ่ายในเดือน
-                    </span>
+                    <span class="text-xs font-extrabold text-slate-800 flex items-center gap-1 border-b pb-2"><i data-lucide="pie-chart" class="w-4 h-4 text-indigo-600"></i> กราฟสัดส่วนรายจ่ายในเดือน</span>
                     <div class="flex items-center justify-around gap-2 py-2">
-                        <div class="w-32 h-32 shrink-0 drop-shadow-sm ml-2">
-                            <svg viewBox="0 0 100 100" class="w-full h-full">
-                                <circle cx="50" cy="50" r="${radius}" fill="transparent" stroke="#f1f5f9" stroke-width="22"></circle>
-                                ${svgContent}
-                            </svg>
-                        </div>
+                        <div class="w-32 h-32 shrink-0 drop-shadow-sm ml-2"><svg viewBox="0 0 100 100" class="w-full h-full"><circle cx="50" cy="50" r="${radius}" fill="transparent" stroke="#f1f5f9" stroke-width="22"></circle>${svgContent}</svg></div>
                         <div class="flex-1 space-y-1.5 min-w-0 ml-2">
                             <span class="text-[9px] font-bold text-slate-400 uppercase tracking-wider block">สัดส่วนหลัก</span>
                             ${miniLegendHTML || '<p class="text-[9px] text-slate-400">ยังไม่มีข้อมูลใช้จ่าย</p>'}
@@ -1143,41 +1067,24 @@
             const categorySums = {};
             records.forEach(r => {
                 const cat = r.category || "อื่นๆ";
-                if (!categorySums[cat]) {
-                    categorySums[cat] = { sum: 0, items: [] };
-                }
-                categorySums[cat].sum += r.amount;
-                categorySums[cat].items.push(r);
+                if (!categorySums[cat]) categorySums[cat] = { sum: 0, items: [] };
+                categorySums[cat].sum += r.amount; categorySums[cat].items.push(r);
             });
-
             const totalSum = records.reduce((sum, x) => sum + x.amount, 0);
 
             let breakdownHTML = '';
-            const categoryColors = {
-                "อาหาร": "bg-amber-500",
-                "การเดินทาง": "bg-blue-500",
-                "ช้อปปิ้ง": "bg-purple-500",
-                "ที่อยู่อาศัย": "bg-rose-500",
-                "ความบันเทิง": "bg-teal-500",
-                "จัดการ": "bg-sky-500",
-                "อื่นๆ": "bg-slate-500"
-            };
-
+            const categoryColors = { "อาหาร": "bg-amber-500", "การเดินทาง": "bg-blue-500", "ช้อปปิ้ง": "bg-purple-500", "ที่อยู่อาศัย": "bg-rose-500", "ความบันเทิง": "bg-teal-500", "จัดการ": "bg-sky-500", "อื่นๆ": "bg-slate-500" };
             const sortedCategories = Object.entries(categorySums).sort((a,b) => b[1].sum - a[1].sum);
 
             if (sortedCategories.length === 0) {
-                breakdownHTML = `
-                    <div class="p-4 text-center text-xs font-bold text-slate-400">ยังไม่มีข้อมูลการใช้เงินในเดือนนี้</div>
-                `;
+                breakdownHTML = `<div class="p-4 text-center text-xs font-bold text-slate-400">ยังไม่มีข้อมูลการใช้เงินในเดือนนี้</div>`;
             } else {
                 sortedCategories.forEach(([cat, data]) => {
                     const pct = totalSum > 0 ? Math.round((data.sum / totalSum) * 100) : 0;
                     const badgeColor = categoryColors[cat] || "bg-slate-500";
-
                     let subRowsHTML = '';
                     data.items.forEach(item => {
-                        let iconClass = "bg-slate-50 text-slate-500";
-                        let iconName = "receipt";
+                        let iconClass = "bg-slate-50 text-slate-500"; let iconName = "receipt";
                         if (item.category === "อาหาร") { iconClass = "bg-amber-50 text-amber-500"; iconName = "utensils"; }
                         else if (item.category === "การเดินทาง") { iconClass = "bg-blue-50 text-blue-500"; iconName = "car"; }
                         else if (item.category === "ช้อปปิ้ง") { iconClass = "bg-purple-50 text-purple-500"; iconName = "shopping-bag"; }
@@ -1188,9 +1095,7 @@
                         subRowsHTML += `
                             <div onclick="event.stopPropagation(); window.startEditExpenseItem('${item.id}')" class="flex items-center justify-between gap-3 cursor-pointer hover:bg-slate-100 p-2.5 rounded-2xl transition-all mt-1 bg-white border border-slate-50 shadow-sm">
                                 <div class="flex items-center gap-3.5 min-w-0 flex-1">
-                                    <div class="w-10 h-10 rounded-full ${iconClass} flex items-center justify-center shrink-0">
-                                        <i data-lucide="${iconName}" class="w-4.5 h-4.5"></i>
-                                    </div>
+                                    <div class="w-10 h-10 rounded-full ${iconClass} flex items-center justify-center shrink-0"><i data-lucide="${iconName}" class="w-4.5 h-4.5"></i></div>
                                     <div class="min-w-0 flex-1 space-y-0.5">
                                         <p class="text-[11px] font-extrabold text-slate-800 truncate">${item.recipient}</p>
                                         <p class="text-[9px] text-slate-400 font-medium">${formatThaiCalendar(item.date)} • ${item.time} น.</p>
@@ -1198,12 +1103,8 @@
                                     </div>
                                 </div>
                                 <div class="flex items-center gap-1.5 shrink-0">
-                                    <div class="text-right">
-                                        <span class="text-xs font-extrabold text-slate-800">-฿${item.amount.toLocaleString('th-TH', { minimumFractionDigits: 0 })}</span>
-                                    </div>
-                                    <button onclick="event.stopPropagation(); window.removeExpenseItem('${item.id}')" class="text-slate-300 hover:text-red-500 p-1.5 transition-colors cursor-pointer ml-1" title="ลบรายการ">
-                                        <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
-                                    </button>
+                                    <div class="text-right"><span class="text-xs font-extrabold text-slate-800">-฿${item.amount.toLocaleString('th-TH', { minimumFractionDigits: 0 })}</span></div>
+                                    <button onclick="event.stopPropagation(); window.removeExpenseItem('${item.id}')" class="text-slate-300 hover:text-red-500 p-1.5 transition-colors cursor-pointer ml-1" title="ลบรายการ"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button>
                                 </div>
                             </div>
                         `;
@@ -1212,35 +1113,24 @@
                     breakdownHTML += `
                         <div class="border border-slate-100 rounded-2xl overflow-hidden bg-slate-50/50">
                             <button onclick="window.toggleDrilldownAccordion(event, '${cat}')" class="w-full flex justify-between items-center p-3 text-left hover:bg-slate-100/50 transition-all font-bold text-xs cursor-pointer">
-                                <span class="flex items-center gap-1.5 text-slate-800">
-                                    <span class="w-2 h-2 rounded-full ${badgeColor}"></span>
-                                    ${cat} (${data.items.length} รายการ)
-                                </span>
+                                <span class="flex items-center gap-1.5 text-slate-800"><span class="w-2 h-2 rounded-full ${badgeColor}"></span>${cat} (${data.items.length} รายการ)</span>
                                 <div class="flex items-center gap-2">
                                     <span class="text-slate-700">฿${data.sum.toLocaleString()}</span>
                                     <span class="text-[9px] text-indigo-600 bg-indigo-50 px-1.5 py-0.5 rounded">${pct}%</span>
                                     <i data-lucide="chevron-down" id="chevron-${cat}" class="w-4 h-4 text-slate-400 transition-transform duration-200"></i>
                                 </div>
                             </button>
-                            <div id="accordion-panel-${cat}" class="hidden p-2 border-t border-slate-100 bg-slate-100/30">
-                                ${subRowsHTML}
-                            </div>
+                            <div id="accordion-panel-${cat}" class="hidden p-2 border-t border-slate-100 bg-slate-100/30">${subRowsHTML}</div>
                         </div>
                     `;
                 });
             }
 
             card.innerHTML = `
-                <div class="absolute top-3.5 right-3.5 text-slate-300 grip-handle p-1 hover:text-indigo-600 transition-colors cursor-row-resize">
-                    <i data-lucide="grip-horizontal" class="w-4.5 h-4.5"></i>
-                </div>
+                <div class="absolute top-3.5 right-3.5 text-slate-300 grip-handle p-1 hover:text-indigo-600 transition-colors cursor-row-resize"><i data-lucide="grip-horizontal" class="w-4.5 h-4.5"></i></div>
                 <div class="space-y-3">
-                    <span class="text-xs font-extrabold text-slate-800 flex items-center gap-1 border-b pb-2">
-                        <i data-lucide="list-collapse" class="w-4 h-4 text-indigo-600"></i> แจกแจงรายการรายหมวดหมู่
-                    </span>
-                    <div class="space-y-2 max-h-80 overflow-y-auto custom-scrollbar pr-0.5 pb-4">
-                        ${breakdownHTML}
-                    </div>
+                    <span class="text-xs font-extrabold text-slate-800 flex items-center gap-1 border-b pb-2"><i data-lucide="list-collapse" class="w-4 h-4 text-indigo-600"></i> แจกแจงรายการรายหมวดหมู่</span>
+                    <div class="space-y-2 max-h-80 overflow-y-auto custom-scrollbar pr-0.5 pb-4">${breakdownHTML}</div>
                 </div>
             `;
             return card;
@@ -1252,511 +1142,217 @@
             const chevron = document.getElementById(`chevron-${cat}`);
             if (panel && chevron) {
                 panel.classList.toggle('hidden');
-                if (panel.classList.contains('hidden')) {
-                    chevron.style.transform = 'rotate(0deg)';
-                } else {
-                    chevron.style.transform = 'rotate(180deg)';
-                }
+                if (panel.classList.contains('hidden')) chevron.style.transform = 'rotate(0deg)';
+                else chevron.style.transform = 'rotate(180deg)';
             }
         };
 
         function setupDragAndDrop() {
             const root = document.getElementById('draggable-dashboard-root');
             if (!root) return;
-
             const draggables = root.querySelectorAll('[draggable="true"]');
-
             draggables.forEach(drv => {
-                drv.addEventListener('dragstart', (e) => {
-                    drv.classList.add('dragging');
-                    e.dataTransfer.effectAllowed = 'move';
-                });
-
-                drv.addEventListener('dragend', () => {
-                    drv.classList.remove('dragging');
-                    saveCurrentDashboardState();
-                });
-
+                drv.addEventListener('dragstart', (e) => { drv.classList.add('dragging'); e.dataTransfer.effectAllowed = 'move'; });
+                drv.addEventListener('dragend', () => { drv.classList.remove('dragging'); saveCurrentDashboardState(); });
                 drv.addEventListener('touchstart', (e) => {
-                    const handle = drv.querySelector('.grip-handle');
-                    const rect = handle.getBoundingClientRect();
-                    const touch = e.touches[0];
-                    
-                    if (touch.clientX >= rect.left && touch.clientX <= rect.right &&
-                        touch.clientY >= rect.top && touch.clientY <= rect.bottom) {
-                        drv.classList.add('dragging');
-                    }
+                    const handle = drv.querySelector('.grip-handle'); const rect = handle.getBoundingClientRect(); const touch = e.touches[0];
+                    if (touch.clientX >= rect.left && touch.clientX <= rect.right && touch.clientY >= rect.top && touch.clientY <= rect.bottom) drv.classList.add('dragging');
                 }, { passive: true });
-
-                drv.addEventListener('touchend', () => {
-                    if (drv.classList.contains('dragging')) {
-                        drv.classList.remove('dragging');
-                        saveCurrentDashboardState();
-                    }
-                });
+                drv.addEventListener('touchend', () => { if (drv.classList.contains('dragging')) { drv.classList.remove('dragging'); saveCurrentDashboardState(); } });
             });
-
             root.addEventListener('dragover', (e) => {
-                e.preventDefault();
-                const afterElement = getDragAfterElement(root, e.clientY);
-                const dragging = document.querySelector('.dragging');
-                if (dragging) {
-                    if (afterElement == null) {
-                        root.appendChild(dragging);
-                    } else {
-                        root.insertBefore(dragging, afterElement);
-                    }
-                }
+                e.preventDefault(); const afterElement = getDragAfterElement(root, e.clientY); const dragging = document.querySelector('.dragging');
+                if (dragging) { if (afterElement == null) root.appendChild(dragging); else root.insertBefore(dragging, afterElement); }
             });
-
             root.addEventListener('touchmove', (e) => {
-                const dragging = document.querySelector('.dragging');
-                if (!dragging) return;
-
-                e.preventDefault();
-                const touch = e.touches[0];
-                const afterElement = getDragAfterElement(root, touch.clientY);
-                if (afterElement == null) {
-                    root.appendChild(dragging);
-                } else {
-                    root.insertBefore(dragging, afterElement);
-                }
+                const dragging = document.querySelector('.dragging'); if (!dragging) return;
+                e.preventDefault(); const touch = e.touches[0]; const afterElement = getDragAfterElement(root, touch.clientY);
+                if (afterElement == null) root.appendChild(dragging); else root.insertBefore(dragging, afterElement);
             }, { passive: false });
         }
 
         function getDragAfterElement(container, y) {
             const draggableElements = [...container.querySelectorAll('[draggable="true"]:not(.dragging)')];
             return draggableElements.reduce((closest, child) => {
-                const box = child.getBoundingClientRect();
-                const offset = y - box.top - box.height / 2;
-                if (offset < 0 && offset > closest.offset) {
-                    return { offset: offset, element: child };
-                } else {
-                    return closest;
-                }
+                const box = child.getBoundingClientRect(); const offset = y - box.top - box.height / 2;
+                if (offset < 0 && offset > closest.offset) return { offset: offset, element: child }; else return closest;
             }, { offset: Number.NEGATIVE_INFINITY }).element;
         }
 
         function loadDashboardOrder() {
             const stored = localStorage.getItem('dashboard_cards_sequence_v2');
-            if (stored) {
-                try {
-                    dashboardOrder = JSON.parse(stored);
-                } catch (e) {
-                    dashboardOrder = ['stats-card', 'donut-card', 'drilldown-card'];
-                }
-            }
+            if (stored) { try { dashboardOrder = JSON.parse(stored); } catch (e) { dashboardOrder = ['stats-card', 'donut-card', 'drilldown-card']; } }
         }
 
         function saveCurrentDashboardState() {
-            const root = document.getElementById('draggable-dashboard-root');
-            if (!root) return;
+            const root = document.getElementById('draggable-dashboard-root'); if (!root) return;
             const cards = [...root.querySelectorAll('[draggable="true"]')];
-            dashboardOrder = cards.map(c => c.id);
-            localStorage.setItem('dashboard_cards_sequence_v2', JSON.stringify(dashboardOrder));
+            dashboardOrder = cards.map(c => c.id); localStorage.setItem('dashboard_cards_sequence_v2', JSON.stringify(dashboardOrder));
         }
 
-        // ------------------------- POPUP FORMS TRIGGER -------------------------
         floatingPlusBtn.addEventListener('click', () => {
             editingRecordId = null;
-            document.getElementById('form-sheet-title').innerHTML = `
-                <i data-lucide="plus-circle" class="w-4 h-4 text-indigo-600"></i>
-                เพิ่มรายการใหม่
-            `;
+            document.getElementById('form-sheet-title').innerHTML = `<i data-lucide="plus-circle" class="w-4 h-4 text-indigo-600"></i> เพิ่มรายการใหม่`;
             document.getElementById('save-btn-text').textContent = "บันทึกรายการกดยืนยัน";
             lucide.createIcons();
-
             formSlideSheet.classList.remove('hidden');
 
             const targetDate = selectedCalendarDate ? new Date(selectedCalendarDate) : new Date();
-            const year = targetDate.getFullYear();
-            const month = String(targetDate.getMonth() + 1).padStart(2, '0');
-            const day = String(targetDate.getDate()).padStart(2, '0');
-            formDate.value = `${year}-${month}-${day}`;
+            formDate.value = `${targetDate.getFullYear()}-${String(targetDate.getMonth() + 1).padStart(2, '0')}-${String(targetDate.getDate()).padStart(2, '0')}`;
+            const now = new Date(); formTime.value = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+            formAmount.value = ""; formRecipient.value = ""; formMemo.value = ""; formCategory.selectedIndex = 0;
+            amountSourceBadge.textContent = "ระบุข้อมูล หรือ สแกนผ่านสลิป"; amountSourceBadge.className = "text-[9px] px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-500 font-bold";
+            ocrRawDatetime.value = ""; ocrRawRecipient.value = ""; ocrRawAmount.value = "";
 
-            const now = new Date();
-            const hours = String(now.getHours()).padStart(2, '0');
-            const minutes = String(now.getMinutes()).padStart(2, '0');
-            formTime.value = `${hours}:${minutes}`;
-
-            formAmount.value = "";
-            formRecipient.value = "";
-            formMemo.value = ""; 
-            formCategory.selectedIndex = 0;
-            amountSourceBadge.textContent = "ระบุข้อมูล หรือ สแกนผ่านสลิป";
-            amountSourceBadge.className = "text-[9px] px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-500 font-bold";
-
-            ocrRawDatetime.value = "";
-            ocrRawRecipient.value = "";
-            ocrRawAmount.value = "";
-
-            resetAppScanner();
-            resetTrueMoneyScanner();
-            switchScanMode('kbank'); 
+            resetAppScanner(); resetTrueMoneyScanner(); switchScanMode('kbank'); 
         });
 
         function switchScanMode(mode) {
             if (mode === 'kbank') {
                 tabKBankMode.className = "flex-1 py-2 text-[11px] font-extrabold rounded-xl transition-all bg-white text-indigo-600 shadow cursor-pointer";
                 tabTrueMoneyMode.className = "flex-1 py-2 text-[11px] font-extrabold rounded-xl transition-all text-slate-500 hover:text-slate-800 cursor-pointer";
-                kbankScanPanel.classList.remove('hidden');
-                truemoneyScanPanel.classList.add('hidden');
+                kbankScanPanel.classList.remove('hidden'); truemoneyScanPanel.classList.add('hidden');
             } else if (mode === 'truemoney') {
                 tabTrueMoneyMode.className = "flex-1 py-2 text-[11px] font-extrabold rounded-xl transition-all bg-white text-orange-600 shadow cursor-pointer";
                 tabKBankMode.className = "flex-1 py-2 text-[11px] font-extrabold rounded-xl transition-all text-slate-500 hover:text-slate-800 cursor-pointer";
-                kbankScanPanel.classList.add('hidden');
-                truemoneyScanPanel.classList.remove('hidden');
+                kbankScanPanel.classList.add('hidden'); truemoneyScanPanel.classList.remove('hidden');
             }
         }
 
         tabKBankMode.addEventListener('click', () => switchScanMode('kbank'));
         tabTrueMoneyMode.addEventListener('click', () => switchScanMode('truemoney'));
 
-        const closeFormSheet = () => {
-            formSlideSheet.classList.add('hidden');
-            resetAppScanner();
-            resetTrueMoneyScanner();
-            fileBatchQueue = [];
-            batchQueueBadge.classList.add('hidden');
-        };
-
-        closeSheetBtn.addEventListener('click', closeFormSheet);
-        closeSheetHandle.addEventListener('click', closeFormSheet);
+        const closeFormSheet = () => { formSlideSheet.classList.add('hidden'); resetAppScanner(); resetTrueMoneyScanner(); fileBatchQueue = []; batchQueueBadge.classList.add('hidden'); };
+        closeSheetBtn.addEventListener('click', closeFormSheet); closeSheetHandle.addEventListener('click', closeFormSheet);
 
         function setupFormListeners() {
-            triggerFilePicker.addEventListener('click', (e) => {
-                e.preventDefault();
-                slipFileInput.click();
-            });
-            
-            slipFileInput.addEventListener('change', (e) => {
-                if (e.target.files.length > 0) {
-                    fileBatchQueue = Array.from(e.target.files);
-                    batchIndex = 0;
-                    processBatchItem();
-                }
-            });
-
-            removeImageBtn.addEventListener('click', (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                resetAppScanner();
-                
-                if (fileBatchQueue.length > 1) {
-                    fileBatchQueue.splice(batchIndex, 1);
-                    if (batchIndex >= fileBatchQueue.length) {
-                        batchIndex = 0;
-                    }
-                    processBatchItem();
-                }
-            });
-
-            skipBatchItemBtn.addEventListener('click', (e) => {
-                e.preventDefault();
-                goToNextBatch();
-            });
-
-            toggleCalibrationBtn.addEventListener('click', (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                calibrationControls.classList.toggle('hidden');
-            });
+            triggerFilePicker.addEventListener('click', (e) => { e.preventDefault(); slipFileInput.click(); });
+            slipFileInput.addEventListener('change', (e) => { if (e.target.files.length > 0) { fileBatchQueue = Array.from(e.target.files); batchIndex = 0; processBatchItem(); } });
+            removeImageBtn.addEventListener('click', (e) => { e.preventDefault(); e.stopPropagation(); resetAppScanner(); if (fileBatchQueue.length > 1) { fileBatchQueue.splice(batchIndex, 1); if (batchIndex >= fileBatchQueue.length) batchIndex = 0; processBatchItem(); } });
+            skipBatchItemBtn.addEventListener('click', (e) => { e.preventDefault(); goToNextBatch(); });
+            toggleCalibrationBtn.addEventListener('click', (e) => { e.preventDefault(); e.stopPropagation(); calibrationControls.classList.toggle('hidden'); });
         }
 
         function processBatchItem() {
-            if (fileBatchQueue.length === 0) {
-                batchQueueBadge.classList.add('hidden');
-                return;
-            }
-
-            if (fileBatchQueue.length > 1) {
-                batchQueueBadge.classList.remove('hidden');
-                batchCurrentNum.textContent = batchIndex + 1;
-                batchTotalNum.textContent = fileBatchQueue.length;
-            } else {
-                batchQueueBadge.classList.add('hidden');
-            }
-
-            const currentFile = fileBatchQueue[batchIndex];
-            processFile(currentFile);
+            if (fileBatchQueue.length === 0) { batchQueueBadge.classList.add('hidden'); return; }
+            if (fileBatchQueue.length > 1) { batchQueueBadge.classList.remove('hidden'); batchCurrentNum.textContent = batchIndex + 1; batchTotalNum.textContent = fileBatchQueue.length; } 
+            else { batchQueueBadge.classList.add('hidden'); }
+            processFile(fileBatchQueue[batchIndex]);
         }
 
         function goToNextBatch() {
             batchIndex++;
             if (batchIndex >= fileBatchQueue.length) {
-                fileBatchQueue = [];
-                batchQueueBadge.classList.add('hidden');
-                resetAppScanner();
+                fileBatchQueue = []; batchQueueBadge.classList.add('hidden'); resetAppScanner();
                 showCustomAlert('เสร็จสิ้น!', 'ประมวลผลสลิปทั้งหมดเรียบร้อยแล้วครับ', true);
-            } else {
-                processBatchItem();
-            }
+            } else processBatchItem();
         }
 
         function showCustomAlert(title, message, isSuccess = false) {
-            alertTitle.textContent = title;
-            alertMessage.textContent = message;
-            if (isSuccess) {
-                alertIcon.className = "w-12 h-12 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center mx-auto";
-                alertIcon.innerHTML = '<i data-lucide="check" class="w-6 h-6"></i>';
-            } else {
-                alertIcon.className = "w-12 h-12 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center mx-auto";
-                alertIcon.innerHTML = '<i data-lucide="alert-circle" class="w-6 h-6"></i>';
-            }
-            lucide.createIcons();
-            alertModal.classList.remove('hidden');
+            alertTitle.textContent = title; alertMessage.textContent = message;
+            if (isSuccess) { alertIcon.className = "w-12 h-12 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center mx-auto"; alertIcon.innerHTML = '<i data-lucide="check" class="w-6 h-6"></i>'; } 
+            else { alertIcon.className = "w-12 h-12 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center mx-auto"; alertIcon.innerHTML = '<i data-lucide="alert-circle" class="w-6 h-6"></i>'; }
+            lucide.createIcons(); alertModal.classList.remove('hidden');
         }
         closeAlertBtn.addEventListener('click', () => alertModal.classList.add('hidden'));
 
         function loadGridSettings() {
             const stored = localStorage.getItem('kbank_grid_calibration_settings');
-            if (stored) {
-                try {
-                    gridSettings = JSON.parse(stored);
-                } catch (e) {
-                    gridSettings = {};
-                }
-            }
+            if (stored) { try { gridSettings = JSON.parse(stored); } catch (e) { gridSettings = {}; } }
             gridSettings = { ...DEFAULT_GRID_SETTINGS, ...gridSettings };
         }
 
         function updateSlidersUI() {
-            const keys = ['dt', 'rc', 'am'];
-            const fields = ['x', 'y', 'w', 'h'];
-            keys.forEach(key => {
-                fields.forEach(field => {
-                    const el = document.getElementById(`slider-${key}-${field}`);
-                    const valEl = document.getElementById(`val-${key}-${field}`);
-                    if (el && valEl && gridSettings[key]) {
-                        el.value = gridSettings[key][field];
-                        valEl.textContent = gridSettings[key][field];
-                    }
-                });
-            });
+            const keys = ['dt', 'rc', 'am']; const fields = ['x', 'y', 'w', 'h'];
+            keys.forEach(key => { fields.forEach(field => {
+                const el = document.getElementById(`slider-${key}-${field}`); const valEl = document.getElementById(`val-${key}-${field}`);
+                if (el && valEl && gridSettings[key]) { el.value = gridSettings[key][field]; valEl.textContent = gridSettings[key][field]; }
+            }); });
         }
 
         function setupCalibrationListeners() {
-            const keys = ['dt', 'rc', 'am'];
-            const fields = ['x', 'y', 'w', 'h'];
-
-            keys.forEach(key => {
-                fields.forEach(field => {
-                    const sliderId = `slider-${key}-${field}`;
-                    const valId = `val-${key}-${field}`;
-                    const el = document.getElementById(sliderId);
-                    
-                    if (el) {
-                        el.addEventListener('input', (e) => {
-                            const val = parseInt(e.target.value);
-                            const textVal = document.getElementById(valId);
-                            if (textVal) textVal.textContent = val;
-                            gridSettings[key][field] = val;
-                            
-                            if (currentLoadedImage) {
-                                renderCropsOnly(currentLoadedImage);
-                            }
-                            localStorage.setItem('kbank_grid_calibration_settings', JSON.stringify(gridSettings));
-                        });
-
-                        el.addEventListener('change', () => {
-                            if (currentLoadedImage) {
-                                triggerReScan();
-                            }
-                        });
-                    }
-                });
-            });
-
-            resetCalibrationBtn.addEventListener('click', (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                gridSettings = JSON.parse(JSON.stringify(DEFAULT_GRID_SETTINGS));
-                localStorage.setItem('kbank_grid_calibration_settings', JSON.stringify(gridSettings));
-                updateSlidersUI();
-                if (currentLoadedImage) {
-                    renderCropsOnly(currentLoadedImage);
-                    triggerReScan();
+            const keys = ['dt', 'rc', 'am']; const fields = ['x', 'y', 'w', 'h'];
+            keys.forEach(key => { fields.forEach(field => {
+                const el = document.getElementById(`slider-${key}-${field}`);
+                if (el) {
+                    el.addEventListener('input', (e) => {
+                        const val = parseInt(e.target.value); document.getElementById(`val-${key}-${field}`).textContent = val; gridSettings[key][field] = val;
+                        if (currentLoadedImage) renderCropsOnly(currentLoadedImage);
+                        localStorage.setItem('kbank_grid_calibration_settings', JSON.stringify(gridSettings));
+                    });
+                    el.addEventListener('change', () => { if (currentLoadedImage) triggerReScan(); });
                 }
+            }); });
+            resetCalibrationBtn.addEventListener('click', (e) => {
+                e.preventDefault(); e.stopPropagation(); gridSettings = JSON.parse(JSON.stringify(DEFAULT_GRID_SETTINGS)); localStorage.setItem('kbank_grid_calibration_settings', JSON.stringify(gridSettings));
+                updateSlidersUI(); if (currentLoadedImage) { renderCropsOnly(currentLoadedImage); triggerReScan(); }
             });
         }
 
         function triggerReScan() {
             if (scanTimeout) clearTimeout(scanTimeout);
-            scanTimeout = setTimeout(() => {
-                if (currentLoadedImage) {
-                    const geo = getSmartGeometry(currentLoadedImage.naturalWidth || currentLoadedImage.width, currentLoadedImage.naturalHeight || currentLoadedImage.height);
-                    analyzeKBankSlipOCR(currentLoadedImage, geo);
-                }
-            }, 600);
+            scanTimeout = setTimeout(() => { if (currentLoadedImage) analyzeKBankSlipOCR(currentLoadedImage, getSmartGeometry(currentLoadedImage.naturalWidth || currentLoadedImage.width, currentLoadedImage.naturalHeight || currentLoadedImage.height)); }, 600);
         }
 
-        // ------------------------- DATA SAVING & UPDATING -------------------------
         saveRecordBtn.addEventListener('click', () => {
-            const amount = parseFloat(formAmount.value);
-            let recipient = formRecipient.value.trim();
-            const date = formDate.value;
-            const time = formTime.value;
-            const category = formCategory.value;
-            const memo = formMemo.value.trim();
-
-            if (isNaN(amount) || amount <= 0) {
-                showCustomAlert('จำนวนเงินไม่ถูกต้อง', 'กรุณาระบุจำนวนเงินชำระโอนที่ถูกต้องด้วยครับ');
-                return;
-            }
-
-            if (!date || !time) {
-                showCustomAlert('ข้อมูลไม่ครบ', 'กรุณาระบุเวลาและวันที่ทำธุรกรรมให้ครบถ้วนด้วยครับ');
-                return;
-            }
-
+            const amount = parseFloat(formAmount.value); let recipient = formRecipient.value.trim(); const date = formDate.value; const time = formTime.value; const category = formCategory.value; const memo = formMemo.value.trim();
+            if (isNaN(amount) || amount <= 0) { showCustomAlert('จำนวนเงินไม่ถูกต้อง', 'กรุณาระบุจำนวนเงินชำระโอนที่ถูกต้องด้วยครับ'); return; }
+            if (!date || !time) { showCustomAlert('ข้อมูลไม่ครบ', 'กรุณาระบุเวลาและวันที่ทำธุรกรรมให้ครบถ้วนด้วยครับ'); return; }
             recipient = applyAliasToName(recipient);
-            const rawCategory = category.replace(/[^ก-๙a-zA-Z]/g, '').trim();
-
-            const record = {
-                id: editingRecordId ? editingRecordId : 'exp_' + Date.now(),
-                amount: amount,
-                recipient: recipient || 'โอนเงินสด / กรอกมือ',
-                date: date,
-                time: time,
-                category: rawCategory,
-                memo: memo 
-            };
-
-            const isDuplicate = checkDuplicateRecord(record);
-            if (isDuplicate) {
-                pendingSaveRecord = record;
-                duplicateModal.classList.remove('hidden');
-            } else {
-                executeSaveRecord(record);
-            }
+            
+            const record = { id: editingRecordId || 'exp_' + Date.now(), amount, recipient: recipient || 'โอนเงินสด', date, time, category: category.replace(/[^ก-๙a-zA-Z]/g, '').trim(), memo };
+            if (checkDuplicateRecord(record)) { pendingSaveRecord = record; duplicateModal.classList.remove('hidden'); } else executeSaveRecord(record);
         });
 
         function checkDuplicateRecord(newRecord) {
-            return expenses.some(item => 
-                item.id !== newRecord.id && 
-                item.amount === newRecord.amount &&
-                item.recipient.toLowerCase().trim() === newRecord.recipient.toLowerCase().trim() &&
-                item.date === newRecord.date &&
-                item.time === newRecord.time
-            );
+            return expenses.some(item => item.id !== newRecord.id && item.amount === newRecord.amount && item.recipient.toLowerCase().trim() === newRecord.recipient.toLowerCase().trim() && item.date === newRecord.date && item.time === newRecord.time);
         }
 
         async function executeSaveRecord(record) {
-            if (editingRecordId) {
-                const index = expenses.findIndex(x => x.id === editingRecordId);
-                if (index !== -1) {
-                    expenses[index] = record;
-                }
-                editingRecordId = null;
-            } else {
-                expenses.unshift(record);
-            }
+            if (editingRecordId) { const index = expenses.findIndex(x => x.id === editingRecordId); if (index !== -1) expenses[index] = record; editingRecordId = null; } 
+            else expenses.unshift(record);
 
-            const parts = record.date.split('-');
-            if (parts.length === 3) {
-                calendarYear = parseInt(parts[0]);
-                calendarMonth = parseInt(parts[1]) - 1;
-            }
-
+            const parts = record.date.split('-'); if (parts.length === 3) { calendarYear = parseInt(parts[0]); calendarMonth = parseInt(parts[1]) - 1; }
             updateDashboard();
-
-            // ส่งข้อมูลเพิ่ม/อัปเดต ขึ้น Google Sheets
             syncWithGoogleSheets('save', record);
-
-            if (fileHandle) {
-                await executeSyncOrDownload(true);
-            }
-
-            if (fileBatchQueue.length > 1 && batchIndex < fileBatchQueue.length - 1) {
-                goToNextBatch();
-            } else {
-                closeFormSheet();
-            }
+            
+            if (fileHandle) await executeSyncOrDownload(true);
+            if (fileBatchQueue.length > 1 && batchIndex < fileBatchQueue.length - 1) goToNextBatch(); else closeFormSheet();
         }
 
         function setupDuplicateConfirmHandlers() {
-            cancelDuplicateBtn.addEventListener('click', () => {
-                duplicateModal.classList.add('hidden');
-                pendingSaveRecord = null;
-            });
-
-            confirmDuplicateBtn.addEventListener('click', () => {
-                duplicateModal.classList.add('hidden');
-                if (pendingSaveRecord) {
-                    executeSaveRecord(pendingSaveRecord);
-                    pendingSaveRecord = null;
-                }
-            });
+            cancelDuplicateBtn.addEventListener('click', () => { duplicateModal.classList.add('hidden'); pendingSaveRecord = null; });
+            confirmDuplicateBtn.addEventListener('click', () => { duplicateModal.classList.add('hidden'); if (pendingSaveRecord) { executeSaveRecord(pendingSaveRecord); pendingSaveRecord = null; } });
         }
 
         window.startEditExpenseItem = function(id) {
-            const item = expenses.find(x => x.id === id);
-            if (!item) return;
-
-            editingRecordId = item.id;
-            
-            formAmount.value = item.amount;
-            formRecipient.value = item.recipient;
-            formDate.value = item.date;
-            formTime.value = item.time;
-            
-            for (let i = 0; i < formCategory.options.length; i++) {
-                if (formCategory.options[i].value.includes(item.category)) {
-                    formCategory.selectedIndex = i;
-                    break;
-                }
-            }
-            
+            const item = expenses.find(x => x.id === id); if (!item) return;
+            editingRecordId = item.id; formAmount.value = item.amount; formRecipient.value = item.recipient; formDate.value = item.date; formTime.value = item.time;
+            for (let i = 0; i < formCategory.options.length; i++) { if (formCategory.options[i].value.includes(item.category)) { formCategory.selectedIndex = i; break; } }
             formMemo.value = item.memo;
-
-            document.getElementById('form-sheet-title').innerHTML = `
-                <i data-lucide="edit-3" class="w-4 h-4 text-amber-500"></i>
-                แก้ไขประวัติธุรกรรม
-            `;
-            document.getElementById('save-btn-text').textContent = "บันทึกการแก้ไขลงหน่วยความจำ (RAM)";
-            lucide.createIcons();
-
-            amountSourceBadge.textContent = "กำลังแก้ไขข้อมูล";
-            amountSourceBadge.className = "text-[9px] px-2.5 py-0.5 rounded-full bg-amber-50 text-amber-800 font-bold border border-amber-100";
-
-            ocrRawDatetime.value = "";
-            ocrRawRecipient.value = "";
-            ocrRawAmount.value = "";
-
-            resetAppScanner();
-            formSlideSheet.classList.remove('hidden');
-            switchScanMode('kbank'); 
+            
+            document.getElementById('form-sheet-title').innerHTML = `<i data-lucide="edit-3" class="w-4 h-4 text-amber-500"></i> แก้ไขประวัติธุรกรรม`;
+            document.getElementById('save-btn-text').textContent = "บันทึกการแก้ไขลงฐานข้อมูล"; lucide.createIcons();
+            amountSourceBadge.textContent = "กำลังแก้ไขข้อมูล"; amountSourceBadge.className = "text-[9px] px-2.5 py-0.5 rounded-full bg-amber-50 text-amber-800 font-bold border border-amber-100";
+            
+            resetAppScanner(); formSlideSheet.classList.remove('hidden'); switchScanMode('kbank'); 
         };
 
         window.removeExpenseItem = async function(id) {
             expenses = expenses.filter(x => x.id !== id);
             updateDashboard();
-            
-            // ส่งคำสั่งลบข้อมูลบน Google Sheets
             syncWithGoogleSheets('delete', { id: id });
-
-            if (fileHandle) {
-                await executeSyncOrDownload(true);
-            }
+            if (fileHandle) await executeSyncOrDownload(true);
         };
 
-        // ------------------------- DASHBOARD ENGINE -------------------------
         function updateDashboard() {
-            expenses.sort((a, b) => {
-                const dateTimeA = new Date(`${a.date}T${a.time}`);
-                const dateTimeB = new Date(`${b.date}T${b.time}`);
-                return dateTimeB - dateTimeA;
-            });
-
-            const targetMonthStr = (calendarMonth + 1).toString().padStart(2, '0');
-            const targetYearStr = calendarYear.toString();
-
+            expenses.sort((a, b) => new Date(`${b.date}T${b.time}`) - new Date(`${a.date}T${a.time}`));
+            const targetMonthStr = (calendarMonth + 1).toString().padStart(2, '0'); const targetYearStr = calendarYear.toString();
             const monthlyRecords = expenses.filter(x => x.date.startsWith(`${targetYearStr}-${targetMonthStr}`));
             const monthlyTotal = monthlyRecords.reduce((sum, item) => sum + item.amount, 0);
 
             const thaiFullMonths = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
             currentMonthDisplayHeader.querySelector('span').textContent = `${thaiFullMonths[calendarMonth]} ${calendarYear + 543}`;
-
             statMonthlyExpense.textContent = monthlyTotal.toLocaleString('th-TH', { minimumFractionDigits: 2 }) + ' ฿';
             statMonthlyCount.textContent = monthlyRecords.length + ' รายการ';
 
@@ -1764,47 +1360,19 @@
         }
 
         function renderTimelineList(records) {
-            const listWrapper = document.getElementById('timeline-group-container');
-            if (!listWrapper) return;
+            const listWrapper = document.getElementById('timeline-group-container'); if (!listWrapper) return;
+            if (records.length === 0) { listWrapper.innerHTML = `<div class="bg-white p-10 rounded-3xl text-center border border-dashed border-slate-200 text-slate-400"><i data-lucide="inbox" class="w-10 h-10 mx-auto mb-2 text-slate-300"></i><p class="text-xs font-bold">ไม่มีข้อมูลบันทึกในเดือนนี้</p></div>`; return; }
 
-            if (records.length === 0) {
-                listWrapper.innerHTML = `
-                    <div class="bg-white p-10 rounded-3xl text-center border border-dashed border-slate-200 text-slate-400">
-                        <i data-lucide="inbox" class="w-10 h-10 mx-auto mb-2 text-slate-300"></i>
-                        <p class="text-xs font-bold">ไม่มีข้อมูลบันทึกในเดือนนี้</p>
-                        <p class="text-[10px] mt-1">กดปุ่ม + เพื่อเพิ่มรายการ <br> หรือกดปุ่ม 📂 ด้านบนเพื่อโหลดข้อมูล</p>
-                    </div>
-                `;
-                return;
-            }
-
-            const grouped = {};
-            records.forEach(r => {
-                if (!grouped[r.date]) grouped[r.date] = [];
-                grouped[r.date].push(r);
-            });
-
+            const grouped = {}; records.forEach(r => { if (!grouped[r.date]) grouped[r.date] = []; grouped[r.date].push(r); });
             listWrapper.innerHTML = '';
+            
             Object.keys(grouped).sort((a,b) => new Date(b) - new Date(a)).forEach(dateStr => {
-                const dayRecords = grouped[dateStr];
-                const dayTotal = dayRecords.reduce((sum, item) => sum + item.amount, 0);
-
-                const groupBlock = document.createElement('div');
-                groupBlock.className = "space-y-2";
-
+                const dayRecords = grouped[dateStr]; const dayTotal = dayRecords.reduce((sum, item) => sum + item.amount, 0);
+                const groupBlock = document.createElement('div'); groupBlock.className = "space-y-2";
                 groupBlock.innerHTML = `
-                    <div class="flex justify-between items-center px-1 text-xs font-bold">
-                        <span class="text-slate-600">${formatTimelineHeaderDate(dateStr)}</span>
-                        <span class="text-slate-700 flex items-center gap-0.5 font-extrabold text-[13px]">
-                            <i data-lucide="trending-down" class="w-3.5 h-3.5 text-red-500 shrink-0"></i>
-                            ฿${dayTotal.toLocaleString('th-TH', { minimumFractionDigits: 0 })}
-                        </span>
-                    </div>
-                    <div class="bg-white rounded-3xl border border-slate-100 shadow-sm p-4 space-y-4">
-                        <div class="divide-y divide-slate-100" id="group-rows-container-${dateStr}"></div>
-                    </div>
+                    <div class="flex justify-between items-center px-1 text-xs font-bold"><span class="text-slate-600">${formatTimelineHeaderDate(dateStr)}</span><span class="text-slate-700 flex items-center gap-0.5 font-extrabold text-[13px]"><i data-lucide="trending-down" class="w-3.5 h-3.5 text-red-500 shrink-0"></i>฿${dayTotal.toLocaleString('th-TH', { minimumFractionDigits: 0 })}</span></div>
+                    <div class="bg-white rounded-3xl border border-slate-100 shadow-sm p-4 space-y-4"><div class="divide-y divide-slate-100" id="group-rows-container-${dateStr}"></div></div>
                 `;
-
                 listWrapper.appendChild(groupBlock);
 
                 const rowsBox = document.getElementById(`group-rows-container-${dateStr}`);
@@ -1813,8 +1381,7 @@
                     row.className = `flex items-center justify-between gap-3 cursor-pointer hover:bg-slate-50/70 p-2 rounded-2xl transition-all ${index > 0 ? 'pt-3.5 mt-1 border-t border-slate-50' : ''}`;
                     row.setAttribute('onclick', `window.startEditExpenseItem('${item.id}')`);
 
-                    let iconClass = "bg-slate-50 text-slate-500";
-                    let iconName = "receipt";
+                    let iconClass = "bg-slate-50 text-slate-500"; let iconName = "receipt";
                     if (item.category === "อาหาร") { iconClass = "bg-amber-50 text-amber-500"; iconName = "utensils"; }
                     else if (item.category === "การเดินทาง") { iconClass = "bg-blue-50 text-blue-500"; iconName = "car"; }
                     else if (item.category === "ช้อปปิ้ง") { iconClass = "bg-purple-50 text-purple-500"; iconName = "shopping-bag"; }
@@ -1824,402 +1391,158 @@
 
                     row.innerHTML = `
                         <div class="flex items-center gap-3.5 min-w-0 flex-1">
-                            <div class="w-11 h-11 rounded-full ${iconClass} flex items-center justify-center shrink-0">
-                                <i data-lucide="${iconName}" class="w-5.5 h-5.5"></i>
-                            </div>
+                            <div class="w-11 h-11 rounded-full ${iconClass} flex items-center justify-center shrink-0"><i data-lucide="${iconName}" class="w-5.5 h-5.5"></i></div>
                             <div class="min-w-0 flex-1 space-y-0.5">
                                 <p class="text-xs font-extrabold text-slate-800 truncate">${item.recipient}</p>
                                 <p class="text-[10px] text-slate-400 font-medium">${formatThaiCalendar(item.date)} • ${item.time} น.</p>
-                                <div class="flex flex-wrap items-center gap-1.5 mt-1">
-                                    <span class="text-[9px] text-slate-500 font-bold bg-slate-50 border border-slate-100 rounded px-1.5 py-0.5 inline-block">${item.category}</span>
-                                    ${item.memo ? `<span class="text-[9px] text-slate-400 italic truncate max-w-[120px]">${item.memo}</span>` : ''}
-                                </div>
+                                <div class="flex flex-wrap items-center gap-1.5 mt-1"><span class="text-[9px] text-slate-500 font-bold bg-slate-50 border border-slate-100 rounded px-1.5 py-0.5 inline-block">${item.category}</span>${item.memo ? `<span class="text-[9px] text-slate-400 italic truncate max-w-[120px]">${item.memo}</span>` : ''}</div>
                             </div>
                         </div>
                         <div class="flex items-center gap-1.5 shrink-0">
-                            <div class="text-right">
-                                <span class="text-sm font-extrabold text-slate-800">-฿${item.amount.toLocaleString('th-TH', { minimumFractionDigits: 0 })}</span>
-                                <span class="block text-[8px] text-slate-400 mt-0.5">${item.time}</span>
-                            </div>
-                            <button onclick="event.stopPropagation(); window.removeExpenseItem('${item.id}')" class="text-slate-300 hover:text-red-500 p-2 transition-colors ml-1 cursor-pointer" title="ลบรายการ">
-                                <i data-lucide="trash-2" class="w-4 h-4"></i>
-                            </button>
+                            <div class="text-right"><span class="text-sm font-extrabold text-slate-800">-฿${item.amount.toLocaleString('th-TH', { minimumFractionDigits: 0 })}</span><span class="block text-[8px] text-slate-400 mt-0.5">${item.time}</span></div>
+                            <button onclick="event.stopPropagation(); window.removeExpenseItem('${item.id}')" class="text-slate-300 hover:text-red-500 p-2 transition-colors ml-1 cursor-pointer" title="ลบรายการ"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
                         </div>
                     `;
                     rowsBox.appendChild(row);
                 });
             });
-
             lucide.createIcons();
         }
 
         function formatTimelineHeaderDate(dateStr) {
-            const parts = dateStr.split('-');
-            if (parts.length !== 3) return dateStr;
-            const thShortMonths = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
-            const daysOfWeek = ['อาทิตย์', 'จันทร์', 'อังคาร', 'พุธ', 'พฤหัสบดี', 'ศุกร์', 'เสาร์'];
-            
+            const parts = dateStr.split('-'); if (parts.length !== 3) return dateStr;
+            const thShortMonths = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.']; const daysOfWeek = ['อาทิตย์', 'จันทร์', 'อังคาร', 'พุธ', 'พฤหัสบดี', 'ศุกร์', 'เสาร์'];
             const dateObj = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
-            const thaiMonth = thShortMonths[dateObj.getMonth()];
-            const dayNum = dateObj.getDate();
-            const dayName = daysOfWeek[dateObj.getDay()];
-
-            return `${dayNum} ${thaiMonth} (วัน${dayName})`;
+            return `${dateObj.getDate()} ${thShortMonths[dateObj.getMonth()]} (วัน${daysOfWeek[dateObj.getDay()]})`;
         }
 
         function formatThaiCalendar(dateStr) {
-            const parts = dateStr.split('-');
-            if (parts.length !== 3) return dateStr;
+            const parts = dateStr.split('-'); if (parts.length !== 3) return dateStr;
             const months = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
-            const year = parseInt(parts[0]) + 543;
-            const month = months[parseInt(parts[1]) - 1];
-            const day = parseInt(parts[2]);
-            return `${day} ${month} ${year}`;
+            return `${parseInt(parts[2])} ${months[parseInt(parts[1]) - 1]} ${parseInt(parts[0]) + 543}`;
         }
 
         function setupMonthPicker() {
-            currentMonthDisplayHeader.addEventListener('click', () => {
-                tempPickerYear = calendarYear;
-                pickerYearDisplay.textContent = `พ.ศ. ${tempPickerYear + 543}`;
-                renderMonthsGrid();
-                monthPickerModal.classList.remove('hidden');
-            });
-
-            closeMonthPickerBtn.addEventListener('click', () => {
-                monthPickerModal.classList.add('hidden');
-            });
-
-            prevPickerYear.addEventListener('click', () => {
-                tempPickerYear--;
-                pickerYearDisplay.textContent = `พ.ศ. ${tempPickerYear + 543}`;
-                renderMonthsGrid();
-            });
-
-            nextPickerYear.addEventListener('click', () => {
-                tempPickerYear++;
-                pickerYearDisplay.textContent = `พ.ศ. ${tempPickerYear + 543}`;
-                renderMonthsGrid();
-            });
+            currentMonthDisplayHeader.addEventListener('click', () => { tempPickerYear = calendarYear; pickerYearDisplay.textContent = `พ.ศ. ${tempPickerYear + 543}`; renderMonthsGrid(); monthPickerModal.classList.remove('hidden'); });
+            closeMonthPickerBtn.addEventListener('click', () => monthPickerModal.classList.add('hidden'));
+            prevPickerYear.addEventListener('click', () => { tempPickerYear--; pickerYearDisplay.textContent = `พ.ศ. ${tempPickerYear + 543}`; renderMonthsGrid(); });
+            nextPickerYear.addEventListener('click', () => { tempPickerYear++; pickerYearDisplay.textContent = `พ.ศ. ${tempPickerYear + 543}`; renderMonthsGrid(); });
         }
 
         function renderMonthsGrid() {
             monthsGridContainer.innerHTML = '';
-            const months = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
-            
-            months.forEach((m, index) => {
+            ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'].forEach((m, index) => {
                 const btn = document.createElement('button');
-                const isSelectedMonth = (calendarMonth === index && calendarYear === tempPickerYear);
-                
-                btn.className = `py-2 text-xs font-bold rounded-xl transition-all cursor-pointer ${
-                    isSelectedMonth 
-                    ? 'bg-indigo-600 text-white shadow-md' 
-                    : 'bg-slate-50 hover:bg-slate-100 text-slate-700'
-                }`;
+                btn.className = `py-2 text-xs font-bold rounded-xl transition-all cursor-pointer ${ (calendarMonth === index && calendarYear === tempPickerYear) ? 'bg-indigo-600 text-white shadow-md' : 'bg-slate-50 hover:bg-slate-100 text-slate-700' }`;
                 btn.textContent = m;
-
-                btn.addEventListener('click', () => {
-                    calendarMonth = index;
-                    calendarYear = tempPickerYear;
-                    
-                    updateDashboard();
-                    monthPickerModal.classList.add('hidden');
-                });
-
+                btn.addEventListener('click', () => { calendarMonth = index; calendarYear = tempPickerYear; updateDashboard(); monthPickerModal.classList.add('hidden'); });
                 monthsGridContainer.appendChild(btn);
             });
         }
 
         function resetAppScanner() {
-            slipFileInput.value = '';
-            imagePreview.src = '#';
-            imagePreviewContainer.classList.add('hidden');
-            triggerFilePicker.classList.remove('hidden');
-            detailStatus.textContent = "";
-            currentLoadedImage = null;
-            
-            ocrRawDatetime.value = "";
-            ocrRawRecipient.value = "";
-            ocrRawAmount.value = "";
-
-            const ctx1 = cropDateTimeCanvas.getContext('2d');
-            const ctx2 = cropRecipientCanvas.getContext('2d');
-            const ctx3 = cropAmountCanvas.getContext('2d');
-            ctx1.clearRect(0, 0, cropDateTimeCanvas.width, cropDateTimeCanvas.height);
-            ctx2.clearRect(0, 0, cropRecipientCanvas.width, cropRecipientCanvas.height);
-            ctx3.clearRect(0, 0, cropAmountCanvas.width, cropAmountCanvas.height);
+            slipFileInput.value = ''; imagePreview.src = '#'; imagePreviewContainer.classList.add('hidden'); triggerFilePicker.classList.remove('hidden'); detailStatus.textContent = ""; currentLoadedImage = null; ocrRawDatetime.value = ""; ocrRawRecipient.value = ""; ocrRawAmount.value = "";
+            const ctx1 = cropDateTimeCanvas.getContext('2d'); const ctx2 = cropRecipientCanvas.getContext('2d'); const ctx3 = cropAmountCanvas.getContext('2d');
+            ctx1.clearRect(0, 0, cropDateTimeCanvas.width, cropDateTimeCanvas.height); ctx2.clearRect(0, 0, cropRecipientCanvas.width, cropRecipientCanvas.height); ctx3.clearRect(0, 0, cropAmountCanvas.width, cropAmountCanvas.height);
         }
 
-        // ------------------------- TEXT PARSING & CLEANUP -------------------------
         function cleanRecipientName(text) {
-            if (!text) return "";
-            let cleaned = text;
-            cleaned = cleaned.replace(/(\s+)([\u0e31\u0e34-\u0e3a\u0e47-\u0e4e\u0e4d])/g, '$2');
-            cleaned = cleaned.replace(/([\u0e31\u0e34-\u0e3a\u0e47-\u0e4e\u0e4d])(\s+)/g, '$1');
-            cleaned = cleaned.replace(/\s{2,}/g, ' __BREAK__ ');
-            cleaned = cleaned.replace(/([ก-๙])\s([ก-๙])/g, '$1$2');
-            cleaned = cleaned.replace(/([ก-๙])\s([ก-๙])/g, '$1$2'); 
-            cleaned = cleaned.replace(/__BREAK__/g, ' ');
-            cleaned = cleaned.replace(/จ\s*ํ\s*า\s*ก\s*ั\s*ด/g, 'จำกัด');
-            cleaned = cleaned.replace(/บ\s*ร\s*ิ\s*ษ\s*ั\s*ท/g, 'บริษัท');
-            cleaned = cleaned.replace(/จํากัด/g, 'จำกัด');
-            cleaned = cleaned.replace(/บ ร ิ ษ ั ท/g, 'บริษัท');
-            cleaned = cleaned.replace(/[^ก-๙a-zA-Z0-9\s()]/g, '').trim();
-            cleaned = cleaned.replace(/\s+/g, ' ');
-            cleaned = cleaned.replace(/\s*[ฝฟผพพัะ]โค?$/g, '');
-            cleaned = cleaned.replace(/\s*[ฝฟผพพัะ]$/g, '');
+            if (!text) return ""; let cleaned = text;
+            cleaned = cleaned.replace(/(\s+)([\u0e31\u0e34-\u0e3a\u0e47-\u0e4e\u0e4d])/g, '$2').replace(/([\u0e31\u0e34-\u0e3a\u0e47-\u0e4e\u0e4d])(\s+)/g, '$1').replace(/\s{2,}/g, ' __BREAK__ ').replace(/([ก-๙])\s([ก-๙])/g, '$1$2').replace(/([ก-๙])\s([ก-๙])/g, '$1$2').replace(/__BREAK__/g, ' ').replace(/จ\s*ํ\s*า\s*ก\s*ั\s*ด/g, 'จำกัด').replace(/บ\s*ร\s*ิ\s*ษ\s*ั\s*ท/g, 'บริษัท').replace(/จํากัด/g, 'จำกัด').replace(/บ ร ิ ษ ั ท/g, 'บริษัท').replace(/[^ก-๙a-zA-Z0-9\s()]/g, '').trim().replace(/\s+/g, ' ').replace(/\s*[ฝฟผพพัะ]โค?$/g, '').replace(/\s*[ฝฟผพพัะ]$/g, '');
             return cleaned;
         }
 
         function extractFloatAmount(text) {
             if (!text) return null;
-            const clean = text.replace(/\s+/g, '');
-            const rightSideMatch = clean.match(/(\d{1,3}(,\d{3})*\.\d{2})|(\d+\.\d{2})/g);
-            if (rightSideMatch && rightSideMatch.length > 0) {
-                const targetValue = rightSideMatch[rightSideMatch.length - 1];
-                return targetValue.replace(/,/g, '');
-            }
-            return null;
+            const rightSideMatch = text.replace(/\s+/g, '').match(/(\d{1,3}(,\d{3})*\.\d{2})|(\d+\.\d{2})/g);
+            return (rightSideMatch && rightSideMatch.length > 0) ? rightSideMatch[rightSideMatch.length - 1].replace(/,/g, '') : null;
         }
 
         function parseThaiSlipDateTime(text) {
-            let date = null;
-            let time = null;
-
-            if (!text) return { date, time };
-            let clean = text.replace(/[\u200B-\u200D\uFEFF\u200E\u200F]/g, '');
-            clean = clean.replace(/\s+/g, '');
-
-            const timeMatch = clean.match(/([01]?\d|2[0-3])[:.](([0-5]\d))/);
-            if (timeMatch) {
-                time = `${timeMatch[1].padStart(2, '0')}:${timeMatch[2]}`;
-            }
-
-            const monthsMap = {
-                'ม.ค.': '01', 'มกราคม': '01',
-                'ก.พ.': '02', 'กุมภาพันธ์': '02',
-                'มี.ค.': '03', 'มีนาคม': '03',
-                'เม.ย.': '04', 'เมษายน': '04',
-                'พ.ค.': '05', 'พฤษภาคม': '05', 'พ.ศ.': '05',
-                'มิ.ย.': '06', 'มิถุนายน': '06',
-                'ก.ค.': '07', 'กรกฎาคม': '07',
-                'ส.ค.': '08', 'สิงหาคม': '08',
-                'ก.ย.': '09', 'กันยายน': '09',
-                'ต.ค.': '10', 'ตุลาคม': '10',
-                'พ.ย.': '11', 'พฤศจิกายน': '11',
-                'ธ.ค.': '12', 'ธันวาคม': '12'
-            };
-
-            let foundMonthStr = null;
-            let monthVal = null;
-            let monthIndex = -1;
-
-            for (const [key, val] of Object.entries(monthsMap)) {
-                monthIndex = clean.indexOf(key);
-                if (monthIndex !== -1) {
-                    foundMonthStr = key;
-                    monthVal = val;
-                    break;
-                }
-            }
-
+            let date = null; let time = null; if (!text) return { date, time };
+            let clean = text.replace(/[\u200B-\u200D\uFEFF\u200E\u200F]/g, '').replace(/\s+/g, '');
+            const timeMatch = clean.match(/([01]?\d|2[0-3])[:.](([0-5]\d))/); if (timeMatch) time = `${timeMatch[1].padStart(2, '0')}:${timeMatch[2]}`;
+            const monthsMap = { 'ม.ค.': '01', 'มกราคม': '01', 'ก.พ.': '02', 'กุมภาพันธ์': '02', 'มี.ค.': '03', 'มีนาคม': '03', 'เม.ย.': '04', 'เมษายน': '04', 'พ.ค.': '05', 'พฤษภาคม': '05', 'พ.ศ.': '05', 'มิ.ย.': '06', 'มิถุนายน': '06', 'ก.ค.': '07', 'กรกฎาคม': '07', 'ส.ค.': '08', 'สิงหาคม': '08', 'ก.ย.': '09', 'กันยายน': '09', 'ต.ค.': '10', 'ตุลาคม': '10', 'พ.ย.': '11', 'พฤศจิกายน': '11', 'ธ.ค.': '12', 'ธันวาคม': '12' };
+            let foundMonthStr = null; let monthVal = null; let monthIndex = -1;
+            for (const [key, val] of Object.entries(monthsMap)) { monthIndex = clean.indexOf(key); if (monthIndex !== -1) { foundMonthStr = key; monthVal = val; break; } }
             if (foundMonthStr && monthVal && monthIndex !== -1) {
-                const dayStr = clean.substring(Math.max(0, monthIndex - 2), monthIndex);
-                const dayVal = dayStr.match(/\d+/) ? dayStr.match(/\d+/)[0].padStart(2, '0') : null;
-
-                const yearStartIndex = monthIndex + foundMonthStr.length;
-                const yearStr = clean.substring(yearStartIndex, yearStartIndex + 2);
-                const yearVal = yearStr.match(/\d+/) ? yearStr.match(/\d+/)[0] : null;
-
+                const dayVal = clean.substring(Math.max(0, monthIndex - 2), monthIndex).match(/\d+/) ? clean.substring(Math.max(0, monthIndex - 2), monthIndex).match(/\d+/)[0].padStart(2, '0') : null;
+                const yearVal = clean.substring(monthIndex + foundMonthStr.length, monthIndex + foundMonthStr.length + 2).match(/\d+/) ? clean.substring(monthIndex + foundMonthStr.length, monthIndex + foundMonthStr.length + 2).match(/\d+/)[0] : null;
                 if (dayVal && yearVal) {
-                    let rawYear = parseInt(yearVal);
-                    let finalYear = new Date().getFullYear(); 
-                    
-                    if (rawYear < 100) {
-                        rawYear = 2500 + rawYear;
-                    }
-                    
-                    if (rawYear > 2500) {
-                        finalYear = rawYear - 543;
-                    } else if (rawYear > 2000) {
-                        finalYear = rawYear;
-                    }
-
+                    let rawYear = parseInt(yearVal); let finalYear = new Date().getFullYear(); 
+                    if (rawYear < 100) rawYear = 2500 + rawYear;
+                    if (rawYear > 2500) finalYear = rawYear - 543; else if (rawYear > 2000) finalYear = rawYear;
                     date = `${finalYear}-${monthVal}-${dayVal}`;
                 }
             }
-
             return { date, time };
         }
 
-        // ------------------------- RECIPIENT ALIAS MAPPER -------------------------
         function loadAliasRules() {
             const stored = localStorage.getItem('recipient_rules_map');
-            if (stored) {
-                try {
-                    recipientRules = JSON.parse(stored);
-                } catch (e) {
-                    recipientRules = {};
-                }
-            } else {
-                recipientRules = { "สินธร": "อาหารกลางวัน" };
-                saveAliasRules();
-            }
+            if (stored) { try { recipientRules = JSON.parse(stored); } catch (e) { recipientRules = {}; } } else { recipientRules = { "สินธร": "อาหารกลางวัน" }; saveAliasRules(); }
             updateRulesBadge();
         }
 
-        function saveAliasRules() {
-            localStorage.setItem('recipient_rules_map', JSON.stringify(recipientRules));
-            updateRulesBadge();
-        }
-
-        function updateRulesBadge() {
-            const count = Object.keys(recipientRules).length;
-            if (count > 0) {
-                rulesCountBadge.classList.remove('hidden');
-            } else {
-                rulesCountBadge.classList.add('hidden');
-            }
-        }
-
+        function saveAliasRules() { localStorage.setItem('recipient_rules_map', JSON.stringify(recipientRules)); updateRulesBadge(); }
+        function updateRulesBadge() { if (Object.keys(recipientRules).length > 0) rulesCountBadge.classList.remove('hidden'); else rulesCountBadge.classList.add('hidden'); }
+        
         function applyAliasToName(rawName) {
-            if (!rawName) return rawName;
-            const searchName = rawName.toLowerCase().trim();
-            for (const [key, val] of Object.entries(recipientRules)) {
-                if (searchName.includes(key.toLowerCase().trim())) {
-                    return val;
-                }
-            }
-            return rawName;
+            if (!rawName) return rawName; const searchName = rawName.toLowerCase().trim();
+            for (const [key, val] of Object.entries(recipientRules)) { if (searchName.includes(key.toLowerCase().trim())) return val; } return rawName;
         }
 
         function setupAliasRulesManager() {
-            aliasRulesBtn.addEventListener('click', () => {
-                renderRulesList();
-                aliasRulesModal.classList.remove('hidden');
-            });
-
-            closeAliasRulesBtn.addEventListener('click', () => {
-                aliasRulesModal.classList.add('hidden');
-            });
-
+            aliasRulesBtn.addEventListener('click', () => { renderRulesList(); aliasRulesModal.classList.remove('hidden'); });
+            closeAliasRulesBtn.addEventListener('click', () => aliasRulesModal.classList.add('hidden'));
             addRuleBtn.addEventListener('click', () => {
-                const key = ruleKeyInput.value.trim();
-                const val = ruleValInput.value.trim();
-
-                if (!key || !val) {
-                    showCustomAlert('ข้อมูลไม่ครบ', 'กรุณากรอกคำอ้างอิงและคำแปลงชื่อให้ครบถ้วนครับ');
-                    return;
-                }
-
-                recipientRules[key] = val;
-                saveAliasRules();
-                renderRulesList();
-
-                ruleKeyInput.value = '';
-                ruleValInput.value = '';
-                
-                showCustomAlert('บันทึกสำเร็จ', `เพิ่มกฎแปลง '${key}' เป็น '${val}' เรียบร้อยแล้ว`, true);
+                const key = ruleKeyInput.value.trim(); const val = ruleValInput.value.trim();
+                if (!key || !val) { showCustomAlert('ข้อมูลไม่ครบ', 'กรุณากรอกคำอ้างอิงและคำแปลงชื่อให้ครบถ้วนครับ'); return; }
+                recipientRules[key] = val; saveAliasRules(); renderRulesList(); ruleKeyInput.value = ''; ruleValInput.value = ''; showCustomAlert('บันทึกสำเร็จ', `เพิ่มกฎแปลง '${key}' เป็น '${val}' เรียบร้อยแล้ว`, true);
             });
         }
 
         function renderRulesList() {
-            rulesListContainer.innerHTML = '';
-            const entries = Object.entries(recipientRules);
-
-            if (entries.length === 0) {
-                rulesListContainer.innerHTML = `
-                    <p class="text-[11px] text-slate-400 font-bold text-center py-6">ยังไม่มีการตั้งค่าจับคู่เปลี่ยนชื่อ</p>
-                `;
-                return;
-            }
-
+            rulesListContainer.innerHTML = ''; const entries = Object.entries(recipientRules);
+            if (entries.length === 0) { rulesListContainer.innerHTML = `<p class="text-[11px] text-slate-400 font-bold text-center py-6">ยังไม่มีการตั้งค่าจับคู่เปลี่ยนชื่อ</p>`; return; }
             entries.forEach(([key, val]) => {
-                const item = document.createElement('div');
-                item.className = "flex items-center justify-between p-2.5 bg-slate-50 border border-slate-100 rounded-xl";
+                const item = document.createElement('div'); item.className = "flex items-center justify-between p-2.5 bg-slate-50 border border-slate-100 rounded-xl";
                 item.innerHTML = `
-                    <div class="min-w-0 flex-1 pr-2">
-                        <span class="text-[10px] font-bold text-slate-400 block">หากสลิปมีคำว่า</span>
-                        <span class="text-xs font-extrabold text-slate-700 truncate block">${key}</span>
-                        <span class="text-[10px] font-bold text-indigo-500 block mt-0.5">➔ จะเปลี่ยนเป็น: ${val}</span>
-                    </div>
-                    <button onclick="window.deleteAliasRule('${key}')" class="text-slate-300 hover:text-red-500 p-1.5 transition-colors shrink-0 cursor-pointer">
-                        <i data-lucide="trash-2" class="w-4 h-4"></i>
-                    </button>
+                    <div class="min-w-0 flex-1 pr-2"><span class="text-[10px] font-bold text-slate-400 block">หากสลิปมีคำว่า</span><span class="text-xs font-extrabold text-slate-700 truncate block">${key}</span><span class="text-[10px] font-bold text-indigo-500 block mt-0.5">➔ จะเปลี่ยนเป็น: ${val}</span></div>
+                    <button onclick="window.deleteAliasRule('${key}')" class="text-slate-300 hover:text-red-500 p-1.5 transition-colors shrink-0 cursor-pointer"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
                 `;
                 rulesListContainer.appendChild(item);
             });
             lucide.createIcons();
         }
 
-        window.deleteAliasRule = function(key) {
-            delete recipientRules[key];
-            saveAliasRules();
-            renderRulesList();
-        };
+        window.deleteAliasRule = function(key) { delete recipientRules[key]; saveAliasRules(); renderRulesList(); };
 
-        // ------------------------- IMAGE OCR UTILS -------------------------
         function cropAndRenderToCanvas(sourceImg, x, y, w, h, targetCanvas, applyOcrOptimizations = false) {
             const ctx = targetCanvas.getContext('2d');
             if (applyOcrOptimizations) {
-                const upscaleFactor = 2;
-                targetCanvas.width = w * upscaleFactor;
-                targetCanvas.height = h * upscaleFactor;
-                
-                ctx.imageSmoothingEnabled = true;
-                ctx.imageSmoothingQuality = 'high';
-                ctx.drawImage(sourceImg, x, y, w, h, 0, 0, targetCanvas.width, targetCanvas.height);
-
-                const imgData = ctx.getImageData(0, 0, targetCanvas.width, targetCanvas.height);
-                const data = imgData.data;
-
+                const upscaleFactor = 2; targetCanvas.width = w * upscaleFactor; targetCanvas.height = h * upscaleFactor;
+                ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = 'high'; ctx.drawImage(sourceImg, x, y, w, h, 0, 0, targetCanvas.width, targetCanvas.height);
+                const imgData = ctx.getImageData(0, 0, targetCanvas.width, targetCanvas.height); const data = imgData.data;
                 for (let i = 0; i < data.length; i += 4) {
-                    const r = data[i];
-                    const g = data[i + 1];
-                    const b = data[i + 2];
-                    const gray = 0.299 * r + 0.587 * g + 0.114 * b;
-                    const threshold = 160; 
-                    const finalVal = gray > threshold ? 255 : 0;
-                    
-                    data[i] = finalVal;
-                    data[i+1] = finalVal;
-                    data[i+2] = finalVal;
+                    const gray = 0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2]; const finalVal = gray > 160 ? 255 : 0;
+                    data[i] = finalVal; data[i+1] = finalVal; data[i+2] = finalVal;
                 }
                 ctx.putImageData(imgData, 0, 0);
-            } else {
-                targetCanvas.width = w;
-                targetCanvas.height = h;
-                ctx.drawImage(sourceImg, x, y, w, h, 0, 0, w, h);
-            }
+            } else { targetCanvas.width = w; targetCanvas.height = h; ctx.drawImage(sourceImg, x, y, w, h, 0, 0, w, h); }
         }
 
-        // ------------------------- LOCAL QR DECODE & SCANNER CONTROLLER -------------------------
         function processFile(file) {
-            if (!file.type.startsWith('image/')) {
-                showCustomAlert('ไฟล์ไม่ถูกต้อง', 'กรุณาอัปโหลดรูปภาพสลิปธุรกรรมเท่านั้นครับ');
-                return;
-            }
-
+            if (!file.type.startsWith('image/')) { showCustomAlert('ไฟล์ไม่ถูกต้อง', 'กรุณาอัปโหลดรูปภาพสลิปธุรกรรมเท่านั้นครับ'); return; }
             const reader = new FileReader();
             reader.onload = function(event) {
-                imagePreview.src = event.target.result;
-                imagePreviewContainer.classList.remove('hidden');
-                triggerFilePicker.classList.add('hidden');
-                
-                scanStatus.className = "text-xs font-bold py-1.5 px-4 rounded-full inline-block bg-amber-100 text-amber-800 animate-pulse";
-                scanStatus.textContent = "วิเคราะห์คิวอาร์โค้ด และ พิกัดสลิป...";
-                detailStatus.textContent = "กำลังวิเคราะห์โครงสร้างพิกัดสลิป...";
-
+                imagePreview.src = event.target.result; imagePreviewContainer.classList.remove('hidden'); triggerFilePicker.classList.add('hidden');
+                scanStatus.className = "text-xs font-bold py-1.5 px-4 rounded-full inline-block bg-amber-100 text-amber-800 animate-pulse"; scanStatus.textContent = "วิเคราะห์คิวอาร์โค้ด และ พิกัดสลิป..."; detailStatus.textContent = "กำลังวิเคราะห์โครงสร้างพิกัดสลิป...";
                 const img = new Image();
                 img.onload = async function() {
-                    currentLoadedImage = img;
-                    analyzeKBankSlipQR(img); 
-                    
-                    const geo = getSmartGeometry(img.naturalWidth || img.width, img.naturalHeight || img.height);
-                    renderCropsOnly(img, geo);
-                    
-                    if (!isOcrReady) {
-                        await preInitializeOCR();
-                    }
+                    currentLoadedImage = img; analyzeKBankSlipQR(img); 
+                    const geo = getSmartGeometry(img.naturalWidth || img.width, img.naturalHeight || img.height); renderCropsOnly(img, geo);
+                    if (!isOcrReady) await preInitializeOCR();
                     analyzeKBankSlipOCR(img, geo); 
                 };
                 img.src = event.target.result;
@@ -2228,303 +1551,146 @@
         }
 
         function analyzeKBankSlipQR(img) {
-            const canvas = document.getElementById('util-canvas');
-            const ctx = canvas.getContext('2d');
-            const w = img.naturalWidth || img.width;
-            const h = img.naturalHeight || img.height;
-            canvas.width = w;
-            canvas.height = h;
-            ctx.drawImage(img, 0, 0, w, h);
-
-            let detectedDate = null;
-            let detectedTime = null;
-
+            const canvas = document.getElementById('util-canvas'); const ctx = canvas.getContext('2d');
+            const w = img.naturalWidth || img.width; const h = img.naturalHeight || img.height;
+            canvas.width = w; canvas.height = h; ctx.drawImage(img, 0, 0, w, h);
+            let detectedDate = null; let detectedTime = null;
             try {
-                const imgData = ctx.getImageData(0, 0, w, h);
-                const code = jsQR(imgData.data, imgData.width, imgData.height);
+                const imgData = ctx.getImageData(0, 0, w, h); const code = jsQR(imgData.data, imgData.width, imgData.height);
                 if (code && code.data) {
                     const dtMatch = code.data.match(/(202\d|203\d)(0\d|1[0-2])(0\d|[12]\d|3[01])([01]\d|2[0-3])([0-5]\d)/);
-                    if (dtMatch) {
-                        detectedDate = `${dtMatch[1]}-${dtMatch[2]}-${dtMatch[3]}`;
-                        detectedTime = `${dtMatch[4]}:${dtMatch[5]}`;
-                    }
+                    if (dtMatch) { detectedDate = `${dtMatch[1]}-${dtMatch[2]}-${dtMatch[3]}`; detectedTime = `${dtMatch[4]}:${dtMatch[5]}`; }
                 }
-            } catch (err) {
-                console.warn("Local QR analyzer error:", err);
-            }
-
-            if (detectedDate && detectedTime) {
-                formDate.value = detectedDate;
-                formTime.value = detectedTime;
-                highlightFilledInputs();
-            }
+            } catch (err) { console.warn("Local QR analyzer error:", err); }
+            if (detectedDate && detectedTime) { formDate.value = detectedDate; formTime.value = detectedTime; highlightFilledInputs(); }
         }
 
         function highlightFilledInputs() {
-            formDate.classList.add('autofilled-highlight');
-            formTime.classList.add('autofilled-highlight');
-            setTimeout(() => {
-                formDate.classList.remove('autofilled-highlight');
-                formTime.classList.remove('autofilled-highlight');
-            }, 1500);
+            formDate.classList.add('autofilled-highlight'); formTime.classList.add('autofilled-highlight');
+            setTimeout(() => { formDate.classList.remove('autofilled-highlight'); formTime.classList.remove('autofilled-highlight'); }, 1500);
         }
 
         function renderCropsOnly(img, geo = null) {
-            if(!geo) {
-                geo = getSmartGeometry(img.naturalWidth || img.width, img.naturalHeight || img.height);
-            }
-            const w = geo.w;
-            const vH = geo.virtualH;
+            if(!geo) geo = getSmartGeometry(img.naturalWidth || img.width, img.naturalHeight || img.height);
+            const w = geo.w; const vH = geo.virtualH;
 
-            const dtX = Math.round(w * (gridSettings.dt.x / 100));
-            const dtY = Math.round(vH * (gridSettings.dt.y / 100));
-            const dtW = Math.round(w * (gridSettings.dt.w / 100));
-            const dtH = Math.round(vH * (gridSettings.dt.h / 100));
-            cropAndRenderToCanvas(img, dtX, dtY, dtW, dtH, cropDateTimeCanvas, false);
-
-            const rcX = Math.round(w * (gridSettings.rc.x / 100));
-            const rcY = Math.round(vH * (gridSettings.rc.y / 100));
-            const rcW = Math.round(w * (gridSettings.rc.w / 100));
-            const rcH = Math.round(vH * (gridSettings.rc.h / 100));
-            cropAndRenderToCanvas(img, rcX, rcY, rcW, rcH, cropRecipientCanvas, false);
-
-            const amX = Math.round(w * (gridSettings.am.x / 100));
-            const amY = Math.round(vH * (gridSettings.am.y / 100));
-            const amW = Math.round(w * (gridSettings.am.w / 100));
-            const amH = Math.round(vH * (gridSettings.am.h / 100));
-            cropAndRenderToCanvas(img, amX, amY, amW, amH, cropAmountCanvas, false);
+            cropAndRenderToCanvas(img, Math.round(w * (gridSettings.dt.x / 100)), Math.round(vH * (gridSettings.dt.y / 100)), Math.round(w * (gridSettings.dt.w / 100)), Math.round(vH * (gridSettings.dt.h / 100)), cropDateTimeCanvas, false);
+            cropAndRenderToCanvas(img, Math.round(w * (gridSettings.rc.x / 100)), Math.round(vH * (gridSettings.rc.y / 100)), Math.round(w * (gridSettings.rc.w / 100)), Math.round(vH * (gridSettings.rc.h / 100)), cropRecipientCanvas, false);
+            cropAndRenderToCanvas(img, Math.round(w * (gridSettings.am.x / 100)), Math.round(vH * (gridSettings.am.y / 100)), Math.round(w * (gridSettings.am.w / 100)), Math.round(vH * (gridSettings.am.h / 100)), cropAmountCanvas, false);
 
             drawVisualOverlays(geo.w, geo.h, geo.virtualH);
         }
 
         function drawVisualOverlays(imgWidth, imgHeight, virtualH) {
-            cropOverlayCanvas.width = imgWidth;
-            cropOverlayCanvas.height = imgHeight;
-
-            const ctx = cropOverlayCanvas.getContext('2d');
-            ctx.clearRect(0, 0, imgWidth, imgHeight);
+            cropOverlayCanvas.width = imgWidth; cropOverlayCanvas.height = imgHeight;
+            const ctx = cropOverlayCanvas.getContext('2d'); ctx.clearRect(0, 0, imgWidth, imgHeight);
 
             function drawGridBox(set, label, color) {
-                const rx = imgWidth * (set.x / 100);
-                const ry = virtualH * (set.y / 100);
-                const rw = imgWidth * (set.w / 100);
-                const rh = virtualH * (set.h / 100);
-
-                ctx.strokeStyle = color;
-                ctx.lineWidth = Math.max(3, Math.round(imgWidth / 150));
-                ctx.strokeRect(rx, ry, rw, rh);
-
-                const fontSize = Math.max(12, Math.round(imgWidth / 40));
-                ctx.fillStyle = color;
-                ctx.fillRect(rx, ry - fontSize - 6, Math.min(rw, fontSize * 5), fontSize + 6);
-                
-                ctx.fillStyle = "#ffffff";
-                ctx.font = `bold ${fontSize}px sans-serif`;
-                ctx.fillText(label, rx + 4, ry - 4);
+                const rx = imgWidth * (set.x / 100); const ry = virtualH * (set.y / 100); const rw = imgWidth * (set.w / 100); const rh = virtualH * (set.h / 100);
+                ctx.strokeStyle = color; ctx.lineWidth = Math.max(3, Math.round(imgWidth / 150)); ctx.strokeRect(rx, ry, rw, rh);
+                const fontSize = Math.max(12, Math.round(imgWidth / 40)); ctx.fillStyle = color; ctx.fillRect(rx, ry - fontSize - 6, Math.min(rw, fontSize * 5), fontSize + 6);
+                ctx.fillStyle = "#ffffff"; ctx.font = `bold ${fontSize}px sans-serif`; ctx.fillText(label, rx + 4, ry - 4);
             }
 
-            drawGridBox(gridSettings.dt, "วันเวลา", "#6366f1");
-            drawGridBox(gridSettings.rc, "ผู้รับโอน", "#f59e0b");
-            drawGridBox(gridSettings.am, "ยอดเงิน", "#ef4444");
+            drawGridBox(gridSettings.dt, "วันเวลา", "#6366f1"); drawGridBox(gridSettings.rc, "ผู้รับโอน", "#f59e0b"); drawGridBox(gridSettings.am, "ยอดเงิน", "#ef4444");
         }
 
-        // ฟังก์ชันอ่านข้อความด้วย Tesseract v5 (ออฟไลน์ 100% สำหรับสลิปเดี่ยว)
         async function analyzeKBankSlipOCR(img, geo) {
-            scanStatus.textContent = "กำลังวิเคราะห์ข้อมูล (Local OCR v5)...";
-            scanStatus.className = "text-xs font-bold py-1.5 px-4 rounded-full inline-block bg-indigo-100 text-indigo-800 animate-pulse";
+            scanStatus.textContent = "กำลังวิเคราะห์ข้อมูล (Local OCR v5)..."; scanStatus.className = "text-xs font-bold py-1.5 px-4 rounded-full inline-block bg-indigo-100 text-indigo-800 animate-pulse";
             
             try {
-                const w = geo.w;
-                const vH = geo.virtualH;
+                const w = geo.w; const vH = geo.virtualH;
+                cropAndRenderToCanvas(img, Math.round(w * (gridSettings.am.x / 100)), Math.round(vH * (gridSettings.am.y / 100)), Math.round(w * (gridSettings.am.w / 100)), Math.round(vH * (gridSettings.am.h / 100)), cropAmountCanvas, true);
+                cropAndRenderToCanvas(img, Math.round(w * (gridSettings.rc.x / 100)), Math.round(vH * (gridSettings.rc.y / 100)), Math.round(w * (gridSettings.rc.w / 100)), Math.round(vH * (gridSettings.rc.h / 100)), cropRecipientCanvas, true);
+                cropAndRenderToCanvas(img, Math.round(w * (gridSettings.dt.x / 100)), Math.round(vH * (gridSettings.dt.y / 100)), Math.round(w * (gridSettings.dt.w / 100)), Math.round(vH * (gridSettings.dt.h / 100)), cropDateTimeCanvas, true);
 
-                const amX = Math.round(w * (gridSettings.am.x / 100));
-                const amY = Math.round(vH * (gridSettings.am.y / 100));
-                const amW = Math.round(w * (gridSettings.am.w / 100));
-                const amH = Math.round(vH * (gridSettings.am.h / 100));
-                cropAndRenderToCanvas(img, amX, amY, amW, amH, cropAmountCanvas, true);
+                ocrProgressContainer.classList.remove('hidden'); ocrProgressBar.style.width = '10%';
 
-                const rcX = Math.round(w * (gridSettings.rc.x / 100));
-                const rcY = Math.round(vH * (gridSettings.rc.y / 100));
-                const rcW = Math.round(w * (gridSettings.rc.w / 100));
-                const rcH = Math.round(vH * (gridSettings.rc.h / 100));
-                cropAndRenderToCanvas(img, rcX, rcY, rcW, rcH, cropRecipientCanvas, true);
-
-                const dtX = Math.round(w * (gridSettings.dt.x / 100));
-                const dtY = Math.round(vH * (gridSettings.dt.y / 100));
-                const dtW = Math.round(w * (gridSettings.dt.w / 100));
-                const dtH = Math.round(vH * (gridSettings.dt.h / 100));
-                cropAndRenderToCanvas(img, dtX, dtY, dtW, dtH, cropDateTimeCanvas, true);
-
-                ocrProgressContainer.classList.remove('hidden');
-                ocrProgressBar.style.width = '10%';
-
-                // ==========================================
-                // Scan 1: วันเวลา
-                // ==========================================
                 detailStatus.textContent = "กำลังวิเคราะห์วันเวลา... (1/3)";
                 await ocrWorker.setParameters({ tessedit_char_whitelist: '' }); 
                 const dtResult = await ocrWorker.recognize(cropDateTimeCanvas);
-                const rawDateText = dtResult.data.text;
-                ocrRawDatetime.value = rawDateText.replace(/\s+/g, ' ').trim();
-                
-                const dateData = parseThaiSlipDateTime(rawDateText);
-                if (dateData.date) { formDate.value = dateData.date; highlightFilledInputs(); }
-                if (dateData.time) { formTime.value = dateData.time; highlightFilledInputs(); }
+                ocrRawDatetime.value = dtResult.data.text.replace(/\s+/g, ' ').trim();
+                const dateData = parseThaiSlipDateTime(dtResult.data.text);
+                if (dateData.date) { formDate.value = dateData.date; highlightFilledInputs(); } if (dateData.time) { formTime.value = dateData.time; highlightFilledInputs(); }
                 ocrProgressBar.style.width = '40%';
 
-                // ==========================================
-                // Scan 2: ชื่อผู้รับโอน
-                // ==========================================
                 detailStatus.textContent = "กำลังวิเคราะห์ชื่อผู้รับโอน... (2/3)";
                 const recResult = await ocrWorker.recognize(cropRecipientCanvas);
-                const rawRecipientText = recResult.data.text;
-                ocrRawRecipient.value = rawRecipientText.replace(/\s+/g, ' ').trim();
-                
-                let cleanedRecipient = cleanRecipientName(rawRecipientText);
-                cleanedRecipient = applyAliasToName(cleanedRecipient);
-                formRecipient.value = cleanedRecipient || "ผู้รับเงินโอน";
+                ocrRawRecipient.value = recResult.data.text.replace(/\s+/g, ' ').trim();
+                formRecipient.value = applyAliasToName(cleanRecipientName(recResult.data.text)) || "ผู้รับเงินโอน";
                 ocrProgressBar.style.width = '70%';
 
-                // ==========================================
-                // Scan 3: ยอดเงิน (ใช้ Whitelist เพื่อความไวและแม่นยำ)
-                // ==========================================
                 detailStatus.textContent = "กำลังวิเคราะห์ตัวเลขยอดเงิน... (3/3)";
-                await ocrWorker.setParameters({
-                    tessedit_char_whitelist: '0123456789.,'
-                });
+                await ocrWorker.setParameters({ tessedit_char_whitelist: '0123456789.,' });
                 const amtResult = await ocrWorker.recognize(cropAmountCanvas);
-                const rawAmountText = amtResult.data.text;
-                ocrRawAmount.value = rawAmountText.replace(/\s+/g, ' ').trim();
-                
-                const cleanedAmount = extractFloatAmount(rawAmountText);
+                ocrRawAmount.value = amtResult.data.text.replace(/\s+/g, ' ').trim();
+                const cleanedAmount = extractFloatAmount(amtResult.data.text);
                 if (cleanedAmount) {
                     formAmount.value = parseFloat(cleanedAmount).toFixed(2);
-                    amountSourceBadge.textContent = "วิเคราะห์ยอดสลิปสำเร็จ";
-                    amountSourceBadge.className = "text-[9px] px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-bold";
+                    amountSourceBadge.textContent = "วิเคราะห์ยอดสลิปสำเร็จ"; amountSourceBadge.className = "text-[9px] px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-bold";
                 } else {
-                    formAmount.value = "";
-                    amountSourceBadge.textContent = "ตรวจไม่พบยอดเงิน";
-                    amountSourceBadge.className = "text-[9px] px-2.5 py-0.5 rounded-full bg-rose-100 text-rose-800 font-bold animate-pulse";
+                    formAmount.value = ""; amountSourceBadge.textContent = "ตรวจไม่พบยอดเงิน"; amountSourceBadge.className = "text-[9px] px-2.5 py-0.5 rounded-full bg-rose-100 text-rose-800 font-bold animate-pulse";
                 }
 
-                formMemo.value = ""; 
-                ocrProgressBar.style.width = '100%';
-                
-                scanStatus.className = "text-xs font-bold py-1.5 px-4 rounded-full inline-block bg-emerald-100 text-emerald-800";
-                scanStatus.textContent = "สแกนสำเร็จเรียบร้อย!";
-                detailStatus.textContent = "โปรดตรวจสอบความถูกต้องและกดยืนยัน";
+                formMemo.value = ""; ocrProgressBar.style.width = '100%';
+                scanStatus.className = "text-xs font-bold py-1.5 px-4 rounded-full inline-block bg-emerald-100 text-emerald-800"; scanStatus.textContent = "สแกนสำเร็จเรียบร้อย!"; detailStatus.textContent = "โปรดตรวจสอบความถูกต้องและกดยืนยัน";
 
             } catch (err) {
                 console.error("Local OCR Failed:", err);
                 showCustomAlert('สแกนล้มเหลว', 'ระบบออฟไลน์ทำงานผิดพลาด กรุณาป้อนข้อมูลด้วยตนเองครับ');
-                scanStatus.className = "text-xs font-bold py-1.5 px-4 rounded-full inline-block bg-red-100 text-red-800";
-                scanStatus.textContent = "เอนจิ้นขัดข้อง";
-                detailStatus.textContent = "กรุณาใส่ข้อมูลด้วยตนเองชั่วคราว";
-            } finally {
-                setTimeout(() => { ocrProgressContainer.classList.add('hidden'); }, 2000);
-            }
+                scanStatus.className = "text-xs font-bold py-1.5 px-4 rounded-full inline-block bg-red-100 text-red-800"; scanStatus.textContent = "เอนจิ้นขัดข้อง"; detailStatus.textContent = "กรุณาใส่ข้อมูลด้วยตนเองชั่วคราว";
+            } finally { setTimeout(() => { ocrProgressContainer.classList.add('hidden'); }, 2000); }
         }
 
-        // ==========================================================================
-        // FEATURE: TRUEMONEY HISTORY OVERVIEW VISION AI ENGINE (GEMINI POWERED)
-        // ==========================================================================
         function setupTrueMoneyListeners() {
-            triggerTrueMoneyPicker.addEventListener('click', (e) => {
-                e.preventDefault();
-                truemoneyFileInput.click();
-            });
-
-            truemoneyFileInput.addEventListener('change', (e) => {
-                const file = e.target.files[0];
-                if (file) {
-                    processTrueMoneyFileWithAI(file);
-                }
-            });
-
+            triggerTrueMoneyPicker.addEventListener('click', (e) => { e.preventDefault(); truemoneyFileInput.click(); });
+            truemoneyFileInput.addEventListener('change', (e) => { if (e.target.files[0]) processTrueMoneyFileWithAI(e.target.files[0]); });
             tmnSelectAllBtn.addEventListener('click', () => {
-                const checkboxes = truemoneyListEditor.querySelectorAll('input[type="checkbox"]');
-                const allChecked = Array.from(checkboxes).every(cb => cb.checked);
-                checkboxes.forEach(cb => cb.checked = !allChecked);
-                updateTmnImportCountBadge();
+                const checkboxes = truemoneyListEditor.querySelectorAll('input[type="checkbox"]'); const allChecked = Array.from(checkboxes).every(cb => cb.checked);
+                checkboxes.forEach(cb => cb.checked = !allChecked); updateTmnImportCountBadge();
             });
-
             tmnSaveAllBtn.addEventListener('click', async () => {
-                const checkedRows = truemoneyListEditor.querySelectorAll('.tmn-item-row');
-                let importCounter = 0;
-
+                const checkedRows = truemoneyListEditor.querySelectorAll('.tmn-item-row'); let importCounter = 0;
                 checkedRows.forEach(row => {
                     const cb = row.querySelector('.tmn-item-check');
                     if (cb && cb.checked) {
-                        const id = cb.dataset.id;
-                        const originalRecord = truemoneyRecords.find(r => r.id === id);
+                        const originalRecord = truemoneyRecords.find(r => r.id === cb.dataset.id);
                         if (originalRecord) {
-                            const recNameInput = row.querySelector('.tmn-item-recipient').value.trim();
-                            const amtValInput = parseFloat(row.querySelector('.tmn-item-amount').value);
-                            const catSelVal = row.querySelector('.tmn-item-category').value;
-                            const dateVal = row.querySelector('.tmn-item-date').value;
-
                             const finalRecord = {
                                 id: 'exp_tmn_' + Date.now() + '_' + importCounter + '_' + Math.random().toString(36).substr(2, 4),
-                                amount: isNaN(amtValInput) ? originalRecord.amount : amtValInput,
-                                recipient: recNameInput || 'รายจ่าย TrueMoney',
-                                date: dateVal || originalRecord.date,
+                                amount: isNaN(parseFloat(row.querySelector('.tmn-item-amount').value)) ? originalRecord.amount : parseFloat(row.querySelector('.tmn-item-amount').value),
+                                recipient: row.querySelector('.tmn-item-recipient').value.trim() || 'รายจ่าย TrueMoney',
+                                date: row.querySelector('.tmn-item-date').value || originalRecord.date,
                                 time: originalRecord.time || "12:00",
-                                category: catSelVal,
+                                category: row.querySelector('.tmn-item-category').value,
                                 memo: originalRecord.memo || "นำเข้าจาก TrueMoney"
                             };
-
                             expenses.unshift(finalRecord);
                             importCounter++;
-
-                            // ส่งรายการจากการสแกน TrueMoney ขึ้น Google Sheets ทีละแถว
                             syncWithGoogleSheets('save', finalRecord);
                         }
                     }
                 });
 
                 if (importCounter > 0) {
-                    updateDashboard();
-                    if (fileHandle) {
-                        await executeSyncOrDownload(true);
-                    }
-                    closeFormSheet();
-                    showCustomAlert('นำเข้าประวัติสำเร็จ!', `นำเข้าประวัติรายจ่าย TrueMoney ทั้งหมด ${importCounter} รายการ เรียบร้อยแล้วครับ`, true);
-                } else {
-                    showCustomAlert('ไม่พบรายการ', 'กรุณาเลือกอย่างน้อย 1 รายการเพื่อบันทึกประวัติครับ');
-                }
+                    updateDashboard(); if (fileHandle) await executeSyncOrDownload(true);
+                    closeFormSheet(); showCustomAlert('นำเข้าประวัติสำเร็จ!', `นำเข้าประวัติรายจ่าย TrueMoney ทั้งหมด ${importCounter} รายการ เรียบร้อยแล้วครับ`, true);
+                } else showCustomAlert('ไม่พบรายการ', 'กรุณาเลือกอย่างน้อย 1 รายการเพื่อบันทึกประวัติครับ');
             });
         }
 
         function resetTrueMoneyScanner() {
-            truemoneyFileInput.value = '';
-            tmnScanStatusCard.classList.add('hidden');
-            truemoneyResultsWrapper.classList.add('hidden');
-            triggerTrueMoneyPicker.classList.remove('hidden');
-            truemoneyListEditor.innerHTML = '';
-            truemoneyRecords = [];
+            truemoneyFileInput.value = ''; tmnScanStatusCard.classList.add('hidden'); truemoneyResultsWrapper.classList.add('hidden'); triggerTrueMoneyPicker.classList.remove('hidden'); truemoneyListEditor.innerHTML = ''; truemoneyRecords = [];
         }
 
         async function processTrueMoneyFileWithAI(file) {
-            if (!file.type.startsWith('image/')) {
-                showCustomAlert('ไฟล์ไม่ถูกต้อง', 'กรุณาอัปโหลดรูปภาพแคปหน้าจอประวัติเท่านั้นครับ');
-                return;
-            }
-
-            tmnScanStatusCard.classList.remove('hidden');
-            triggerTrueMoneyPicker.classList.add('hidden');
-            tmnScanStatusText.textContent = "กำลังส่งรูปภาพประวัติให้ Gemini Vision AI วิเคราะห์...";
-
-            const reader = new FileReader();
-            reader.onload = async function(event) {
-                const base64Data = event.target.result.split(',')[1];
-                await callGeminiVisionAI(base64Data);
-            };
-            reader.readAsDataURL(file);
+            if (!file.type.startsWith('image/')) { showCustomAlert('ไฟล์ไม่ถูกต้อง', 'กรุณาอัปโหลดรูปภาพแคปหน้าจอประวัติเท่านั้นครับ'); return; }
+            tmnScanStatusCard.classList.remove('hidden'); triggerTrueMoneyPicker.classList.add('hidden'); tmnScanStatusText.textContent = "กำลังส่งรูปภาพประวัติให้ Gemini Vision AI วิเคราะห์...";
+            const reader = new FileReader(); reader.onload = async function(event) { await callGeminiVisionAI(event.target.result.split(',')[1]); }; reader.readAsDataURL(file);
         }
 
-        // เชื่อมต่อ Gemini 2.5 Flash Vision API ในการตรวจจับรูปภาพอย่างอัจฉริยะแบบโครงสร้าง JSON
         async function callGeminiVisionAI(base64ImageData) {
-            const apiKey = ""; // โครงสร้าง runtime จัดการส่ง key อัตโนมัติ
+            const apiKey = ""; 
             const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
             
             const systemPrompt = `You are a professional bank statement receipt scanner. Extract transaction details from the provided Thai TrueMoney wallet transaction history screenshot image. 
@@ -2546,130 +1712,62 @@ Guideline:
 - Detect whether it is expense (usually marked with '-' sign, like -฿133.00) or income ('+' sign, like +฿200.00). Only mark isExpense as true if it has minus sign.
 - Output ONLY the JSON object. Do not include any markdown format or additional text.`;
 
-            const payload = {
-                contents: [
-                    {
-                        role: "user",
-                        parts: [
-                            { text: "Extract all transactions from this image and output as JSON according to system instruction." },
-                            { inlineData: { mimeType: "image/png", data: base64ImageData } }
-                        ]
-                    }
-                ],
-                systemInstruction: {
-                    parts: [{ text: systemPrompt }]
-                },
-                generationConfig: {
-                    responseMimeType: "application/json"
-                }
-            };
+            const payload = { contents: [ { role: "user", parts: [ { text: "Extract all transactions from this image and output as JSON according to system instruction." }, { inlineData: { mimeType: "image/png", data: base64ImageData } } ] } ], systemInstruction: { parts: [{ text: systemPrompt }] }, generationConfig: { responseMimeType: "application/json" } };
 
-            // ดำเนินการเรียกใช้งาน API พร้อม Exponential Backoff
-            let delay = 1000;
-            let success = false;
-            let resultText = "";
-
+            let delay = 1000; let success = false; let resultText = "";
             for (let retry = 0; retry < 5; retry++) {
                 try {
-                    const response = await fetch(url, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(payload)
-                    });
-                    
-                    if (response.ok) {
-                        const responseData = await response.json();
-                        resultText = responseData.candidates?.[0]?.content?.parts?.[0]?.text;
-                        success = true;
-                        break;
-                    }
-                } catch (e) {
-                    console.error(`Gemini call error on retry ${retry}:`, e);
-                }
-                
-                await new Promise(resolve => setTimeout(resolve, delay));
-                delay *= 2; // เพิ่มเวลาดีเลย์แบบทวีคูณ
+                    const response = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+                    if (response.ok) { resultText = (await response.json()).candidates?.[0]?.content?.parts?.[0]?.text; success = true; break; }
+                } catch (e) { console.error(`Gemini call error on retry ${retry}:`, e); }
+                await new Promise(resolve => setTimeout(resolve, delay)); delay *= 2; 
             }
 
             if (!success || !resultText) {
-                tmnScanStatusCard.classList.add('hidden');
-                triggerTrueMoneyPicker.classList.remove('hidden');
-                showCustomAlert('การเชื่อมต่อขัดข้อง', 'ไม่สามารถเชื่อมต่อระบบ Vision AI ได้ในขณะนี้ กรุณาตรวจสอบอินเทอร์เน็ตหรือทำรายการกรอกมือครับ');
-                return;
+                tmnScanStatusCard.classList.add('hidden'); triggerTrueMoneyPicker.classList.remove('hidden');
+                showCustomAlert('การเชื่อมต่อขัดข้อง', 'ไม่สามารถเชื่อมต่อระบบ Vision AI ได้ในขณะนี้ กรุณาตรวจสอบอินเทอร์เน็ตหรือทำรายการกรอกมือครับ'); return;
             }
 
             try {
-                const cleanJson = JSON.parse(resultText);
-                const rawTransactions = cleanJson.transactions || [];
-
+                const rawTransactions = JSON.parse(resultText).transactions || [];
                 if (rawTransactions.length === 0) {
-                    tmnScanStatusCard.classList.add('hidden');
-                    triggerTrueMoneyPicker.classList.remove('hidden');
-                    showCustomAlert('ไม่พบรายการ', 'สแกนสำเร็จแต่ตรวจไม่พบข้อมูลธุรกรรมในภาพ กรุณาตรวจสอบว่าหน้านี้มีบิลรายจ่ายจริงหรือไม่ครับ');
-                    return;
+                    tmnScanStatusCard.classList.add('hidden'); triggerTrueMoneyPicker.classList.remove('hidden'); showCustomAlert('ไม่พบรายการ', 'สแกนสำเร็จแต่ตรวจไม่พบข้อมูลธุรกรรมในภาพ กรุณาตรวจสอบว่าหน้านี้มีบิลรายจ่ายจริงหรือไม่ครับ'); return;
                 }
 
-                // สรุปข้อมูลเข้าสู่รายการระบบ
                 truemoneyRecords = rawTransactions.map((tx, idx) => {
-                    let category = "อื่นๆ";
-                    const recLower = (tx.recipient || "").toLowerCase();
-                    if (recLower.includes("เซเว่น") || recLower.includes("seven") || recLower.includes("7-11") || recLower.includes("อาหาร") || recLower.includes("ส้มตำ")) {
-                        category = "อาหาร";
-                    } else if (recLower.includes("grab") || recLower.includes("bts") || recLower.includes("mrt") || recLower.includes("เติมน้ำมัน") || recLower.includes("taxi")) {
-                        category = "การเดินทาง";
-                    } else if (recLower.includes("playstore") || recLower.includes("กูเกิล") || recLower.includes("google") || recLower.includes("netflix") || recLower.includes("youtube") || recLower.includes("เกม")) {
-                        category = "ความบันเทิง";
-                    } else if (recLower.includes("ช้อปปิ้ง") || recLower.includes("lazada") || recLower.includes("shopee") || recLower.includes("ซื้อของ")) {
-                        category = "ช้อปปิ้ง";
-                    }
+                    let category = "อื่นๆ"; const recLower = (tx.recipient || "").toLowerCase();
+                    if (recLower.includes("เซเว่น") || recLower.includes("seven") || recLower.includes("7-11") || recLower.includes("อาหาร") || recLower.includes("ส้มตำ")) category = "อาหาร";
+                    else if (recLower.includes("grab") || recLower.includes("bts") || recLower.includes("mrt") || recLower.includes("เติมน้ำมัน") || recLower.includes("taxi")) category = "การเดินทาง";
+                    else if (recLower.includes("playstore") || recLower.includes("กูเกิล") || recLower.includes("google") || recLower.includes("netflix") || recLower.includes("youtube") || recLower.includes("เกม")) category = "ความบันเทิง";
+                    else if (recLower.includes("ช้อปปิ้ง") || recLower.includes("lazada") || recLower.includes("shopee") || recLower.includes("ซื้อของ")) category = "ช้อปปิ้ง";
 
-                    return {
-                        id: 'tmn_ai_' + Date.now() + '_' + idx + '_' + Math.random().toString(36).substr(2, 4),
-                        date: tx.date || new Date().toISOString().slice(0, 10),
-                        time: tx.time || "12:00",
-                        recipient: tx.recipient || "รายจ่าย TrueMoney",
-                        amount: parseFloat(tx.amount) || 0,
-                        isExpense: tx.isExpense !== false,
-                        category: category,
-                        memo: "สแกนอัจฉริยะผ่าน Gemini"
-                    };
+                    return { id: 'tmn_ai_' + Date.now() + '_' + idx + '_' + Math.random().toString(36).substr(2, 4), date: tx.date || new Date().toISOString().slice(0, 10), time: tx.time || "12:00", recipient: tx.recipient || "รายจ่าย TrueMoney", amount: parseFloat(tx.amount) || 0, isExpense: tx.isExpense !== false, category: category, memo: "สแกนอัจฉริยะผ่าน Gemini" };
                 });
 
-                renderTrueMoneyChecklistEditor();
-                tmnScanStatusCard.classList.add('hidden');
-                truemoneyResultsWrapper.classList.remove('hidden');
+                renderTrueMoneyChecklistEditor(); tmnScanStatusCard.classList.add('hidden'); truemoneyResultsWrapper.classList.remove('hidden');
 
             } catch (err) {
                 console.error("Failed to parse Vision JSON response:", err, resultText);
-                tmnScanStatusCard.classList.add('hidden');
-                triggerTrueMoneyPicker.classList.remove('hidden');
-                showCustomAlert('วิเคราะห์ผิดพลาด', 'ระบบปลายทางตอบกลับด้วยรูปแบบที่ไม่ถูกต้อง กรุณาทดลองใหม่อีกครั้งครับ');
+                tmnScanStatusCard.classList.add('hidden'); triggerTrueMoneyPicker.classList.remove('hidden'); showCustomAlert('วิเคราะห์ผิดพลาด', 'ระบบปลายทางตอบกลับด้วยรูปแบบที่ไม่ถูกต้อง กรุณาทดลองใหม่อีกครั้งครับ');
             }
         }
 
         function renderTrueMoneyChecklistEditor() {
-            truemoneyListEditor.innerHTML = '';
-            tmnDetectedCount.textContent = truemoneyRecords.length;
+            truemoneyListEditor.innerHTML = ''; tmnDetectedCount.textContent = truemoneyRecords.length;
 
             truemoneyRecords.forEach(item => {
-                const row = document.createElement('div');
-                row.className = "tmn-item-row bg-white p-3.5 rounded-2xl border border-slate-100 flex flex-col space-y-2.5 shadow-sm";
-                
+                const row = document.createElement('div'); row.className = "tmn-item-row bg-white p-3.5 rounded-2xl border border-slate-100 flex flex-col space-y-2.5 shadow-sm";
                 const badgeStyle = item.isExpense ? "bg-red-50 text-red-600 border-red-100" : "bg-emerald-50 text-emerald-600 border-emerald-100";
                 const badgeLabel = item.isExpense ? "รายจ่าย" : "รายรับ";
 
                 row.innerHTML = `
                     <div class="flex items-start gap-2.5">
                         <input type="checkbox" data-id="${item.id}" class="tmn-item-check mt-1 w-4 h-4 text-orange-600 border-slate-300 rounded focus:ring-orange-500 cursor-pointer" ${item.isExpense ? 'checked' : ''}>
-                        
                         <div class="flex-1 min-w-0 grid grid-cols-1 gap-2">
-                            <!-- บรรทัดหัวเรื่อง -->
                             <div class="flex justify-between items-center">
                                 <span class="text-[9px] font-bold px-2 py-0.5 rounded-full border ${badgeStyle}">${badgeLabel}</span>
                                 <input type="date" class="tmn-item-date text-[10px] font-bold text-slate-400 bg-transparent text-right border-none p-0 focus:ring-0 cursor-pointer" value="${item.date}">
                             </div>
-
-                            <!-- ส่วนแก้อินพุตตัวหนังสือและยอดเงิน -->
                             <div class="grid grid-cols-3 gap-1.5">
                                 <div class="col-span-2">
                                     <span class="block text-[8px] font-bold text-slate-400 uppercase">ชื่อรายการ / ผู้รับ</span>
@@ -2680,8 +1778,6 @@ Guideline:
                                     <input type="number" step="0.01" class="tmn-item-amount w-full px-2 py-1 text-xs font-extrabold text-slate-800 border rounded-lg focus:outline-none focus:ring-1 focus:ring-orange-500" value="${item.amount}">
                                 </div>
                             </div>
-
-                            <!-- ส่วนหมวดหมู่ -->
                             <div>
                                 <span class="block text-[8px] font-bold text-slate-400 uppercase">หมวดหมู่ระบบ</span>
                                 <select class="tmn-item-category w-full px-2 py-1.5 text-[10px] font-bold text-slate-600 border rounded-lg bg-slate-50 focus:outline-none cursor-pointer">
@@ -2697,17 +1793,14 @@ Guideline:
                         </div>
                     </div>
                 `;
-
                 row.querySelector('.tmn-item-check').addEventListener('change', updateTmnImportCountBadge);
                 truemoneyListEditor.appendChild(row);
             });
-
             updateTmnImportCountBadge();
         }
 
         function updateTmnImportCountBadge() {
-            const checkedBoxes = truemoneyListEditor.querySelectorAll('.tmn-item-check:checked');
-            tmnImportCount.textContent = checkedBoxes.length;
+            tmnImportCount.textContent = truemoneyListEditor.querySelectorAll('.tmn-item-check:checked').length;
         }
 
     </script>
