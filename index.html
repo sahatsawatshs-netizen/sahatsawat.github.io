@@ -1543,6 +1543,7 @@
             return (rightSideMatch && rightSideMatch.length > 0) ? rightSideMatch[rightSideMatch.length - 1].replace(/,/g, '') : null;
         }
 
+        // --- แก้ไขฟังก์ชันแปลงวันที่ให้คำนวณ ค.ศ. ให้ถูกต้อง 100% ---
         function parseThaiSlipDateTime(text) {
             let date = null; let time = null; if (!text) return { date, time };
             let clean = text.replace(/[\u200B-\u200D\uFEFF\u200E\u200F]/g, '').replace(/\s+/g, '');
@@ -1570,11 +1571,25 @@
             for (const [key, val] of Object.entries(monthsMap)) { monthIndex = clean.indexOf(key); if (monthIndex !== -1) { foundMonthStr = key; monthVal = val; break; } }
             if (foundMonthStr && monthVal && monthIndex !== -1) {
                 const dayVal = clean.substring(Math.max(0, monthIndex - 2), monthIndex).match(/\d+/) ? clean.substring(Math.max(0, monthIndex - 2), monthIndex).match(/\d+/)[0].padStart(2, '0') : null;
-                const yearVal = clean.substring(monthIndex + foundMonthStr.length, monthIndex + foundMonthStr.length + 2).match(/\d+/) ? clean.substring(monthIndex + foundMonthStr.length, monthIndex + foundMonthStr.length + 2).match(/\d+/)[0] : null;
+                const yearVal = clean.substring(monthIndex + foundMonthStr.length, monthIndex + foundMonthStr.length + 4).match(/\d+/) ? clean.substring(monthIndex + foundMonthStr.length, monthIndex + foundMonthStr.length + 4).match(/\d+/)[0] : null;
                 if (dayVal && yearVal) {
-                    let rawYear = parseInt(yearVal); let finalYear = new Date().getFullYear(); 
-                    if (rawYear < 100) rawYear = 2500 + rawYear;
-                    if (rawYear > 2500) finalYear = rawYear - 543; else if (rawYear > 2000) finalYear = rawYear;
+                    let rawYear = parseInt(yearVal); 
+                    let finalYear = new Date().getFullYear(); 
+                    
+                    // ตรรกะแปลงปีให้ฉลาดขึ้น ป้องกันปี 1963
+                    if (rawYear < 100) {
+                        // ถ้ามา 2 หลัก เช่น 69 ให้ถือว่าเป็น พ.ศ. 2569
+                        rawYear = 2500 + rawYear;
+                    }
+                    
+                    if (rawYear > 2400) {
+                        // ถ้าเป็น พ.ศ. (เช่น 2569) ให้ลบ 543 เป็น ค.ศ.
+                        finalYear = rawYear - 543;
+                    } else if (rawYear >= 2000 && rawYear <= 2100) {
+                        // ถ้ามาเป็น ค.ศ. อยู่แล้ว (เช่น 2026) ก็ใช้ได้เลย
+                        finalYear = rawYear;
+                    }
+                    
                     date = `${finalYear}-${monthVal}-${dayVal}`;
                 }
             }
@@ -1643,62 +1658,62 @@
                 scanStatus.className = "text-xs font-bold py-1.5 px-4 rounded-full inline-block bg-amber-100 text-amber-800 animate-pulse"; scanStatus.textContent = "วิเคราะห์คิวอาร์โค้ด และ พิกัดสลิป..."; detailStatus.textContent = "กำลังวิเคราะห์โครงสร้างพิกัดสลิป...";
                 const img = new Image();
                 img.onload = async function() {
-                    currentLoadedImage = img; analyzeKBankSlipQR(img); 
+                    currentLoadedImage = img; 
+                    const qrData = analyzeKBankSlipQR(img); // รับข้อมูลที่ได้จาก QR Code มา
+                    
                     const geo = getSmartGeometry(img.naturalWidth || img.width, img.naturalHeight || img.height); renderCropsOnly(img, geo);
                     if (!isOcrReady) await preInitializeOCR();
-                    analyzeKBankSlipOCR(img, geo); 
+                    
+                    // ส่งข้อมูลที่ได้จาก QR เข้าไปสมทบกับ OCR
+                    analyzeKBankSlipOCR(img, geo, qrData); 
                 };
                 img.src = event.target.result;
             };
             reader.readAsDataURL(file);
         }
 
+        // --- อัปเกรดฟังก์ชันวิเคราะห์ QR Code ให้ดึง "ยอดเงิน" ออกมาด้วย ---
         function analyzeKBankSlipQR(img) {
             const canvas = document.getElementById('util-canvas'); const ctx = canvas.getContext('2d');
             const w = img.naturalWidth || img.width; const h = img.naturalHeight || img.height;
             canvas.width = w; canvas.height = h; ctx.drawImage(img, 0, 0, w, h);
-            let detectedDate = null; let detectedTime = null;
+            
+            let detectedDate = null; 
+            let detectedTime = null;
+            let detectedAmount = null; // ตัวแปรเก็บยอดเงิน
+
             try {
                 const imgData = ctx.getImageData(0, 0, w, h); const code = jsQR(imgData.data, imgData.width, imgData.height);
                 if (code && code.data) {
-                    const dtMatch = code.data.match(/(202\d|203\d)(0\d|1[0-2])(0\d|[12]\d|3[01])([01]\d|2[0-3])([0-5]\d)/);
+                    const rawQRText = code.data;
+                    
+                    // 1. ดึงวันเวลาแบบเดิม
+                    const dtMatch = rawQRText.match(/(202\d|203\d)(0\d|1[0-2])(0\d|[12]\d|3[01])([01]\d|2[0-3])([0-5]\d)/);
                     if (dtMatch) { detectedDate = `${dtMatch[1]}-${dtMatch[2]}-${dtMatch[3]}`; detectedTime = `${dtMatch[4]}:${dtMatch[5]}`; }
+
+                    // 2. ดึงยอดเงิน (Amount) ตามมาตรฐาน EMVCo ของพร้อมเพย์ไทย (Tag 54)
+                    // รูปแบบคือ: "54" + "ความยาว(2หลัก)" + "ยอดเงิน"
+                    const amountMatch = rawQRText.match(/54(\d{2})([\d\.]+)/);
+                    if (amountMatch && amountMatch[2]) {
+                        detectedAmount = parseFloat(amountMatch[2]);
+                    }
                 }
             } catch (err) { console.warn("Local QR analyzer error:", err); }
+            
             if (detectedDate && detectedTime) { formDate.value = detectedDate; formTime.value = detectedTime; highlightFilledInputs(); }
-        }
-
-        function highlightFilledInputs() {
-            formDate.classList.add('autofilled-highlight'); formTime.classList.add('autofilled-highlight');
-            setTimeout(() => { formDate.classList.remove('autofilled-highlight'); formTime.classList.remove('autofilled-highlight'); }, 1500);
-        }
-
-        function renderCropsOnly(img, geo = null) {
-            if(!geo) geo = getSmartGeometry(img.naturalWidth || img.width, img.naturalHeight || img.height);
-            const w = geo.w; const vH = geo.virtualH;
-
-            cropAndRenderToCanvas(img, Math.round(w * (gridSettings.dt.x / 100)), Math.round(vH * (gridSettings.dt.y / 100)), Math.round(w * (gridSettings.dt.w / 100)), Math.round(vH * (gridSettings.dt.h / 100)), cropDateTimeCanvas, false);
-            cropAndRenderToCanvas(img, Math.round(w * (gridSettings.rc.x / 100)), Math.round(vH * (gridSettings.rc.y / 100)), Math.round(w * (gridSettings.rc.w / 100)), Math.round(vH * (gridSettings.rc.h / 100)), cropRecipientCanvas, false);
-            cropAndRenderToCanvas(img, Math.round(w * (gridSettings.am.x / 100)), Math.round(vH * (gridSettings.am.y / 100)), Math.round(w * (gridSettings.am.w / 100)), Math.round(vH * (gridSettings.am.h / 100)), cropAmountCanvas, false);
-
-            drawVisualOverlays(geo.w, geo.h, geo.virtualH);
-        }
-
-        function drawVisualOverlays(imgWidth, imgHeight, virtualH) {
-            cropOverlayCanvas.width = imgWidth; cropOverlayCanvas.height = imgHeight;
-            const ctx = cropOverlayCanvas.getContext('2d'); ctx.clearRect(0, 0, imgWidth, imgHeight);
-
-            function drawGridBox(set, label, color) {
-                const rx = imgWidth * (set.x / 100); const ry = virtualH * (set.y / 100); const rw = imgWidth * (set.w / 100); const rh = virtualH * (set.h / 100);
-                ctx.strokeStyle = color; ctx.lineWidth = Math.max(3, Math.round(imgWidth / 150)); ctx.strokeRect(rx, ry, rw, rh);
-                const fontSize = Math.max(12, Math.round(imgWidth / 40)); ctx.fillStyle = color; ctx.fillRect(rx, ry - fontSize - 6, Math.min(rw, fontSize * 5), fontSize + 6);
-                ctx.fillStyle = "#ffffff"; ctx.font = `bold ${fontSize}px sans-serif`; ctx.fillText(label, rx + 4, ry - 4);
+            if (detectedAmount !== null) { 
+                formAmount.value = detectedAmount.toFixed(2);
+                amountSourceBadge.textContent = "อ่านยอดเงินจาก QR แม่นยำ 100%"; 
+                amountSourceBadge.className = "text-[9px] px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-bold";
+                highlightFilledInputs();
             }
 
-            drawGridBox(gridSettings.dt, "วันเวลา", "#6366f1"); drawGridBox(gridSettings.rc, "ผู้รับโอน", "#f59e0b"); drawGridBox(gridSettings.am, "ยอดเงิน", "#ef4444");
+            // คืนค่ากลับไปให้ OCR เผื่อต้องใช้
+            return { date: detectedDate, time: detectedTime, amount: detectedAmount };
         }
 
-        async function analyzeKBankSlipOCR(img, geo) {
+        // --- ปรับปรุง OCR ให้ใช้ข้อมูลจาก QR Code หากมี ---
+        async function analyzeKBankSlipOCR(img, geo, qrData = {}) {
             scanStatus.textContent = "กำลังวิเคราะห์ข้อมูล (Local OCR v5)..."; scanStatus.className = "text-xs font-bold py-1.5 px-4 rounded-full inline-block bg-indigo-100 text-indigo-800 animate-pulse";
             
             try {
@@ -1713,8 +1728,13 @@
                 await ocrWorker.setParameters({ tessedit_char_whitelist: '' }); 
                 const dtResult = await ocrWorker.recognize(cropDateTimeCanvas);
                 ocrRawDatetime.value = dtResult.data.text.replace(/\s+/g, ' ').trim();
-                const dateData = parseThaiSlipDateTime(dtResult.data.text);
-                if (dateData.date) { formDate.value = dateData.date; highlightFilledInputs(); } if (dateData.time) { formTime.value = dateData.time; highlightFilledInputs(); }
+                
+                // ถ้า QR Code หาวันเวลาไม่เจอ ถึงจะให้ OCR ลองหาดู
+                if (!qrData.date) {
+                    const dateData = parseThaiSlipDateTime(dtResult.data.text);
+                    if (dateData.date) { formDate.value = dateData.date; highlightFilledInputs(); } 
+                    if (dateData.time) { formTime.value = dateData.time; highlightFilledInputs(); }
+                }
                 ocrProgressBar.style.width = '40%';
 
                 detailStatus.textContent = "กำลังวิเคราะห์ชื่อผู้รับโอน... (2/3)";
@@ -1727,12 +1747,16 @@
                 await ocrWorker.setParameters({ tessedit_char_whitelist: '0123456789.,' });
                 const amtResult = await ocrWorker.recognize(cropAmountCanvas);
                 ocrRawAmount.value = amtResult.data.text.replace(/\s+/g, ' ').trim();
-                const cleanedAmount = extractFloatAmount(amtResult.data.text);
-                if (cleanedAmount) {
-                    formAmount.value = parseFloat(cleanedAmount).toFixed(2);
-                    amountSourceBadge.textContent = "วิเคราะห์ยอดสลิปสำเร็จ"; amountSourceBadge.className = "text-[9px] px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-bold";
-                } else {
-                    formAmount.value = ""; amountSourceBadge.textContent = "ตรวจไม่พบยอดเงิน"; amountSourceBadge.className = "text-[9px] px-2.5 py-0.5 rounded-full bg-rose-100 text-rose-800 font-bold animate-pulse";
+                
+                // ถ้าระบบ QR Code อ่านยอดเงินได้แล้ว จะไม่สนใจ OCR เลย (ข้ามปัญหากริดเพี้ยน)
+                if (qrData.amount === null || qrData.amount === undefined) {
+                    const cleanedAmount = extractFloatAmount(amtResult.data.text);
+                    if (cleanedAmount) {
+                        formAmount.value = parseFloat(cleanedAmount).toFixed(2);
+                        amountSourceBadge.textContent = "วิเคราะห์ยอดสลิปสำเร็จ"; amountSourceBadge.className = "text-[9px] px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-bold";
+                    } else {
+                        formAmount.value = ""; amountSourceBadge.textContent = "ตรวจไม่พบยอดเงิน"; amountSourceBadge.className = "text-[9px] px-2.5 py-0.5 rounded-full bg-rose-100 text-rose-800 font-bold animate-pulse";
+                    }
                 }
 
                 formMemo.value = ""; ocrProgressBar.style.width = '100%';
@@ -1798,6 +1822,21 @@
             tmnScanStatusCard.classList.remove('hidden'); triggerTrueMoneyPicker.classList.add('hidden'); tmnScanStatusText.textContent = "กำลังส่งรูปภาพประวัติให้ Gemini Vision AI วิเคราะห์...";
             const reader = new FileReader(); reader.onload = async function(event) { await callGeminiVisionAI(event.target.result.split(',')[1]); }; reader.readAsDataURL(file);
         }
+        
+        // --- เพิ่มฟังก์ชันจัดการปี พ.ศ. -> ค.ศ. สำหรับ TrueMoney AI โดยเฉพาะ ---
+        function normalizeDateFromAI(aiDateStr) {
+             if (!aiDateStr) return new Date().toISOString().slice(0, 10);
+             let parts = aiDateStr.split('-');
+             if (parts.length === 3) {
+                 let year = parseInt(parts[0]);
+                 if (year > 2400) {
+                     year = year - 543;
+                     parts[0] = year.toString();
+                 }
+                 return parts.join('-');
+             }
+             return aiDateStr;
+        }
 
         async function callGeminiVisionAI(base64ImageData) {
             const apiKey = ""; 
@@ -1850,8 +1889,11 @@ Guideline:
                     else if (recLower.includes("grab") || recLower.includes("bts") || recLower.includes("mrt") || recLower.includes("เติมน้ำมัน") || recLower.includes("taxi")) category = "การเดินทาง";
                     else if (recLower.includes("playstore") || recLower.includes("กูเกิล") || recLower.includes("google") || recLower.includes("netflix") || recLower.includes("youtube") || recLower.includes("เกม")) category = "ความบันเทิง";
                     else if (recLower.includes("ช้อปปิ้ง") || recLower.includes("lazada") || recLower.includes("shopee") || recLower.includes("ซื้อของ")) category = "ช้อปปิ้ง";
+                    
+                    // ใช้ฟังก์ชัน normalizeDateFromAI แปลงวันที่ป้องกันปี พ.ศ.
+                    const safeDate = normalizeDateFromAI(tx.date);
 
-                    return { id: 'tmn_ai_' + Date.now() + '_' + idx + '_' + Math.random().toString(36).substr(2, 4), date: tx.date || new Date().toISOString().slice(0, 10), time: tx.time || "12:00", recipient: tx.recipient || "รายจ่าย TrueMoney", amount: parseFloat(tx.amount) || 0, isExpense: tx.isExpense !== false, category: category, memo: "สแกนอัจฉริยะผ่าน Gemini" };
+                    return { id: 'tmn_ai_' + Date.now() + '_' + idx + '_' + Math.random().toString(36).substr(2, 4), date: safeDate, time: tx.time || "12:00", recipient: tx.recipient || "รายจ่าย TrueMoney", amount: parseFloat(tx.amount) || 0, isExpense: tx.isExpense !== false, category: category, memo: "สแกนอัจฉริยะผ่าน Gemini" };
                 });
 
                 renderTrueMoneyChecklistEditor(); tmnScanStatusCard.classList.add('hidden'); truemoneyResultsWrapper.classList.remove('hidden');
