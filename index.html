@@ -1659,24 +1659,40 @@
                 const img = new Image();
                 img.onload = async function() {
                     currentLoadedImage = img; 
-                    const qrData = analyzeKBankSlipQR(img); // รับข้อมูลที่ได้จาก QR Code มา
                     
-                    const geo = getSmartGeometry(img.naturalWidth || img.width, img.naturalHeight || img.height); renderCropsOnly(img, geo);
-                    if (!isOcrReady) await preInitializeOCR();
-                    
-                    // ส่งข้อมูลที่ได้จาก QR เข้าไปสมทบกับ OCR
-                    analyzeKBankSlipOCR(img, geo, qrData); 
+                    // เพิ่มการหน่วงเวลาเล็กน้อยให้ UI แสดงข้อความโหลดได้ทันก่อนเครื่องทำงานหนัก
+                    setTimeout(async () => {
+                        const qrData = analyzeKBankSlipQR(img); // รับข้อมูลที่ได้จาก QR Code มา
+                        
+                        const geo = getSmartGeometry(img.naturalWidth || img.width, img.naturalHeight || img.height); renderCropsOnly(img, geo);
+                        if (!isOcrReady) await preInitializeOCR();
+                        
+                        // ส่งข้อมูลที่ได้จาก QR เข้าไปสมทบกับ OCR
+                        analyzeKBankSlipOCR(img, geo, qrData); 
+                    }, 50);
                 };
                 img.src = event.target.result;
             };
             reader.readAsDataURL(file);
         }
 
-        // --- อัปเกรดฟังก์ชันวิเคราะห์ QR Code ให้ดึง "ยอดเงิน" ออกมาด้วย ---
+        // --- อัปเกรดฟังก์ชันวิเคราะห์ QR Code ให้ดึง "ยอดเงิน" ออกมาด้วย และย่อขนาดภาพเพื่อความรวดเร็ว ---
         function analyzeKBankSlipQR(img) {
             const canvas = document.getElementById('util-canvas'); const ctx = canvas.getContext('2d');
-            const w = img.naturalWidth || img.width; const h = img.naturalHeight || img.height;
-            canvas.width = w; canvas.height = h; ctx.drawImage(img, 0, 0, w, h);
+            
+            // ย่อขนาดภาพให้ไม่เกิน 800px เพื่อให้ jsQR ทำงานได้เร็วขึ้นมาก
+            const MAX_DIMENSION = 800;
+            let w = img.naturalWidth || img.width; 
+            let h = img.naturalHeight || img.height;
+            
+            if (w > MAX_DIMENSION || h > MAX_DIMENSION) {
+                const ratio = Math.min(MAX_DIMENSION / w, MAX_DIMENSION / h);
+                w = Math.round(w * ratio);
+                h = Math.round(h * ratio);
+            }
+
+            canvas.width = w; canvas.height = h; 
+            ctx.drawImage(img, 0, 0, w, h);
             
             let detectedDate = null; 
             let detectedTime = null;
