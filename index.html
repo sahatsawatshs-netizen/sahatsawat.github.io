@@ -4,10 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>สมุดบัญชีสแกนสลิป PWA</title>
+    <!-- เรียกใช้ PWA Manifest -->
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#f8fafc">
     <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/3135/3135679.png">
-    
+
     <!-- Tailwind CSS for Modern Premium UI Layout -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Lucide Icons -->
@@ -32,7 +33,10 @@
     </style>
 </head>
 <body class="bg-slate-800 flex justify-center items-center min-h-screen">
+    <!-- Mobile Viewport Container -->
     <div id="app-container" class="w-full max-w-md bg-slate-50 min-h-screen shadow-2xl relative flex flex-col notebook-grid overflow-hidden">
+
+        <!-- Top Navigation Bar -->
         <header class="bg-white border-b border-slate-100 px-4 py-3.5 sticky top-0 z-20 shadow-sm flex justify-between items-center w-full">
             <div class="flex items-center space-x-2">
                 <div class="p-1.5 text-slate-500 bg-slate-50 rounded-lg relative cursor-pointer" id="file-status-indicator" title="สถานะไฟล์">
@@ -44,16 +48,12 @@
                 </button>
             </div>
             <div class="flex items-center space-x-1">
-                <!-- ปุ่มตั้งค่าคลาวด์เพิ่มใหม่ -->
                 <button id="cloud-settings-btn" class="p-2 text-sky-500 hover:bg-sky-50 rounded-xl relative cursor-pointer" title="ตั้งค่าเชื่อมต่อ Google Sheets">
                     <i data-lucide="cloud-cog" class="w-4.5 h-4.5"></i>
                 </button>
-
-                <!-- เพิ่มปุ่มลัดสำหรับเปิด Google Sheets ตรงๆ -->
                 <a href="https://docs.google.com/spreadsheets/d/1_qYY5cXu-ZpwwTaFhhVceuShjJS3ZNartiWr7v8yESs/edit" target="_blank" class="p-2 text-emerald-500 hover:bg-emerald-50 rounded-xl relative cursor-pointer" title="เปิดหน้าตาราง Google Sheets">
                     <i data-lucide="table" class="w-4.5 h-4.5"></i>
                 </a>
-
                 <button id="alias-rules-btn" class="p-2 text-slate-500 hover:bg-slate-100 rounded-xl relative cursor-pointer" title="ตั้งค่าแปลงชื่อผู้รับ">
                     <i data-lucide="user-cog" class="w-4.5 h-4.5"></i>
                     <span id="rules-count-badge" class="absolute top-1 right-1 w-2 h-2 bg-indigo-600 rounded-full hidden"></span>
@@ -68,6 +68,7 @@
             </div>
         </header>
 
+        <!-- Main Dynamic Content Frame -->
         <main class="flex-1 p-4 overflow-y-auto space-y-4 pb-24 custom-scrollbar">
             <div class="bg-white p-4 rounded-3xl border border-slate-100 shadow-sm grid grid-cols-2 gap-4">
                 <div class="flex flex-col">
@@ -82,6 +83,7 @@
             <div id="tab-content-container" class="space-y-4"></div>
         </main>
 
+        <!-- NAVIGATION SYSTEM (Bottom Tabs) -->
         <nav class="absolute bottom-0 w-full bg-white border-t border-slate-100 px-3 py-2 flex justify-around items-center z-30 shadow-[0_-2px_10px_rgba(0,0,0,0.03)]">
             <button id="tab-list-btn" class="flex flex-col items-center gap-1 text-indigo-600 font-bold text-[10px] transition-all cursor-pointer">
                 <i data-lucide="list-ordered" class="w-5 h-5"></i> รายการ
@@ -94,12 +96,14 @@
             </button>
         </nav>
 
+        <!-- FLOATING ADD BUTTON -->
         <div class="absolute bottom-14 w-full flex justify-center z-30 pointer-events-none">
             <button id="floating-plus-btn" class="pointer-events-auto w-12 h-12 rounded-full bg-gradient-to-tr from-indigo-600 to-indigo-500 text-white flex items-center justify-center shadow-lg hover:scale-105 active:scale-95 transition-all cursor-pointer">
                 <i data-lucide="plus" class="w-6 h-6"></i>
             </button>
         </div>
 
+        <!-- MAIN CONTROL FORM SLIDE SHEET -->
         <div id="form-slide-sheet" class="hidden absolute inset-0 z-40 bg-black/60 flex flex-col justify-end">
             <div class="bg-white w-full rounded-t-[2.5rem] p-5 max-h-[95%] overflow-y-auto flex flex-col space-y-4 shadow-2xl relative custom-scrollbar">
                 <div class="w-12 h-1.5 bg-slate-200 rounded-full mx-auto cursor-pointer shrink-0" id="close-sheet-handle"></div>
@@ -285,7 +289,7 @@
         </div>
 
         <!-- MODALS -->
-        <!-- เพิ่ม Modal สำหรับใส่ลิงก์คลาวด์ -->
+        <!-- Modal สำหรับใส่ลิงก์คลาวด์ -->
         <div id="cloud-settings-modal" class="hidden absolute inset-0 z-50 bg-black/60 flex items-center justify-center p-4">
             <div class="bg-white w-full rounded-3xl p-5 max-w-sm space-y-4 shadow-2xl flex flex-col">
                 <div class="flex justify-between items-center border-b pb-3 shrink-0">
@@ -398,8 +402,57 @@
         let fileBatchQueue = [];
         let batchIndex = 0;
 
-        let GOOGLE_SCRIPT_URL = localStorage.getItem('google_script_url') || 'https://script.google.com/macros/s/AKfycbxJ5vuQQH4b-rb6Ty1wGpzhVcze7WmPqL6GOORElCBsuG0zm7fadDFAeVs7Rohw9y3P/exec';
+        let GOOGLE_SCRIPT_URL = localStorage.getItem('google_script_url') || 'https://script.google.com/macros/s/AKfycbwSGaMhbejwBmC4vWrv3drIwnbWviw8sRBb92IgRmAw_WWrHwA1EOYliqrSXctBjS0/exec';
 
+        // ------------------------- ระบบคิวสำหรับการซิงค์คลาวด์ -------------------------
+        let syncQueue = [];
+        let isSyncing = false;
+
+        async function processSyncQueue() {
+            if (isSyncing || syncQueue.length === 0) return;
+            
+            isSyncing = true;
+            linkedFileDot.classList.replace('bg-emerald-500', 'bg-amber-500'); // แสดงสถานะกำลังซิงค์
+
+            while (syncQueue.length > 0) {
+                const task = syncQueue[0]; // หยิบงานแรกในคิวมาทำ
+                
+                try {
+                    await fetch(GOOGLE_SCRIPT_URL, {
+                        method: 'POST',
+                        mode: 'no-cors',
+                        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                        body: JSON.stringify({ action: task.action, data: task.record })
+                    });
+                    
+                    // หน่วงเวลาเล็กน้อย (500ms) ระหว่างคำสั่ง เพื่อไม่ให้ Google Sheets บล็อค
+                    await new Promise(resolve => setTimeout(resolve, 500));
+                    
+                    syncQueue.shift(); // เอาคิวที่ทำเสร็จแล้วออก
+                } catch (err) {
+                    console.warn("Google Sheets Sync Error (Task Queued):", err);
+                    // หากซิงค์พลาด จะลองใหม่ในรอบถัดไป หรือถ้าค้างนานให้เอาออกก็ได้
+                    // กรณีนี้เราเอาออกไปก่อนเพื่อไม่ให้คิวบล็อก (สามารถพัฒนาต่อยอดเป็น Retry ได้)
+                    syncQueue.shift(); 
+                }
+            }
+
+            isSyncing = false;
+            linkedFileDot.classList.replace('bg-amber-500', 'bg-emerald-500'); // กลับมาสถานะปกติ
+        }
+
+        // ฟังก์ชันรับคำสั่งเพื่อนำไปใส่คิวแทนการส่งทันที
+        function syncWithGoogleSheets(action, record) {
+            if (!GOOGLE_SCRIPT_URL) return;
+            
+            // นำงานไปต่อท้ายคิว
+            syncQueue.push({ action, record });
+            
+            // สั่งให้เริ่มทำคิว
+            processSyncQueue();
+        }
+        // -------------------------------------------------------------------------
+        
         const cloudSettingsBtn = document.getElementById('cloud-settings-btn');
         const cloudSettingsModal = document.getElementById('cloud-settings-modal');
         const closeCloudSettingsBtn = document.getElementById('close-cloud-settings-btn');
@@ -436,6 +489,18 @@
             document.getElementById('file-status-indicator').title = "กำลังโหลดข้อมูลจากคลาวด์...";
 
             try {
+                // รอให้คิวที่ค้างอยู่ทำงานเสร็จก่อนโหลดข้อมูลใหม่
+                if(isSyncing) {
+                   await new Promise(resolve => {
+                       const checkInterval = setInterval(() => {
+                           if(!isSyncing) {
+                               clearInterval(checkInterval);
+                               resolve();
+                           }
+                       }, 500);
+                   });
+                }
+
                 const url = GOOGLE_SCRIPT_URL + '?action=read&t=' + Date.now();
                 const response = await fetch(url);
                 const text = await response.text(); 
@@ -443,7 +508,34 @@
                 try {
                     const result = JSON.parse(text);
                     if (result.status === 'success' && result.data) {
-                        expenses = result.data;
+                        
+                        expenses = result.data.map(item => {
+                            let cleanDate = item.date;
+                            if (cleanDate && cleanDate.includes('T')) {
+                                cleanDate = cleanDate.split('T')[0];
+                            }
+                            let cleanTime = item.time;
+                            if (cleanTime && cleanTime.includes('T')) {
+                                cleanTime = cleanTime.split('T')[1].substring(0, 5);
+                            }
+                            return { ...item, date: cleanDate, time: cleanTime };
+                        });
+
+                        // ระบบหาเดือนล่าสุดที่มีข้อมูล (แก้ไขใหม่)
+                        if (expenses.length > 0) {
+                            let latestRecord = expenses.reduce((latest, current) => {
+                                return new Date(current.date) > new Date(latest.date) ? current : latest;
+                            });
+                            
+                            if (latestRecord && latestRecord.date) {
+                                const parts = latestRecord.date.split('-');
+                                if (parts.length === 3) {
+                                    calendarYear = parseInt(parts[0]);
+                                    calendarMonth = parseInt(parts[1]) - 1;
+                                }
+                            }
+                        }
+
                         updateDashboard();
                         linkedFileDot.classList.replace('bg-amber-500', 'bg-emerald-500');
                         document.getElementById('file-status-indicator').title = "ซิงค์คลาวด์สำเร็จแล้ว";
