@@ -1658,10 +1658,19 @@
                 scanStatus.className = "text-xs font-bold py-1.5 px-4 rounded-full inline-block bg-amber-100 text-amber-800 animate-pulse"; scanStatus.textContent = "วิเคราะห์คิวอาร์โค้ด และ พิกัดสลิป..."; detailStatus.textContent = "กำลังวิเคราะห์โครงสร้างพิกัดสลิป...";
                 const img = new Image();
                 img.onload = async function() {
-                    currentLoadedImage = img; analyzeKBankSlipQR(img); 
-                    const geo = getSmartGeometry(img.naturalWidth || img.width, img.naturalHeight || img.height); renderCropsOnly(img, geo);
-                    if (!isOcrReady) await preInitializeOCR();
-                    analyzeKBankSlipOCR(img, geo); 
+                    currentLoadedImage = img; 
+                    
+                    // หน่วงเวลาให้ UI ตอบสนองก่อนทำงานหนัก เพื่อป้องกันแอปค้าง
+                    setTimeout(async () => {
+                        // 1. ลองดึงข้อมูลจาก QR Code ก่อน (ย่อภาพก่อนหาจะได้ไม่ค้าง)
+                        const qrData = analyzeKBankSlipQR(img); 
+                        
+                        const geo = getSmartGeometry(img.naturalWidth || img.width, img.naturalHeight || img.height); renderCropsOnly(img, geo);
+                        if (!isOcrReady) await preInitializeOCR();
+                        
+                        // 2. ส่งต่อให้ OCR โดยส่งข้อมูล QR แนบไปด้วย
+                        analyzeKBankSlipOCR(img, geo, qrData); 
+                    }, 50);
                 };
                 img.src = event.target.result;
             };
@@ -1670,22 +1679,47 @@
 
         function analyzeKBankSlipQR(img) {
             const canvas = document.getElementById('util-canvas'); const ctx = canvas.getContext('2d');
-            const w = img.naturalWidth || img.width; const h = img.naturalHeight || img.height;
+            
+            // ย่อขนาดภาพให้ไม่เกิน 800px เพื่อให้ jsQR ทำงานได้เร็วและไม่ค้าง
+            const MAX_DIMENSION = 800;
+            let w = img.naturalWidth || img.width; 
+            let h = img.naturalHeight || img.height;
+            if (w > MAX_DIMENSION || h > MAX_DIMENSION) {
+                const ratio = Math.min(MAX_DIMENSION / w, MAX_DIMENSION / h);
+                w = Math.round(w * ratio);
+                h = Math.round(h * ratio);
+            }
+
             canvas.width = w; canvas.height = h; ctx.drawImage(img, 0, 0, w, h);
-            let detectedDate = null; let detectedTime = null;
+            
+            let detectedDate = null; let detectedTime = null; let detectedAmount = null;
+            
             try {
                 const imgData = ctx.getImageData(0, 0, w, h); const code = jsQR(imgData.data, imgData.width, imgData.height);
                 if (code && code.data) {
-                    const dtMatch = code.data.match(/(202\d|203\d)(0\d|1[0-2])(0\d|[12]\d|3[01])([01]\d|2[0-3])([0-5]\d)/);
+                    const rawText = code.data;
+                    
+                    // หากหาวันเวลาเจอใน QR
+                    const dtMatch = rawText.match(/(202\d|203\d)(0\d|1[0-2])(0\d|[12]\d|3[01])([01]\d|2[0-3])([0-5]\d)/);
                     if (dtMatch) { detectedDate = `${dtMatch[1]}-${dtMatch[2]}-${dtMatch[3]}`; detectedTime = `${dtMatch[4]}:${dtMatch[5]}`; }
+                    
+                    // หากหายอดเงินเจอใน QR (มาตรฐาน Tag 54)
+                    const amountMatch = rawText.match(/54(\d{2})([\d\.]+)/);
+                    if (amountMatch && amountMatch[2]) { detectedAmount = parseFloat(amountMatch[2]); }
                 }
             } catch (err) { console.warn("Local QR analyzer error:", err); }
-            if (detectedDate && detectedTime) { formDate.value = detectedDate; formTime.value = detectedTime; highlightFilledInputs(); }
+            
+            // คืนค่าข้อมูลที่ได้จาก QR
+            return { date: detectedDate, time: detectedTime, amount: detectedAmount };
         }
 
         function highlightFilledInputs() {
             formDate.classList.add('autofilled-highlight'); formTime.classList.add('autofilled-highlight');
-            setTimeout(() => { formDate.classList.remove('autofilled-highlight'); formTime.classList.remove('autofilled-highlight'); }, 1500);
+            formAmount.classList.add('autofilled-highlight');
+            setTimeout(() => { 
+                formDate.classList.remove('autofilled-highlight'); formTime.classList.remove('autofilled-highlight');
+                formAmount.classList.remove('autofilled-highlight');
+            }, 1500);
         }
 
         function renderCropsOnly(img, geo = null) {
@@ -1713,7 +1747,7 @@
             drawGridBox(gridSettings.dt, "วันเวลา", "#6366f1"); drawGridBox(gridSettings.rc, "ผู้รับโอน", "#f59e0b"); drawGridBox(gridSettings.am, "ยอดเงิน", "#ef4444");
         }
 
-        async function analyzeKBankSlipOCR(img, geo) {
+        async function analyzeKBankSlipOCR(img, geo, qrData = {}) {
             scanStatus.textContent = "กำลังวิเคราะห์ข้อมูล (Local OCR v5)..."; scanStatus.className = "text-xs font-bold py-1.5 px-4 rounded-full inline-block bg-indigo-100 text-indigo-800 animate-pulse";
             
             try {
@@ -1728,8 +1762,15 @@
                 await ocrWorker.setParameters({ tessedit_char_whitelist: '' }); 
                 const dtResult = await ocrWorker.recognize(cropDateTimeCanvas);
                 ocrRawDatetime.value = dtResult.data.text.replace(/\s+/g, ' ').trim();
-                const dateData = parseThaiSlipDateTime(dtResult.data.text);
-                if (dateData.date) { formDate.value = dateData.date; highlightFilledInputs(); } if (dateData.time) { formTime.value = dateData.time; highlightFilledInputs(); }
+                
+                // ถ้ายึดข้อมูลวันเวลาจาก QR ได้ ให้ใช้เลย ถ้าไม่ได้ค่อยใช้ข้อมูลจาก OCR กริด
+                if (qrData.date && qrData.time) {
+                    formDate.value = qrData.date; formTime.value = qrData.time; highlightFilledInputs();
+                } else {
+                    const dateData = parseThaiSlipDateTime(dtResult.data.text);
+                    if (dateData.date) { formDate.value = dateData.date; highlightFilledInputs(); } 
+                    if (dateData.time) { formTime.value = dateData.time; highlightFilledInputs(); }
+                }
                 ocrProgressBar.style.width = '40%';
 
                 detailStatus.textContent = "กำลังวิเคราะห์ชื่อผู้รับโอน... (2/3)";
@@ -1742,12 +1783,22 @@
                 await ocrWorker.setParameters({ tessedit_char_whitelist: '0123456789.,' });
                 const amtResult = await ocrWorker.recognize(cropAmountCanvas);
                 ocrRawAmount.value = amtResult.data.text.replace(/\s+/g, ' ').trim();
-                const cleanedAmount = extractFloatAmount(amtResult.data.text);
-                if (cleanedAmount) {
-                    formAmount.value = parseFloat(cleanedAmount).toFixed(2);
-                    amountSourceBadge.textContent = "วิเคราะห์ยอดสลิปสำเร็จ"; amountSourceBadge.className = "text-[9px] px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-bold";
+                
+                // ถ้ายึดข้อมูลยอดเงินจาก QR ได้ ให้ใช้เลย ถ้าไม่ได้ค่อยใช้ข้อมูลจาก OCR กริด
+                if (qrData.amount !== null && qrData.amount !== undefined) {
+                    formAmount.value = qrData.amount.toFixed(2);
+                    amountSourceBadge.textContent = "อ่านยอดเงินจาก QR แม่นยำ 100%"; 
+                    amountSourceBadge.className = "text-[9px] px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-bold";
+                    highlightFilledInputs();
                 } else {
-                    formAmount.value = ""; amountSourceBadge.textContent = "ตรวจไม่พบยอดเงิน"; amountSourceBadge.className = "text-[9px] px-2.5 py-0.5 rounded-full bg-rose-100 text-rose-800 font-bold animate-pulse";
+                    const cleanedAmount = extractFloatAmount(amtResult.data.text);
+                    if (cleanedAmount) {
+                        formAmount.value = parseFloat(cleanedAmount).toFixed(2);
+                        amountSourceBadge.textContent = "วิเคราะห์ยอดสลิปจากภาพ"; 
+                        amountSourceBadge.className = "text-[9px] px-2.5 py-0.5 rounded-full bg-indigo-100 text-indigo-800 font-bold";
+                    } else {
+                        formAmount.value = ""; amountSourceBadge.textContent = "ตรวจไม่พบยอดเงิน"; amountSourceBadge.className = "text-[9px] px-2.5 py-0.5 rounded-full bg-rose-100 text-rose-800 font-bold animate-pulse";
+                    }
                 }
 
                 formMemo.value = ""; ocrProgressBar.style.width = '100%';
