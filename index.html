@@ -32,12 +32,14 @@
         #toast-notification.show { transform: translateY(0); opacity: 1; }
     </style>
 </head>
-<body class="bg-slate-800 flex justify-center items-center min-h-screen">
-    <!-- Mobile Viewport Container -->
-    <div id="app-container" class="w-full max-w-md bg-slate-50 min-h-screen shadow-2xl relative flex flex-col notebook-grid overflow-hidden">
+<!-- แก้ไข body ให้สูงพอดีจอและตัดส่วนเกินทิ้ง (ป้องกันแอปยืดทะลุขอบล่าง) -->
+<body class="bg-slate-800 flex justify-center items-center h-[100dvh] overflow-hidden relative">
+    
+    <!-- Mobile Viewport Container: บังคับความสูงเต็มจอ (h-full) -->
+    <div id="app-container" class="w-full max-w-md bg-slate-50 h-full shadow-2xl relative flex flex-col notebook-grid overflow-hidden">
 
         <!-- Top Navigation Bar -->
-        <header class="bg-white border-b border-slate-100 px-4 py-3.5 sticky top-0 z-20 shadow-sm flex justify-between items-center w-full">
+        <header class="bg-white border-b border-slate-100 px-4 py-3.5 sticky top-0 z-20 shadow-sm flex justify-between items-center w-full shrink-0">
             <div class="flex items-center space-x-2">
                 <div class="p-1.5 text-slate-500 bg-slate-50 rounded-lg relative cursor-pointer" id="file-status-indicator" title="สถานะไฟล์">
                     <i data-lucide="hard-drive" class="w-5 h-5 text-indigo-600"></i>
@@ -68,8 +70,8 @@
             </div>
         </header>
 
-        <!-- Main Dynamic Content Frame -->
-        <main class="flex-1 p-4 overflow-y-auto space-y-4 pb-24 custom-scrollbar">
+        <!-- Main Dynamic Content Frame: ใช้ flex-1 ให้ขยายเต็มพื้นที่ที่เหลือ และให้ scroll ภายใน -->
+        <main class="flex-1 p-4 overflow-y-auto space-y-4 pb-28 custom-scrollbar">
             <div class="bg-white p-4 rounded-3xl border border-slate-100 shadow-sm grid grid-cols-2 gap-4">
                 <div class="flex flex-col">
                     <span class="text-xs font-semibold text-slate-400">รายจ่ายรวมเดือนนี้</span>
@@ -84,7 +86,7 @@
         </main>
 
         <!-- NAVIGATION SYSTEM (Bottom Tabs) -->
-        <nav class="absolute bottom-0 w-full bg-white border-t border-slate-100 px-3 py-2 flex justify-around items-center z-30 shadow-[0_-2px_10px_rgba(0,0,0,0.03)]">
+        <nav class="absolute bottom-0 w-full bg-white border-t border-slate-100 px-3 py-2 flex justify-around items-center z-30 shadow-[0_-2px_10px_rgba(0,0,0,0.03)] shrink-0">
             <button id="tab-list-btn" class="flex flex-col items-center gap-1 text-indigo-600 font-bold text-[10px] transition-all cursor-pointer">
                 <i data-lucide="list-ordered" class="w-5 h-5"></i> รายการ
             </button>
@@ -97,15 +99,15 @@
         </nav>
 
         <!-- FLOATING ADD BUTTON -->
-        <div class="absolute bottom-14 w-full flex justify-center z-30 pointer-events-none">
-            <button id="floating-plus-btn" class="pointer-events-auto w-12 h-12 rounded-full bg-gradient-to-tr from-indigo-600 to-indigo-500 text-white flex items-center justify-center shadow-lg hover:scale-105 active:scale-95 transition-all cursor-pointer">
-                <i data-lucide="plus" class="w-6 h-6"></i>
+        <div class="absolute bottom-20 w-full flex justify-center z-30 pointer-events-none">
+            <button id="floating-plus-btn" class="pointer-events-auto w-14 h-14 rounded-full bg-gradient-to-tr from-indigo-600 to-indigo-500 text-white flex items-center justify-center shadow-[0_8px_20px_rgba(79,70,229,0.4)] hover:scale-105 active:scale-95 transition-transform cursor-pointer">
+                <i data-lucide="plus" class="w-7 h-7"></i>
             </button>
         </div>
 
         <!-- MAIN CONTROL FORM SLIDE SHEET -->
         <div id="form-slide-sheet" class="hidden absolute inset-0 z-40 bg-black/60 flex flex-col justify-end">
-            <div class="bg-white w-full rounded-t-[2.5rem] p-5 max-h-[95%] overflow-y-auto flex flex-col space-y-4 shadow-2xl relative custom-scrollbar">
+            <div class="bg-white w-full max-w-md mx-auto rounded-t-[2.5rem] p-5 max-h-[95%] overflow-y-auto flex flex-col space-y-4 shadow-2xl relative custom-scrollbar">
                 <div class="w-12 h-1.5 bg-slate-200 rounded-full mx-auto cursor-pointer shrink-0" id="close-sheet-handle"></div>
                 <div class="flex justify-between items-center shrink-0">
                     <h3 id="form-sheet-title" class="text-sm font-bold text-slate-800 flex items-center gap-1.5">
@@ -288,10 +290,9 @@
             </div>
         </div>
 
-        <!-- MODALS -->
-        <!-- Modal สำหรับใส่ลิงก์คลาวด์ -->
+        <!-- MODALS ลอยตรงกลางจอ -->
         <div id="cloud-settings-modal" class="hidden absolute inset-0 z-50 bg-black/60 flex items-center justify-center p-4">
-            <div class="bg-white w-full rounded-3xl p-5 max-w-sm space-y-4 shadow-2xl flex flex-col">
+            <div class="bg-white w-full max-w-md mx-auto rounded-3xl p-5 space-y-4 shadow-2xl flex flex-col">
                 <div class="flex justify-between items-center border-b pb-3 shrink-0">
                     <h3 class="font-extrabold text-slate-800 text-sm flex items-center gap-1.5">
                         <i data-lucide="cloud-cog" class="w-4 h-4 text-sky-600"></i> ตั้งค่า Google Sheets
@@ -310,7 +311,7 @@
         </div>
 
         <div id="month-picker-modal" class="hidden absolute inset-0 z-50 bg-black/60 flex items-center justify-center p-4">
-            <div class="bg-white w-full rounded-3xl p-6 max-w-sm space-y-4 shadow-2xl">
+            <div class="bg-white w-full max-w-md mx-auto rounded-3xl p-6 space-y-4 shadow-2xl">
                 <div class="flex justify-between items-center border-b pb-3">
                     <h3 class="font-extrabold text-slate-800 text-sm flex items-center gap-1.5"><i data-lucide="calendar" class="w-4 h-4 text-indigo-600"></i> เลือกเดือน / ปีประวัติ</h3>
                     <button id="close-month-picker-btn" class="p-1 text-slate-400 hover:bg-slate-100 rounded-full cursor-pointer"><i data-lucide="x" class="w-4 h-4"></i></button>
@@ -325,7 +326,7 @@
         </div>
 
         <div id="alias-rules-modal" class="hidden absolute inset-0 z-50 bg-black/60 flex items-center justify-center p-4">
-            <div class="bg-white w-full rounded-3xl p-5 max-w-sm space-y-4 shadow-2xl flex flex-col max-h-[85%]">
+            <div class="bg-white w-full max-w-md mx-auto rounded-3xl p-5 space-y-4 shadow-2xl flex flex-col max-h-[85%]">
                 <div class="flex justify-between items-center border-b pb-3 shrink-0">
                     <h3 class="font-extrabold text-slate-800 text-sm flex items-center gap-1.5"><i data-lucide="user-cog" class="w-4 h-4 text-indigo-600"></i> ตั้งค่าแปลงชื่อผู้รับ</h3>
                     <button id="close-alias-rules-btn" class="p-1 text-slate-400 hover:bg-slate-100 rounded-full cursor-pointer"><i data-lucide="x" class="w-4 h-4"></i></button>
@@ -343,7 +344,7 @@
         </div>
 
         <div id="duplicate-modal" class="hidden absolute inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
-            <div class="bg-white w-full rounded-3xl p-6 max-w-xs text-center space-y-4 shadow-2xl">
+            <div class="bg-white w-full max-w-sm mx-auto rounded-3xl p-6 text-center space-y-4 shadow-2xl">
                 <div class="w-12 h-12 rounded-full bg-amber-50 text-amber-600 flex items-center justify-center mx-auto"><i data-lucide="copy" class="w-6 h-6"></i></div>
                 <div>
                     <h4 class="text-base font-bold text-slate-800">แจ้งเตือนข้อมูลซ้ำซ้อน</h4>
@@ -357,7 +358,7 @@
         </div>
 
         <div id="alert-modal" class="hidden absolute inset-0 z-50 flex items-center justify-center bg-black/60 p-4 transition-all">
-            <div class="bg-white w-full rounded-3xl p-6 max-w-xs text-center space-y-4 shadow-2xl scale-100">
+            <div class="bg-white w-full max-w-sm mx-auto rounded-3xl p-6 text-center space-y-4 shadow-2xl scale-100">
                 <div class="w-12 h-12 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center mx-auto" id="alert-icon"><i data-lucide="alert-circle" class="w-6 h-6"></i></div>
                 <div>
                     <h4 class="text-base font-bold text-slate-800" id="alert-title">แจ้งเตือน</h4>
@@ -431,8 +432,6 @@
                     syncQueue.shift(); // เอาคิวที่ทำเสร็จแล้วออก
                 } catch (err) {
                     console.warn("Google Sheets Sync Error (Task Queued):", err);
-                    // หากซิงค์พลาด จะลองใหม่ในรอบถัดไป หรือถ้าค้างนานให้เอาออกก็ได้
-                    // กรณีนี้เราเอาออกไปก่อนเพื่อไม่ให้คิวบล็อก (สามารถพัฒนาต่อยอดเป็น Retry ได้)
                     syncQueue.shift(); 
                 }
             }
@@ -441,14 +440,9 @@
             linkedFileDot.classList.replace('bg-amber-500', 'bg-emerald-500'); // กลับมาสถานะปกติ
         }
 
-        // ฟังก์ชันรับคำสั่งเพื่อนำไปใส่คิวแทนการส่งทันที
         function syncWithGoogleSheets(action, record) {
             if (!GOOGLE_SCRIPT_URL) return;
-            
-            // นำงานไปต่อท้ายคิว
             syncQueue.push({ action, record });
-            
-            // สั่งให้เริ่มทำคิว
             processSyncQueue();
         }
         // -------------------------------------------------------------------------
@@ -460,20 +454,6 @@
         const saveCloudBtn = document.getElementById('save-cloud-btn');
         const clearCloudBtn = document.getElementById('clear-cloud-btn');
 
-        function syncWithGoogleSheets(action, record) {
-            if (!GOOGLE_SCRIPT_URL) return;
-            try {
-                fetch(GOOGLE_SCRIPT_URL, {
-                    method: 'POST',
-                    mode: 'no-cors',
-                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                    body: JSON.stringify({ action: action, data: record })
-                }).catch(err => console.warn("Fetch API Error:", err));
-            } catch (err) {
-                console.warn("Google Sheets Sync Error:", err);
-            }
-        }
-        
         async function fetchDataFromGoogleSheets() {
             if (!GOOGLE_SCRIPT_URL) {
                 linkedFileDot.classList.replace('bg-emerald-500', 'bg-slate-300');
@@ -489,14 +469,10 @@
             document.getElementById('file-status-indicator').title = "กำลังโหลดข้อมูลจากคลาวด์...";
 
             try {
-                // รอให้คิวที่ค้างอยู่ทำงานเสร็จก่อนโหลดข้อมูลใหม่
                 if(isSyncing) {
                    await new Promise(resolve => {
                        const checkInterval = setInterval(() => {
-                           if(!isSyncing) {
-                               clearInterval(checkInterval);
-                               resolve();
-                           }
+                           if(!isSyncing) { clearInterval(checkInterval); resolve(); }
                        }, 500);
                    });
                 }
@@ -521,7 +497,6 @@
                             return { ...item, date: cleanDate, time: cleanTime };
                         });
 
-                        // ระบบหาเดือนล่าสุดที่มีข้อมูล (แก้ไขใหม่)
                         if (expenses.length > 0) {
                             let latestRecord = expenses.reduce((latest, current) => {
                                 return new Date(current.date) > new Date(latest.date) ? current : latest;
@@ -1571,8 +1546,26 @@
         function parseThaiSlipDateTime(text) {
             let date = null; let time = null; if (!text) return { date, time };
             let clean = text.replace(/[\u200B-\u200D\uFEFF\u200E\u200F]/g, '').replace(/\s+/g, '');
+            
+            // ดึงเวลา
             const timeMatch = clean.match(/([01]?\d|2[0-3])[:.](([0-5]\d))/); if (timeMatch) time = `${timeMatch[1].padStart(2, '0')}:${timeMatch[2]}`;
-            const monthsMap = { 'ม.ค.': '01', 'มกราคม': '01', 'ก.พ.': '02', 'กุมภาพันธ์': '02', 'มี.ค.': '03', 'มีนาคม': '03', 'เม.ย.': '04', 'เมษายน': '04', 'พ.ค.': '05', 'พฤษภาคม': '05', 'พ.ศ.': '05', 'มิ.ย.': '06', 'มิถุนายน': '06', 'ก.ค.': '07', 'กรกฎาคม': '07', 'ส.ค.': '08', 'สิงหาคม': '08', 'ก.ย.': '09', 'กันยายน': '09', 'ต.ค.': '10', 'ตุลาคม': '10', 'พ.ย.': '11', 'พฤศจิกายน': '11', 'ธ.ค.': '12', 'ธันวาคม': '12' };
+            
+            // เพิ่มคำเพี้ยนยอดฮิตที่ Tesseract มักจะอ่านผิด
+            const monthsMap = { 
+                'ม.ค.': '01', 'มกราคม': '01', 'N.ค.': '01',
+                'ก.พ.': '02', 'กุมภาพันธ์': '02',
+                'มี.ค.': '03', 'มีนาคม': '03',
+                'เม.ย.': '04', 'เมษายน': '04', 'Lม.ย.': '04', 'เN.ย.': '04',
+                'พ.ค.': '05', 'พฤษภาคม': '05', 'พ.ศ.': '05',
+                'มิ.ย.': '06', 'มิถุนายน': '06',
+                'ก.ค.': '07', 'กรกฎาคม': '07', 'กุค': '07', 'ก.ด.': '07', 'N.ค.': '07', 'Nก': '07', 'ก.ศ.': '07',
+                'ส.ค.': '08', 'สิงหาคม': '08',
+                'ก.ย.': '09', 'กันยายน': '09',
+                'ต.ค.': '10', 'ตุลาคม': '10',
+                'พ.ย.': '11', 'พฤศจิกายน': '11', 'W.ย.': '11', 'N.ย.': '11',
+                'ธ.ค.': '12', 'ธันวาคม': '12', 'S.ค.': '12'
+            };
+
             let foundMonthStr = null; let monthVal = null; let monthIndex = -1;
             for (const [key, val] of Object.entries(monthsMap)) { monthIndex = clean.indexOf(key); if (monthIndex !== -1) { foundMonthStr = key; monthVal = val; break; } }
             if (foundMonthStr && monthVal && monthIndex !== -1) {
