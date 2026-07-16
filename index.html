@@ -998,18 +998,21 @@
                     }
                 }
                 showToast('บันทึกการตั้งค่าโปรไฟล์แล้ว');
+                localStorage.setItem('app_profiles', JSON.stringify(appProfiles));
+                profileEditModal.classList.add('hidden');
             } else {
+                // สร้างไอดีโปรไฟล์ใหม่
                 const newId = 'prof_' + Date.now();
                 appProfiles.push({ id: newId, name: name, scriptUrl: url, icon: 'user' });
+                
+                // บันทึกโปรไฟล์ลง LocalStorage ทันที
+                localStorage.setItem('app_profiles', JSON.stringify(appProfiles));
+                
                 showToast('สร้างโปรไฟล์ใหม่สำเร็จ');
-            }
-            
-            localStorage.setItem('app_profiles', JSON.stringify(appProfiles));
-            profileEditModal.classList.add('hidden');
-            
-            if(!id) {
-               renderProfileList();
-               profileListModal.classList.remove('hidden');
+                profileEditModal.classList.add('hidden');
+                
+                // สลับไปยังโปรไฟล์ที่เพิ่งสร้างใหม่อัตโนมัติ เพื่อให้พร้อมใช้งานทันที
+                window.switchProfile(newId);
             }
         });
 
