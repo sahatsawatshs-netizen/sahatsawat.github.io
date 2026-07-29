@@ -119,6 +119,15 @@
                         </div>
                     </div>
 
+                    <!-- Log OCR Text (For Debugging) -->
+                    <div id="ocr-debug-panel" class="hidden bg-slate-900 rounded-xl p-3 shadow-inner text-left">
+                        <div class="flex justify-between items-center mb-1.5 border-b border-slate-700 pb-1">
+                            <span class="text-[10px] font-bold text-emerald-400 flex items-center gap-1"><i data-lucide="terminal" class="w-3 h-3"></i> แผงตรวจสอบการอ่านข้อความ</span>
+                            <button id="close-ocr-log-btn" class="text-[9px] text-slate-400 hover:text-white cursor-pointer">ซ่อน</button>
+                        </div>
+                        <p id="ocr-raw-text-log" class="text-[9.5px] text-slate-300 font-mono whitespace-pre-wrap break-words h-28 overflow-y-auto custom-scrollbar leading-tight"></p>
+                    </div>
+
                     <!-- Form Panel -->
                     <div class="space-y-3 pt-2">
                         <div>
@@ -389,7 +398,7 @@
         // --- 6. GOOGLE SHEETS SYNC SYSTEM ---
         let syncQueue = []; let isSyncing = false;
         async function processSyncQueue() {
-            if (isSyncing || syncQueue.length === 0 || !activeProfile) return;
+            if (isSyncing || syncQueue.length === 0) return; // ลบ !activeProfile ออก เพื่อให้คิวลบโปรไฟล์ทำงานได้แม้โปรไฟล์จะว่างเปล่า
             isSyncing = true; document.getElementById('linked-file-dot').classList.replace('bg-emerald-500', 'bg-amber-500');
             while (syncQueue.length > 0) {
                 const task = syncQueue[0];
@@ -539,8 +548,23 @@
                     syncWithGoogleSheets('delete_profile', { targetProfileId: ep }, ep);
                     appProfiles = appProfiles.filter(p => p.id !== ep); localStorage.setItem('app_profiles', JSON.stringify(appProfiles));
                     const sfx = '_' + ep; localStorage.removeItem(`user_monthly_budgets${sfx}`); localStorage.removeItem(`custom_categories${sfx}`); localStorage.removeItem(`category_rules_map${sfx}`); localStorage.removeItem(`recipient_rules_map${sfx}`);
-                    if (activeProfileId === ep) { if (appProfiles.length > 0) window.switchProfile(appProfiles[0].id); else { activeProfileId = null; activeProfile = null; loadCurrentProfileData(); } } else renderProfilesList();
-                    document.getElementById('profile-settings-modal').classList.add('hidden'); showToast('ลบสำเร็จ');
+                    
+                    // บังคับปิด Modal ทั้งหมดเพื่อแก้ปัญหาหน้าจอดำ
+                    document.getElementById('profile-settings-modal').classList.add('hidden');
+                    document.getElementById('profile-manager-modal').classList.add('hidden');
+
+                    if (activeProfileId === ep) { 
+                        if (appProfiles.length > 0) window.switchProfile(appProfiles[0].id); 
+                        else { 
+                            activeProfileId = null; activeProfile = null; 
+                            localStorage.removeItem('active_profile_id');
+                            loadCurrentProfileData(); 
+                        } 
+                    } else {
+                        renderProfilesList();
+                        document.getElementById('profile-manager-modal').classList.remove('hidden');
+                    }
+                    showToast('ลบสำเร็จ');
                 });
             });
 
@@ -657,7 +681,13 @@
 
         async function preInitializeOCRWorker() {
             if (isOcrReady) return;
-            try { ocrWorker = await Tesseract.createWorker('tha+eng'); isOcrReady = true; } catch (e) { console.error("Tesseract err", e); }
+            try { 
+                ocrWorker = await Tesseract.createWorker('tha+eng'); 
+                isOcrReady = true; 
+            } catch (e) { 
+                console.error("Tesseract err", e); 
+                showToast("ระบบออฟไลน์ OCR โหลดไม่สำเร็จ");
+            }
         }
 
         function resetScannerUI() {
@@ -669,12 +699,15 @@
             nameSourceBadge.classList.add('hidden');
             document.querySelector('.scanner-loader').classList.remove('hidden');
             document.getElementById('scan-status-text').textContent = "กำลังอ่านข้อมูล QR...";
+            const logPanel = document.getElementById('ocr-debug-panel');
+            if(logPanel) logPanel.classList.add('hidden');
         }
 
         function setupHybridScannerListeners() {
             document.getElementById('trigger-file-picker').addEventListener('click', () => document.getElementById('slip-file-input').click());
             document.getElementById('slip-file-input').addEventListener('change', (e) => { if (e.target.files.length > 0) processSlipImage(e.target.files[0]); });
             document.getElementById('remove-image-btn').addEventListener('click', resetScannerUI);
+            document.getElementById('close-ocr-log-btn').addEventListener('click', () => document.getElementById('ocr-debug-panel').classList.add('hidden'));
             
             document.getElementById('save-record-btn').addEventListener('click', () => {
                 const amount = parseFloat(formAmount.value); let recipient = formRecipient.value.trim(); const date = formDate.value; const time = formTime.value; const cat = formCategory.value;
@@ -692,40 +725,67 @@
         async function processSlipImage(file) {
             document.getElementById('image-preview-container').classList.remove('hidden'); document.getElementById('trigger-file-picker').classList.add('hidden');
             document.getElementById('scan-status-text').textContent = "อ่าน QR (ออฟไลน์)...";
+            document.getElementById('ocr-debug-panel').classList.remove('hidden'); // เปิดแผง Log ตลอด
+            const logElement = document.getElementById('ocr-raw-text-log');
+            logElement.textContent = "[System] เริ่มวิเคราะห์ภาพ...";
+
             const reader = new FileReader();
             reader.onload = function(e) {
                 document.getElementById('image-preview').src = e.target.result;
                 const img = new Image();
                 img.onload = async () => {
-                    // 1. อ่าน QR แบบออฟไลน์
-                    const qrData = scanQRCodeLocal(img);
-                    let qrAmount = qrData.amount;
-                    if (qrData.date) formDate.value = qrData.date; if (qrData.time) formTime.value = qrData.time;
-                    if (qrAmount) { formAmount.value = qrAmount.toFixed(2); amtSourceBadge.textContent = "อ่านจาก QR แม่นยำ 100%"; amtSourceBadge.className = "text-[9px] px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-bold"; }
-                    
-                    // 2. ดึงข้อความดิบด้วย Tesseract (ออฟไลน์)
-                    document.getElementById('scan-status-text').textContent = "ดึงข้อความ (ออฟไลน์)...";
-                    const rawText = await extractRawTextWithOCR(img);
+                    try {
+                        // 1. อ่าน QR แบบออฟไลน์
+                        const qrData = scanQRCodeLocal(img);
+                        let qrAmount = qrData.amount;
+                        if (qrData.date) formDate.value = qrData.date; if (qrData.time) formTime.value = qrData.time;
+                        if (qrAmount) { formAmount.value = qrAmount.toFixed(2); amtSourceBadge.textContent = "อ่านจาก QR แม่นยำ 100%"; amtSourceBadge.className = "text-[9px] px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-bold"; }
+                        
+                        logElement.textContent += `\n[QR] ยอดเงิน: ${qrAmount||'-'}, วันที่: ${qrData.date||'-'}, เวลา: ${qrData.time||'-'}`;
 
-                    // 3. ส่งให้ AI เกลาชื่อผู้รับ (ออนไลน์ - ปลอดภัย ไม่ส่งรูป)
-                    if (navigator.onLine && GLOBAL_WEBAPP_URL) {
-                        document.getElementById('scan-status-text').textContent = "ส่งข้อความดิบให้ AI วิเคราะห์...";
-                        const aiData = await callBackendAI(rawText, qrData);
-                        if (aiData.recipient) {
-                            let rName = applyAlias(aiData.recipient); formRecipient.value = rName;
-                            nameSourceBadge.classList.remove('hidden'); nameSourceBadge.textContent = "เรียบเรียงโดย AI"; nameSourceBadge.className = "text-[9px] px-2.5 py-0.5 rounded-full bg-theme-100 text-theme-800 font-bold";
-                            if(categoryRules[rName]){ const s=document.getElementById('form-category'); for(let i=0;i<s.options.length;i++){ if(s.options[i].value===categoryRules[rName]){ s.selectedIndex=i; break;} } }
+                        // 2. ดึงข้อความดิบด้วย Tesseract (ออฟไลน์)
+                        document.getElementById('scan-status-text').textContent = "ดึงข้อความ (ออฟไลน์)...";
+                        logElement.textContent += `\n[OCR] กำลังทำงาน (อาจใช้เวลา 2-5 วินาที)...`;
+                        
+                        let rawText = "";
+                        try {
+                            rawText = await extractRawTextWithOCR(img);
+                            logElement.textContent += `\n[OCR] อ่านข้อความสำเร็จ:\n----------------\n${rawText}\n----------------`;
+                        } catch (ocrErr) {
+                            console.error("OCR Ext error", ocrErr);
+                            logElement.textContent += `\n[OCR] ล้มเหลว: ${ocrErr.message}`;
                         }
-                        if (aiData.amount && !qrAmount) { formAmount.value = aiData.amount.toFixed(2); amtSourceBadge.textContent = "อ่านยอดจาก AI"; amtSourceBadge.className = "text-[9px] px-2.5 py-0.5 rounded-full bg-orange-100 text-orange-800 font-bold"; }
-                        if (aiData.date && !formDate.value) formDate.value = aiData.date; if (aiData.time && !formTime.value) formTime.value = aiData.time;
-                        if (aiData.memo) formMemo.value = aiData.memo;
-                    } else {
-                        document.getElementById('scan-status-text').textContent = "ออฟไลน์: กรอกชื่อเองครับ"; setTimeout(()=>{document.querySelector('.scanner-loader').classList.add('hidden');}, 1500);
-                        return;
+
+                        // 3. ส่งให้ AI เกลาชื่อผู้รับ (ออนไลน์ - ปลอดภัย ไม่ส่งรูป)
+                        if (navigator.onLine && GLOBAL_WEBAPP_URL && rawText.trim().length > 0) {
+                            document.getElementById('scan-status-text').textContent = "ส่งข้อความดิบให้ AI วิเคราะห์...";
+                            logElement.textContent += `\n[AI] กำลังส่งให้ AI เรียบเรียงชื่อผ่าน Apps Script...`;
+
+                            const aiData = await callBackendAI(rawText, qrData);
+                            logElement.textContent += `\n[AI] ตอบกลับ:\n${JSON.stringify(aiData, null, 2)}`;
+
+                            if (aiData.recipient) {
+                                let rName = applyAlias(aiData.recipient); formRecipient.value = rName;
+                                nameSourceBadge.classList.remove('hidden'); nameSourceBadge.textContent = "เรียบเรียงโดย AI"; nameSourceBadge.className = "text-[9px] px-2.5 py-0.5 rounded-full bg-theme-100 text-theme-800 font-bold";
+                                if(categoryRules[rName]){ const s=document.getElementById('form-category'); for(let i=0;i<s.options.length;i++){ if(s.options[i].value===categoryRules[rName]){ s.selectedIndex=i; break;} } }
+                            }
+                            if (aiData.amount && !qrAmount) { formAmount.value = aiData.amount.toFixed(2); amtSourceBadge.textContent = "อ่านยอดจาก AI"; amtSourceBadge.className = "text-[9px] px-2.5 py-0.5 rounded-full bg-orange-100 text-orange-800 font-bold"; }
+                            if (aiData.date && !formDate.value) formDate.value = aiData.date; if (aiData.time && !formTime.value) formTime.value = aiData.time;
+                            if (aiData.memo) formMemo.value = aiData.memo;
+                        } else {
+                            document.getElementById('scan-status-text').textContent = "ออฟไลน์/ข้อความสั้น: กรอกชื่อเองครับ"; 
+                            logElement.textContent += `\n[System] ข้ามขั้นตอน AI (อาจเพราะออฟไลน์ หรือข้อความสั้นเกินไป)`;
+                        }
+                        
+                        document.querySelector('.scanner-loader').classList.add('hidden'); document.getElementById('scan-status-text').textContent = "แสกนสำเร็จ!";
+                        formDate.classList.add('autofilled-highlight'); formAmount.classList.add('autofilled-highlight'); setTimeout(()=>{formDate.classList.remove('autofilled-highlight'); formAmount.classList.remove('autofilled-highlight');}, 1500);
+                        
+                    } catch (generalErr) {
+                        console.error("General Scan Error", generalErr);
+                        logElement.textContent += `\n[ERROR] ระบบขัดข้อง: ${generalErr.message}`;
+                        document.querySelector('.scanner-loader').classList.add('hidden');
+                        document.getElementById('scan-status-text').textContent = "เกิดข้อผิดพลาดในการอ่าน";
                     }
-                    
-                    document.querySelector('.scanner-loader').classList.add('hidden'); document.getElementById('scan-status-text').textContent = "แสกนสำเร็จ!";
-                    formDate.classList.add('autofilled-highlight'); formAmount.classList.add('autofilled-highlight'); setTimeout(()=>{formDate.classList.remove('autofilled-highlight'); formAmount.classList.remove('autofilled-highlight');}, 1500);
                 };
                 img.src = e.target.result;
             };
@@ -748,7 +808,10 @@
         }
 
         async function extractRawTextWithOCR(img) {
-            if (!isOcrReady) await preInitializeOCRWorker();
+            if (!isOcrReady) {
+                await preInitializeOCRWorker();
+                if (!isOcrReady) throw new Error("Tesseract โหลดไม่สำเร็จ");
+            }
             const c = document.getElementById('util-canvas'); const ctx = c.getContext('2d');
             // ครอปหัวท้ายทิ้ง (เอาเฉพาะ 70% ตรงกลาง) ลดขนาดภาพและดึงแค่ส่วนที่มีชื่อ
             const w = img.width; const h = img.height; const yOffset = h * 0.15; const cropH = h * 0.7;
